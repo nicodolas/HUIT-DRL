@@ -3,13 +3,14 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon, Share2, Calendar } from "lucide-react";
+import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon, Share2, Calendar, FileQuestion } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { QrCodeViewer } from "@/components/common/QrCodeViewer";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { AnnualReportModal } from "@/components/dashboard/AnnualReportModal";
+import { DrlAppealModal } from "@/components/modals/DrlAppealModal";
 import { shareTrainingSummary } from "@/lib/mobile/share";
 
 function ReportContent() {
@@ -30,6 +31,7 @@ function ReportContent() {
   const [classScores, setClassScores] = useState<Record<number, number>>({ 1: 25, 2: 20, 3: 0, 4: 15, 5: 0 });
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [annualReportOpen, setAnnualReportOpen] = useState(false);
+  const [appealModalOpen, setAppealModalOpen] = useState(false);
   const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
 
   // Initialize evidenceFolderUrl from localStorage or records
@@ -234,6 +236,15 @@ function ReportContent() {
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Kiểm tra hồ sơ</span>
+          </button>
+
+          <button
+            onClick={() => setAppealModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Soạn đơn khiếu nại kết quả rèn luyện theo Điều 13 QĐ 3385"
+          >
+            <FileQuestion className="w-4 h-4 text-rose-600" />
+            <span>Khiếu nại (Điều 13)</span>
           </button>
 
           <button
@@ -594,6 +605,20 @@ function ReportContent() {
         onClose={() => setAnnualReportOpen(false)}
         user={user}
         semesters={semesters}
+      />
+
+      <DrlAppealModal
+        isOpen={appealModalOpen}
+        onClose={() => setAppealModalOpen(false)}
+        currentUser={{
+          fullName: user?.fullName || "Sinh viên",
+          studentId: user?.studentId || undefined,
+          className: user?.className || undefined,
+          faculty: user?.faculty || undefined,
+        }}
+        currentScore={scoreSummary?.totalScore || 60}
+        currentSemester={currentSemester?.name || "Học kỳ 1"}
+        currentYear={currentSemester?.name.match(/\d{4}-\d{4}/)?.[0] || "2024-2025"}
       />
     </div>
   );

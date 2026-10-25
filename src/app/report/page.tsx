@@ -25,6 +25,8 @@ function ReportContent() {
   const [copied, setCopied] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"official" | "personal">("official");
+  const [simulateClassReview, setSimulateClassReview] = useState(false);
+  const [classScores, setClassScores] = useState<Record<number, number>>({ 1: 25, 2: 20, 3: 0, 4: 15, 5: 0 });
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
 
@@ -89,6 +91,13 @@ function ReportContent() {
         if (data && !data.error) {
           setRecords(data.records || []);
           setScoreSummary(data.scoreSummary);
+          if (data.scoreSummary?.categories) {
+            const initialMap: Record<number, number> = {};
+            for (let c = 1; c <= 5; c++) {
+              initialMap[c] = data.scoreSummary.categories[c]?.cappedScore || 0;
+            }
+            setClassScores(initialMap);
+          }
         }
       })
       .catch(console.error)
@@ -174,6 +183,20 @@ function ReportContent() {
           >
             <span>{formMode === "official" ? "Biểu mẫu: Mẫu 01 (Nộp Lớp)" : "Biểu mẫu: Xem Cá Nhân"}</span>
           </button>
+
+          {formMode === "official" && (
+            <button
+              onClick={() => setSimulateClassReview(!simulateClassReview)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shadow-xs transition-colors cursor-pointer ${
+                simulateClassReview
+                  ? "bg-amber-100 border-amber-300 text-amber-900"
+                  : "bg-white border-slate-300 hover:bg-slate-50 text-slate-700"
+              }`}
+              title="Bật tính năng mô phỏng điểm tập thể lớp biểu quyết"
+            >
+              <span>{simulateClassReview ? "Đang mô phỏng Lớp xét" : "Mô phỏng Lớp xét"}</span>
+            </button>
+          )}
 
           <button
             onClick={handleShareSummary}
@@ -374,8 +397,38 @@ function ReportContent() {
                         <td className="p-2.5 border-r border-slate-300 text-center font-bold text-slate-900 bg-slate-50/50">
                           {res.cappedScore}đ
                         </td>
-                        <td className="p-2.5 border-r border-slate-300 text-center text-slate-300 font-mono">
-                          .....
+                        <td className="p-2.5 border-r border-slate-300 text-center font-mono">
+                          {simulateClassReview ? (
+                            <div className="flex items-center justify-center space-x-1">
+                              <input
+                                type="number"
+                                min={0}
+                                max={meta.maxPoints}
+                                value={classScores[catNum] ?? res.cappedScore}
+                                onChange={(e) => {
+                                  const val = Math.min(meta.maxPoints, Math.max(0, parseInt(e.target.value, 10) || 0));
+                                  setClassScores((prev) => ({ ...prev, [catNum]: val }));
+                                }}
+                                className="w-12 text-center text-xs font-bold border border-slate-300 rounded p-1 bg-white no-print"
+                              />
+                              <span className="print:inline hidden font-bold text-slate-900">
+                                {classScores[catNum] ?? res.cappedScore}đ
+                              </span>
+                              {(classScores[catNum] ?? res.cappedScore) !== res.cappedScore && (
+                                <span className={`text-[10px] font-bold ${
+                                  (classScores[catNum] ?? res.cappedScore) > res.cappedScore
+                                    ? "text-emerald-700"
+                                    : "text-red-700"
+                                }`}>
+                                  {(classScores[catNum] ?? res.cappedScore) > res.cappedScore
+                                    ? `+${(classScores[catNum] ?? res.cappedScore) - res.cappedScore}`
+                                    : (classScores[catNum] ?? res.cappedScore) - res.cappedScore}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-300">.....</span>
+                          )}
                         </td>
                         <td className="p-2.5 text-center text-slate-300 font-mono">
                           .....
@@ -404,8 +457,14 @@ function ReportContent() {
                     <td className="p-2.5 text-center text-sm font-extrabold bg-slate-200 border-r border-slate-300">
                       {scoreSummary.totalScore}đ
                     </td>
-                    <td className="p-2.5 text-center text-slate-400 border-r border-slate-300 font-mono">
-                      .....
+                    <td className="p-2.5 text-center text-slate-900 border-r border-slate-300 font-mono text-sm font-extrabold">
+                      {simulateClassReview ? (
+                        <span>
+                          {Math.min(100, Object.values(classScores).reduce((a, b) => a + b, 0))}đ
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-normal">.....</span>
+                      )}
                     </td>
                     <td className="p-2.5 text-center text-slate-400 font-mono">
                       .....

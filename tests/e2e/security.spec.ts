@@ -101,3 +101,4 @@ test.describe("Security & OWASP Hardening Suite", () => {
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
 });
+

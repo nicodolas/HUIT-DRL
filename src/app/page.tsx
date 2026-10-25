@@ -16,6 +16,7 @@ import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
+import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTranscriptSheet";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -332,6 +334,7 @@ export default function DashboardPage() {
           data={analyticsData}
           currentSemesterId={currentSemesterId}
           onSelectSemester={setCurrentSemesterId}
+          onOpenTranscript={() => setTranscriptOpen(true)}
         />
 
         {/* 5 Criteria Breakdown */}
@@ -400,6 +403,13 @@ export default function DashboardPage() {
         semester={currentSemester || null}
         records={records}
         onImportComplete={loadRecords}
+      />
+
+      <CumulativeTranscriptSheet
+        isOpen={transcriptOpen}
+        onClose={() => setTranscriptOpen(false)}
+        user={user}
+        analyticsData={analyticsData}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

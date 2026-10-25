@@ -30,3 +30,4 @@ export function sanitizeText(text: string): string {
     .replace(/[<>]/g, "") // remove angle brackets to prevent simple HTML injection
     .substring(0, 1000); // enforce maximum length
 }
+

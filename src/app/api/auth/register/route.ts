@@ -10,7 +10,8 @@ import { randomUUID } from "crypto";
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "client";
-    const rateCheck = checkRateLimit(`register_${ip}`, 5, 60 * 1000);
+    const limit = process.env.NODE_ENV === "production" ? 20 : 100;
+    const rateCheck = checkRateLimit(`register_${ip}`, limit, 60 * 1000);
     if (!rateCheck.success) {
       return NextResponse.json(
         { error: `Quá nhiều yêu cầu tạo tài khoản. Vui lòng chờ ${Math.ceil(rateCheck.resetMs / 1000)} giây.` },

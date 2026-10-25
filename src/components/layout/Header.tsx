@@ -55,6 +55,40 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </Link>
 
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center space-x-1">
+          <Link
+            href="/"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            Tổng quan
+          </Link>
+          <Link
+            href="/records"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            Sổ điểm
+          </Link>
+          <Link
+            href="/goals"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            Mục tiêu & Dự phóng
+          </Link>
+          <Link
+            href="/handbook"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            Sổ tay quy chế
+          </Link>
+          <Link
+            href="/report"
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            Phiếu ĐRL
+          </Link>
+        </nav>
+
         {/* Semester selector & user profile */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           {semesters.length > 0 && (

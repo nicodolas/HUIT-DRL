@@ -19,19 +19,40 @@ export const RecordList: React.FC<RecordListProps> = ({
   onOpenAddModal,
 }) => {
   const [filterCat, setFilterCat] = useState<number>(0);
+  const [filterType, setFilterType] = useState<"all" | "add" | "deduct" | "evidence">("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "points_desc">("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const filtered = records.filter((r) => {
-    if (filterCat > 0 && r.category !== filterCat) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchTitle = (r.title || "").toLowerCase().includes(q);
-      const matchNote = (r.note || "").toLowerCase().includes(q);
-      const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
-      if (!matchTitle && !matchNote && !matchDate) return false;
-    }
-    return true;
-  });
+  const addCount = records.filter((r) => Number(r.points) > 0).length;
+  const deductCount = records.filter((r) => Number(r.points) < 0).length;
+  const evidenceCount = records.filter((r) => !!r.evidenceUrl).length;
+
+  const filtered = records
+    .filter((r) => {
+      if (filterCat > 0 && r.category !== filterCat) return false;
+      if (filterType === "add" && Number(r.points) <= 0) return false;
+      if (filterType === "deduct" && Number(r.points) >= 0) return false;
+      if (filterType === "evidence" && !r.evidenceUrl) return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = (r.title || "").toLowerCase().includes(q);
+        const matchNote = (r.note || "").toLowerCase().includes(q);
+        const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchNote && !matchDate) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "points_desc") {
+        return Number(b.points) * (b.quantity || 1) - Number(a.points) * (a.quantity || 1);
+      }
+      if (sortBy === "oldest") {
+        return (a.occurredAt || "").localeCompare(b.occurredAt || "");
+      }
+      // newest
+      return (b.occurredAt || "").localeCompare(a.occurredAt || "");
+    });
 
   const exportToCsv = () => {
     if (records.length === 0) return;
@@ -128,25 +149,87 @@ export const RecordList: React.FC<RecordListProps> = ({
         </div>
       </div>
 
-      {/* Quick Search Bar */}
+      {/* Filter and Search Toolbar */}
       {records.length > 0 && (
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoạt động, ngày hoặc ghi chú..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+        <div className="space-y-2 pt-1">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Quick Search Bar */}
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên hoạt động, ngày hoặc ghi chú..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e: any) => setSortBy(e.target.value)}
+              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none cursor-pointer font-medium"
             >
-              <X className="w-3.5 h-3.5" />
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+              <option value="points_desc">Điểm cao nhất</option>
+            </select>
+          </div>
+
+          {/* Type Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <button
+              onClick={() => setFilterType("all")}
+              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === "all"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              Tất cả ({records.length})
             </button>
-          )}
+            <button
+              onClick={() => setFilterType("add")}
+              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === "add"
+                  ? "bg-emerald-800 text-white"
+                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+              }`}
+            >
+              Cộng điểm ({addCount})
+            </button>
+            <button
+              onClick={() => setFilterType("deduct")}
+              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                filterType === "deduct"
+                  ? "bg-red-800 text-white"
+                  : "bg-red-50 text-red-800 hover:bg-red-100"
+              }`}
+            >
+              Trừ điểm ({deductCount})
+            </button>
+            {evidenceCount > 0 && (
+              <button
+                onClick={() => setFilterType("evidence")}
+                className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  filterType === "evidence"
+                    ? "bg-blue-800 text-white"
+                    : "bg-blue-50 text-blue-800 hover:bg-blue-100"
+                }`}
+              >
+                Có minh chứng ({evidenceCount})
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -208,18 +291,35 @@ export const RecordList: React.FC<RecordListProps> = ({
                         {r.note}
                       </span>
                     )}
-                    {r.evidenceUrl && (
-                      <a
-                        href={r.evidenceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline text-[11px] font-medium"
-                        title="Mở liên kết minh chứng"
-                      >
-                        <ExternalLink className="w-3 h-3 mr-1 shrink-0" />
-                        Minh chứng
-                      </a>
-                    )}
+                    {r.evidenceUrl && (() => {
+                      const lower = r.evidenceUrl.toLowerCase();
+                      let label = "Minh chứng";
+                      let colorClass = "bg-slate-100 text-slate-700 border-slate-200";
+
+                      if (lower.includes("drive.google.com") || lower.includes("docs.google.com")) {
+                        label = "Google Drive";
+                        colorClass = "bg-blue-50 text-blue-700 border-blue-200";
+                      } else if (lower.includes("1drv.ms") || lower.includes("onedrive") || lower.includes("sharepoint")) {
+                        label = "OneDrive";
+                        colorClass = "bg-sky-50 text-sky-700 border-sky-200";
+                      } else if (lower.includes("facebook.com") || lower.includes("fb.com")) {
+                        label = "Facebook";
+                        colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                      }
+
+                      return (
+                        <a
+                          href={r.evidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border hover:opacity-80 transition-opacity ${colorClass}`}
+                          title="Mở liên kết minh chứng"
+                        >
+                          <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                          <span>{label}</span>
+                        </a>
+                      );
+                    })()}
                   </div>
                 </div>
 

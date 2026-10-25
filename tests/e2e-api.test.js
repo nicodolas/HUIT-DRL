@@ -264,7 +264,7 @@ async function runE2ETests() {
     });
 
     // ==========================================
-    // 8. TEST REPORT PAGE RENDERING (HTML)
+    // 8. TEST REPORT & HANDBOOK PAGE RENDERING (HTML)
     // ==========================================
     const resReport = await fetch(`${baseUrl}/report?semesterId=${dataReg.semesterId}`, {
       headers: { Cookie: newSessionCookie },
@@ -272,6 +272,13 @@ async function runE2ETests() {
     const htmlReport = await resReport.text();
     assert(resReport.status === 200, "GET /report renders with 200 OK");
     assert(htmlReport.includes("PHIẾU") || htmlReport.includes("3385"), "Report HTML includes official evaluation sheet elements");
+
+    const resHandbook = await fetch(`${baseUrl}/handbook`, {
+      headers: { Cookie: newSessionCookie },
+    });
+    const htmlHandbook = await resHandbook.text();
+    assert(resHandbook.status === 200, "GET /handbook renders with 200 OK");
+    assert(htmlHandbook.includes("Quy chế") || htmlHandbook.includes("3385"), "Handbook HTML includes regulation elements");
 
     // ==========================================
     // 9. DATABASE CLEANUP

@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScoreGauge } from "@/components/dashboard/ScoreGauge";
 import { CriteriaBreakdown } from "@/components/dashboard/CriteriaBreakdown";
+import { DrlRadarCard } from "@/components/dashboard/DrlRadarCard";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { CumulativeStatsCard } from "@/components/dashboard/CumulativeStatsCard";
 import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
@@ -415,6 +416,17 @@ export default function DashboardPage() {
           onOpenTranscript={() => setTranscriptOpen(true)}
           onOpenForecast={() => setForecastModalOpen(true)}
         />
+
+        {/* 5 Criteria Radar & Balance Index */}
+        {scoreSummary && (
+          <DrlRadarCard
+            categories={scoreSummary.categories}
+            onSelectCategoryToAdd={(cat) => {
+              setModalInitialCategory(cat);
+              setModalOpen(true);
+            }}
+          />
+        )}
 
         {/* 5 Criteria Breakdown */}
         {scoreSummary && (

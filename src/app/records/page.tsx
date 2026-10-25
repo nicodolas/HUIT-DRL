@@ -18,6 +18,7 @@ export default function RecordsPage() {
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   useEffect(() => {
@@ -109,7 +110,10 @@ export default function RecordsPage() {
             </Link>
 
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={() => {
+                setEditingRecord(null);
+                setModalOpen(true);
+              }}
               className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-amber-400" />
@@ -121,14 +125,25 @@ export default function RecordsPage() {
         <RecordList
           records={records}
           onDeleteRecord={handleDelete}
-          onOpenAddModal={() => setModalOpen(true)}
+          onEditRecord={(r) => {
+            setEditingRecord(r);
+            setModalOpen(true);
+          }}
+          onOpenAddModal={() => {
+            setEditingRecord(null);
+            setModalOpen(true);
+          }}
         />
       </main>
 
       <AddRecordModal
         isOpen={modalOpen}
         semesterId={currentSemesterId}
-        onClose={() => setModalOpen(false)}
+        recordToEdit={editingRecord}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingRecord(null);
+        }}
         onSuccess={loadRecords}
       />
 

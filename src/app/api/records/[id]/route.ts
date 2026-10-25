@@ -35,3 +35,46 @@ export async function DELETE(
   }
 }
 
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json({ error: "Thiếu ID bản ghi" }, { status: 400 });
+  }
+
+  try {
+    const body = await req.json();
+    const { title, points, quantity, occurredAt, note, category } = body;
+
+    const updateData: any = { updatedAt: new Date() };
+    if (title !== undefined) updateData.title = title.trim();
+    if (points !== undefined) updateData.points = String(points);
+    if (quantity !== undefined) updateData.quantity = Math.max(1, Number(quantity));
+    if (occurredAt !== undefined) updateData.occurredAt = occurredAt;
+    if (note !== undefined) updateData.note = note ? note.trim() : null;
+    if (category !== undefined) updateData.category = Number(category);
+
+    const updated = await db
+      .update(drlRecords)
+      .set(updateData)
+      .where(and(eq(drlRecords.id, id), eq(drlRecords.userId, session.id)))
+      .returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "Không tìm thấy hoặc không có quyền sửa" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Đã cập nhật mục điểm thành công", record: updated[0] });
+  } catch (error: any) {
+    console.error("Records PUT error:", error);
+    return NextResponse.json({ error: "Lỗi cập nhật bản ghi: " + error.message }, { status: 500 });
+  }
+}
+

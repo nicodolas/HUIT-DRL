@@ -13,9 +13,12 @@ import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
+import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
+import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
+import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
-import { Plus, RefreshCw, FileText } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -32,6 +35,8 @@ export default function DashboardPage() {
   const [modalInitialCategory, setModalInitialCategory] = useState<number | undefined>(undefined);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
 
   // 1. Check Auth & Load Semesters
   useEffect(() => {
@@ -175,6 +180,24 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={() => setCsvModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Xuất hoặc nhập bảng kê hoạt động bằng file Excel CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Excel CSV</span>
+            </button>
+
+            <button
+              onClick={() => setAuditModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Kiểm tra tính hợp lệ và minh chứng của hồ sơ"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Kiểm tra hồ sơ</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -203,6 +226,21 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Semester Deadline & Status Banner */}
+        {currentSemester && (
+          <DeadlineAlertBanner
+            semesterId={currentSemester.id}
+            semesterName={currentSemester.name}
+            deadline={currentSemester.submissionDeadline}
+            status={currentSemester.status}
+            onUpdateSemester={(up) => {
+              setSemesters((prev) =>
+                prev.map((s) => (s.id === currentSemester.id ? { ...s, ...up } : s))
+              );
+            }}
+          />
+        )}
 
         {/* Offline Sync Banner */}
         <OfflineSyncBanner onSyncComplete={loadRecords} />
@@ -285,6 +323,22 @@ export default function DashboardPage() {
           await loadSemesters();
           if (newSem?.id) setCurrentSemesterId(newSem.id);
         }}
+      />
+
+      <PreFlightAuditModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        semester={currentSemester || null}
+        records={records}
+        onNavigateToReport={() => router.push(`/report?semesterId=${currentSemesterId}`)}
+      />
+
+      <CsvExchangeModal
+        isOpen={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        semester={currentSemester || null}
+        records={records}
+        onImportComplete={loadRecords}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

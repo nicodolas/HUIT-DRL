@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, targetScore, disciplineLevel } = body;
+    const { name, targetScore, disciplineLevel, submissionDeadline } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: "Tên học kỳ không được để trống" }, { status: 400 });
@@ -53,6 +53,8 @@ export async function POST(req: Request) {
       isCurrent: true,
       targetScore: targetScore ? Number(targetScore) : 90,
       disciplineLevel: disciplineLevel || "none",
+      submissionDeadline: submissionDeadline ? String(submissionDeadline).trim() : null,
+      status: "active",
     });
 
     const [created] = await db
@@ -76,7 +78,7 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { id, targetScore, disciplineLevel, isCurrent } = body;
+    const { id, targetScore, disciplineLevel, isCurrent, submissionDeadline, status } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu ID học kỳ" }, { status: 400 });
@@ -99,6 +101,12 @@ export async function PUT(req: Request) {
     const updateData: any = { updatedAt: new Date() };
     if (targetScore !== undefined) updateData.targetScore = Number(targetScore);
     if (disciplineLevel !== undefined) updateData.disciplineLevel = disciplineLevel;
+    if (submissionDeadline !== undefined) {
+      updateData.submissionDeadline = submissionDeadline ? String(submissionDeadline).trim() : null;
+    }
+    if (status !== undefined) {
+      updateData.status = String(status).trim();
+    }
     if (isCurrent !== undefined) {
       if (isCurrent) {
         await db

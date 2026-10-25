@@ -19,6 +19,7 @@
     "@neon/config": "^1.9.4",
     "@neon/env": "^1.6.5",
     "@neondatabase/serverless": "^0.10.4",
+    "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "dotenv": "^18.0.9",
@@ -26,6 +27,7 @@
     "jose": "^6.0.8",
     "lucide-react": "^1.16.0",
     "next": "^15.2.1",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2"

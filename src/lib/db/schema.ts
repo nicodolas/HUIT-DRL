@@ -19,6 +19,8 @@ export const semesters = pgTable("semesters", {
   isCurrent: boolean("is_current").default(true).notNull(),
   targetScore: integer("target_score").default(90).notNull(),
   disciplineLevel: varchar("discipline_level", { length: 32 }).default("none").notNull(), // 'none' | 'khien_trach' | 'canh_cao' | 'dinh_chi'
+  submissionDeadline: varchar("submission_deadline", { length: 32 }), // e.g. '2026-11-20'
+  status: varchar("status", { length: 32 }).default("active").notNull(), // 'active' | 'submitted' | 'locked'
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

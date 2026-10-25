@@ -10,8 +10,11 @@ import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { CloneActivitiesModal } from "@/components/modals/CloneActivitiesModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
+import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
+import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
+import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester } from "@/lib/db/schema";
-import { Plus, FileText, Copy } from "lucide-react";
+import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet } from "lucide-react";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function RecordsPage() {
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -82,6 +87,8 @@ export default function RecordsPage() {
 
   if (!user) return null;
 
+  const currentSemester = semesters.find((s) => s.id === currentSemesterId) || null;
+
   return (
     <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
       <Header
@@ -104,6 +111,24 @@ export default function RecordsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setCsvModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Xuất hoặc nhập bảng kê hoạt động bằng file Excel CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Excel CSV</span>
+            </button>
+
+            <button
+              onClick={() => setAuditModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Kiểm tra tính hợp lệ và minh chứng của hồ sơ"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Kiểm tra hồ sơ</span>
+            </button>
+
             {semesters.length > 1 && (
               <button
                 onClick={() => setCloneModalOpen(true)}
@@ -135,6 +160,21 @@ export default function RecordsPage() {
             </button>
           </div>
         </div>
+
+        {/* Semester Deadline & Status Banner */}
+        {currentSemester && (
+          <DeadlineAlertBanner
+            semesterId={currentSemester.id}
+            semesterName={currentSemester.name}
+            deadline={currentSemester.submissionDeadline}
+            status={currentSemester.status}
+            onUpdateSemester={(up) => {
+              setSemesters((prev) =>
+                prev.map((s) => (s.id === currentSemester.id ? { ...s, ...up } : s))
+              );
+            }}
+          />
+        )}
 
         {/* Offline Sync Banner */}
         <OfflineSyncBanner onSyncComplete={loadRecords} />
@@ -179,6 +219,22 @@ export default function RecordsPage() {
         semesters={semesters}
         onClose={() => setCloneModalOpen(false)}
         onSuccess={loadRecords}
+      />
+
+      <PreFlightAuditModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        semester={currentSemester}
+        records={records}
+        onNavigateToReport={() => router.push(`/report?semesterId=${currentSemesterId}`)}
+      />
+
+      <CsvExchangeModal
+        isOpen={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        semester={currentSemester}
+        records={records}
+        onImportComplete={loadRecords}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

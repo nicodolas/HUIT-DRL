@@ -51,7 +51,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, points, quantity, occurredAt, note, category } = body;
+    const { title, points, quantity, occurredAt, note, category, evidenceUrl } = body;
 
     const updateData: any = { updatedAt: new Date() };
     if (title !== undefined) updateData.title = title.trim();
@@ -59,6 +59,7 @@ export async function PUT(
     if (quantity !== undefined) updateData.quantity = Math.max(1, Number(quantity));
     if (occurredAt !== undefined) updateData.occurredAt = occurredAt;
     if (note !== undefined) updateData.note = note ? note.trim() : null;
+    if (evidenceUrl !== undefined) updateData.evidenceUrl = evidenceUrl ? evidenceUrl.trim() : null;
     if (category !== undefined) updateData.category = Number(category);
 
     const updated = await db

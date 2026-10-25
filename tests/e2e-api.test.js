@@ -225,7 +225,46 @@ async function runE2ETests() {
     });
 
     // ==========================================
-    // 7. TEST REPORT PAGE RENDERING (HTML)
+    // 7. TEST HEALTH CHECK API & EVIDENCE URL
+    // ==========================================
+    const resHealth = await fetch(`${baseUrl}/api/health`);
+    const dataHealth = await resHealth.json();
+    assert(resHealth.status === 200, "GET /api/health returns 200 OK");
+    assert(dataHealth.status === "ok", "Health status is ok");
+    assert(dataHealth.database && dataHealth.database.status === "connected", "Health database is connected");
+
+    // Add record with evidenceUrl
+    const resAddEvidence = await fetch(`${baseUrl}/api/records`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: newSessionCookie },
+      body: JSON.stringify({
+        semesterId: dataReg.semesterId,
+        category: 3,
+        title: 'Tham gia giải chạy HUIT Marathon',
+        points: 4,
+        quantity: 1,
+        evidenceUrl: 'https://drive.google.com/file/d/test-marathon-huit.pdf',
+      }),
+    });
+    const dataAddEvidence = await resAddEvidence.json();
+    assert(resAddEvidence.status === 200, "POST /api/records accepts evidenceUrl");
+
+    // Verify evidenceUrl is returned in GET
+    const resGetEvidence = await fetch(`${baseUrl}/api/records?semesterId=${dataReg.semesterId}`, {
+      headers: { Cookie: newSessionCookie },
+    });
+    const dataGetEvidence = await resGetEvidence.json();
+    const foundRecord = dataGetEvidence.records.find(r => r.id === dataAddEvidence.recordId);
+    assert(foundRecord && foundRecord.evidenceUrl === 'https://drive.google.com/file/d/test-marathon-huit.pdf', "Record stores and returns evidenceUrl correctly");
+
+    // Clean up record
+    await fetch(`${baseUrl}/api/records/${dataAddEvidence.recordId}`, {
+      method: 'DELETE',
+      headers: { Cookie: newSessionCookie },
+    });
+
+    // ==========================================
+    // 8. TEST REPORT PAGE RENDERING (HTML)
     // ==========================================
     const resReport = await fetch(`${baseUrl}/report?semesterId=${dataReg.semesterId}`, {
       headers: { Cookie: newSessionCookie },
@@ -235,7 +274,7 @@ async function runE2ETests() {
     assert(htmlReport.includes("PHIẾU") || htmlReport.includes("3385"), "Report HTML includes official evaluation sheet elements");
 
     // ==========================================
-    // 8. DATABASE CLEANUP
+    // 9. DATABASE CLEANUP
     // ==========================================
     const { neon } = require('@neondatabase/serverless');
     require('dotenv').config({ path: '.env.local' });

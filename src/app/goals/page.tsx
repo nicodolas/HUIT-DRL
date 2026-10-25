@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
+import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
-import { Semester } from "@/lib/db/schema";
+import { Semester, DrlRecord } from "@/lib/db/schema";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
 import { Award } from "lucide-react";
 
@@ -15,6 +16,7 @@ export default function GoalsPage() {
   const [user, setUser] = useState<any>(null);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
+  const [records, setRecords] = useState<DrlRecord[]>([]);
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
@@ -51,8 +53,9 @@ export default function GoalsPage() {
     try {
       const res = await fetch(`/api/records?semesterId=${currentSemesterId}`);
       const data = await res.json();
-      if (data && data.goalAnalysis) {
-        setGoalAnalysis(data.goalAnalysis);
+      if (data) {
+        if (data.records) setRecords(data.records);
+        if (data.goalAnalysis) setGoalAnalysis(data.goalAnalysis);
       }
     } catch (e) {
       console.error(e);
@@ -103,6 +106,16 @@ export default function GoalsPage() {
           <GoalTrackerCard
             analysis={goalAnalysis}
             onUpdateTarget={handleUpdateTarget}
+          />
+        )}
+
+        {/* What-If Simulation Engine */}
+        {currentSemesterId && (
+          <WhatIfSimulator
+            currentRecords={records}
+            disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
+            semesterId={currentSemesterId}
+            onCommittedSuccess={loadData}
           />
         )}
 

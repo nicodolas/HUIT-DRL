@@ -130,3 +130,4 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
     </div>
   );
 };
+

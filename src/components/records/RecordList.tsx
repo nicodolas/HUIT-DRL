@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download } from "lucide-react";
+import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink } from "lucide-react";
 
 interface RecordListProps {
   records: DrlRecord[];
@@ -44,7 +44,8 @@ export const RecordList: React.FC<RecordListProps> = ({
       "Số lượng",
       "Tổng điểm",
       "Ngày diễn ra",
-      "Ghi chú / Minh chứng",
+      "Ghi chú",
+      "Link minh chứng",
     ];
 
     const rows = records.map((r, idx) => {
@@ -60,6 +61,7 @@ export const RecordList: React.FC<RecordListProps> = ({
         totalPts,
         `"${r.occurredAt || ""}"`,
         `"${(r.note || "").replace(/"/g, '""')}"`,
+        `"${(r.evidenceUrl || "").replace(/"/g, '""')}"`,
       ].join(",");
     });
 
@@ -205,6 +207,18 @@ export const RecordList: React.FC<RecordListProps> = ({
                         <FileText className="w-3 h-3 mr-1 text-slate-400 shrink-0" />
                         {r.note}
                       </span>
+                    )}
+                    {r.evidenceUrl && (
+                      <a
+                        href={r.evidenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline text-[11px] font-medium"
+                        title="Mở liên kết minh chứng"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1 shrink-0" />
+                        Minh chứng
+                      </a>
                     )}
                   </div>
                 </div>

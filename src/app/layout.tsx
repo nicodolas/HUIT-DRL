@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ServiceWorkerRegister } from "@/components/common/ServiceWorkerRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className="antialiased selection:bg-slate-900 selection:text-white">
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>

@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note } = body;
+    const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note, evidenceUrl } = body;
 
     if (!semesterId || !category || !title || points === undefined) {
       return NextResponse.json(
@@ -104,6 +104,7 @@ export async function POST(req: Request) {
       quantity: quantity ? Number(quantity) : 1,
       occurredAt: occurredAt || null,
       note: note ? note.trim() : null,
+      evidenceUrl: evidenceUrl ? evidenceUrl.trim() : null,
     });
 
     return NextResponse.json({ message: "Đã thêm hoạt động!", recordId });

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
 import { CATEGORIES } from "@/lib/drl/rules";
@@ -19,6 +19,7 @@ function ReportContent() {
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [scoreSummary, setScoreSummary] = useState<ScoreCalculationResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   // Load auth
   useEffect(() => {
@@ -80,6 +81,24 @@ function ReportContent() {
 
   const currentSemester = semesters.find((s) => s.id === currentSemesterId) || semesters[0];
 
+  const handleCopySummary = () => {
+    if (!scoreSummary) return;
+    const text = `[HUIT - ĐIỂM RÈN LUYỆN]
+Họ và tên: ${user?.fullName || user?.username}
+Lớp: ${user?.className || "Chưa cập nhật"} | Khoa: ${user?.faculty || "Chưa cập nhật"}
+Học kỳ: ${currentSemester.name}
+- TC1 (Nội quy): ${scoreSummary.categories[1].cappedScore}/25đ
+- TC2 (Học tập): ${scoreSummary.categories[2].cappedScore}/20đ
+- TC3 (Phong trào): ${scoreSummary.categories[3].cappedScore}/20đ
+- TC4 (Cộng đồng): ${scoreSummary.categories[4].cappedScore}/15đ
+- TC5 (Cán bộ/NCKH): ${scoreSummary.categories[5].cappedScore}/20đ
+=> TỔNG ĐIỂM: ${scoreSummary.totalScore}/100đ (Xếp loại: ${scoreSummary.rating.label})
+(Căn cứ theo QĐ 3385/QĐ-DCT)`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 py-6 px-3 sm:px-6 text-slate-900 print:bg-white print:p-0">
       {/* Top action bar - Hidden when printing */}
@@ -111,6 +130,24 @@ function ReportContent() {
               ))}
             </select>
           )}
+
+          <button
+            onClick={handleCopySummary}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Sao chép kết quả gửi Zalo/Lớp trưởng"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span className="text-emerald-700">Đã sao chép!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 text-slate-500" />
+                <span>Sao chép Zalo</span>
+              </>
+            )}
+          </button>
 
           <button
             onClick={() => window.print()}

@@ -19,6 +19,9 @@ import {
   Trash2,
   Calendar,
   ExternalLink,
+  Download,
+  Upload,
+  Database,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -29,6 +32,10 @@ export default function ProfilePage() {
   const [discipline, setDiscipline] = useState<string>("none");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
+
+  // Backup & Restore states
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
 
   // Edit profile states
   const [isEditing, setIsEditing] = useState(false);
@@ -184,6 +191,57 @@ export default function ProfilePage() {
       await loadSemesters();
     } catch (e: any) {
       alert("Lỗi kết nối: " + e.message);
+    }
+  };
+
+  const handleExportBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const res = await fetch("/api/backup");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `huit-drl-backup-${user?.username || "student"}-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupMsg("Đã xuất file sao lưu JSON thành công!");
+      setTimeout(() => setBackupMsg(null), 3500);
+    } catch (e: any) {
+      alert("Lỗi xuất sao lưu: " + e.message);
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setBackupLoading(true);
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+
+      const res = await fetch("/api/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setBackupMsg(data.message || "Khôi phục dữ liệu thành công!");
+      await loadSemesters();
+      setTimeout(() => setBackupMsg(null), 3500);
+    } catch (e: any) {
+      alert("Lỗi khôi phục: " + e.message);
+    } finally {
+      setBackupLoading(false);
+      e.target.value = "";
     }
   };
 
@@ -534,6 +592,47 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 mt-2 font-medium">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>Đã lưu trạng thái thành công</span>
+            </div>
+          )}
+        </div>
+
+        {/* Backup & Restore Data Card */}
+        <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-3">
+          <div className="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+            <Database className="w-4 h-4 text-slate-700" />
+            <span>Sao lưu & Khôi phục dữ liệu cá nhân</span>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Xuất toàn bộ học kỳ và lịch sử điểm rèn luyện ra file JSON để lưu trữ an toàn hoặc chuyển đổi sang thiết bị khác.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            <button
+              onClick={handleExportBackup}
+              disabled={backupLoading}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-400" />
+              <span>{backupLoading ? "Đang xử lý..." : "Xuất file sao lưu (JSON)"}</span>
+            </button>
+
+            <label className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer">
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
+              <span>Khôi phục từ file JSON</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={handleImportBackup}
+                disabled={backupLoading}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {backupMsg && (
+            <div className="flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{backupMsg}</span>
             </div>
           )}
         </div>

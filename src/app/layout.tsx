@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegister } from "@/components/common/ServiceWorkerRegister";
+import { NetworkStatusIndicator } from "@/components/common/NetworkStatusIndicator";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="vi">
       <body className="antialiased selection:bg-slate-900 selection:text-white">
         <ServiceWorkerRegister />
+        <NetworkStatusIndicator />
         {children}
       </body>
     </html>

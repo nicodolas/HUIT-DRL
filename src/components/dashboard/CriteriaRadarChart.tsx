@@ -165,3 +165,4 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
     </div>
   );
 };
+

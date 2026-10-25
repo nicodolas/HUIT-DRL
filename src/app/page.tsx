@@ -9,6 +9,7 @@ import { ScoreGauge } from "@/components/dashboard/ScoreGauge";
 import { CriteriaBreakdown } from "@/components/dashboard/CriteriaBreakdown";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { CumulativeStatsCard } from "@/components/dashboard/CumulativeStatsCard";
+import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
@@ -202,6 +203,9 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Offline Sync Banner */}
+        <OfflineSyncBanner onSyncComplete={loadRecords} />
 
         {/* Score Gauge */}
         {scoreSummary && (

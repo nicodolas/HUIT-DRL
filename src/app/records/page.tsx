@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
@@ -121,6 +122,9 @@ export default function RecordsPage() {
             </button>
           </div>
         </div>
+
+        {/* Offline Sync Banner */}
+        <OfflineSyncBanner onSyncComplete={loadRecords} />
 
         <RecordList
           records={records}

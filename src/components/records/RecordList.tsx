@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus } from "lucide-react";
+import { Trash2, Calendar, FileText, Layers, Plus, Search, X } from "lucide-react";
 
 interface RecordListProps {
   records: DrlRecord[];
@@ -17,9 +17,17 @@ export const RecordList: React.FC<RecordListProps> = ({
   onOpenAddModal,
 }) => {
   const [filterCat, setFilterCat] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const filtered = records.filter((r) => {
     if (filterCat > 0 && r.category !== filterCat) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchTitle = (r.title || "").toLowerCase().includes(q);
+      const matchNote = (r.note || "").toLowerCase().includes(q);
+      const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
+      if (!matchTitle && !matchNote && !matchDate) return false;
+    }
     return true;
   });
 
@@ -62,6 +70,28 @@ export const RecordList: React.FC<RecordListProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Quick Search Bar */}
+      {records.length > 0 && (
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Tìm theo tên hoạt động, ngày hoặc ghi chú..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="py-10 flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-200 rounded-lg">

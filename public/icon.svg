@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <!-- Shield outline -->
+  <path d="M256 70 L390 125 V260 C390 350 256 430 256 430 C256 430 122 350 122 260 V125 Z" fill="#1e293b" stroke="#334155" stroke-width="8"/>
+  <!-- Graduation cap icon inside -->
+  <path d="M256 160 L360 215 L256 270 L152 215 Z" fill="#fbbf24"/>
+  <path d="M182 245 V305 C182 325 215 340 256 340 C297 340 330 325 330 305 V245 L256 284 Z" fill="#f59e0b"/>
+  <!-- Tassel -->
+  <path d="M350 220 V300 L345 320" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+  <!-- Badge text / HUIT banner -->
+  <rect x="180" y="360" width="152" height="34" rx="6" fill="#fbbf24"/>
+  <text x="256" y="384" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="900" fill="#0f172a" text-anchor="middle" letter-spacing="2">HUIT ĐRL</text>
+</svg>

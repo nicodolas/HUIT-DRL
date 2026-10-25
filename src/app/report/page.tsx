@@ -3,12 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon, Share2 } from "lucide-react";
+import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon, Share2, Calendar } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { QrCodeViewer } from "@/components/common/QrCodeViewer";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
+import { AnnualReportModal } from "@/components/dashboard/AnnualReportModal";
 import { shareTrainingSummary } from "@/lib/mobile/share";
 
 function ReportContent() {
@@ -28,6 +29,7 @@ function ReportContent() {
   const [simulateClassReview, setSimulateClassReview] = useState(false);
   const [classScores, setClassScores] = useState<Record<number, number>>({ 1: 25, 2: 20, 3: 0, 4: 15, 5: 0 });
   const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [annualReportOpen, setAnnualReportOpen] = useState(false);
   const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
 
   // Initialize evidenceFolderUrl from localStorage or records
@@ -214,6 +216,15 @@ function ReportContent() {
                 <span>Chia sẻ / Gửi Zalo</span>
               </>
             )}
+          </button>
+
+          <button
+            onClick={() => setAnnualReportOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Tổng hợp điểm rèn luyện cả năm học theo Điều 11 QĐ 3385"
+          >
+            <Calendar className="w-4 h-4 text-amber-600" />
+            <span>Tổng hợp năm học (Điều 11)</span>
           </button>
 
           <button
@@ -576,6 +587,13 @@ function ReportContent() {
         onClose={() => setAuditModalOpen(false)}
         semester={currentSemester || null}
         records={records}
+      />
+
+      <AnnualReportModal
+        isOpen={annualReportOpen}
+        onClose={() => setAnnualReportOpen(false)}
+        user={user}
+        semesters={semesters}
       />
     </div>
   );

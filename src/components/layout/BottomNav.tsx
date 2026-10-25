@@ -12,11 +12,11 @@ export const BottomNav: React.FC = () => {
     { href: "/", label: "Tổng quan", icon: LayoutDashboard },
     { href: "/records", label: "Sổ điểm", icon: BookOpenCheck },
     { href: "/goals", label: "Mục tiêu", icon: Target },
-    { href: "/profile", label: "Hồ sơ", icon: User },
+    { href: "/profile", label: "Tài khoản", icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 shadow-lg sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xs border-t border-slate-200 px-2 py-1.5 sm:hidden">
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -25,19 +25,14 @@ export const BottomNav: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
                 isActive
-                  ? "text-huit-blue-700 font-bold"
-                  : "text-slate-400 hover:text-slate-600 font-medium"
+                  ? "text-slate-900 font-semibold"
+                  : "text-slate-500 hover:text-slate-800 font-normal"
               }`}
             >
-              <div className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`} />
-                {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-huit-orange-500 rounded-full" />
-                )}
-              </div>
-              <span className="text-[11px] mt-1">{item.label}</span>
+              <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
+              <span className="text-[11px] mt-0.5">{item.label}</span>
             </Link>
           );
         })}

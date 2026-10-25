@@ -10,3 +10,4 @@ if (!connectionString) {
 
 const client = neon(connectionString);
 export const db = drizzle(client, { schema });
+

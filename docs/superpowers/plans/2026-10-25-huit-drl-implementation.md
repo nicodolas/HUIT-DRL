@@ -151,3 +151,4 @@
 - [ ] **Step 1: Chạy `npm run build` để kiểm tra 0 lỗi TypeScript và compilation**
 - [ ] **Step 2: Chạy kiểm tra kết nối Neon database với role hạn chế**
 - [ ] **Step 3: Chạy test luồng đăng ký -> tự cộng điểm -> kiểm tra trần -> kiểm tra xếp loại**
+

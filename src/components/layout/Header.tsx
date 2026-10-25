@@ -1,14 +1,16 @@
 "use client";
 
 import React from "react";
-import { GraduationCap, LogOut, ChevronDown, Award } from "lucide-react";
+import Link from "next/link";
+import { GraduationCap, LogOut, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   user: {
     fullName: string;
-    mssv?: string | null;
+    username: string;
     faculty?: string | null;
+    className?: string | null;
   } | null;
   semesters: Array<{ id: string; name: string; isCurrent: boolean }>;
   currentSemesterId: string;
@@ -36,29 +38,24 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xs border-b border-slate-200">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo & Brand */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-huit-blue-700 to-huit-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-900/10">
-            <GraduationCap className="w-6 h-6 text-orange-400" />
+        {/* Brand */}
+        <Link href="/" className="flex items-center space-x-2.5 hover:opacity-90 transition-opacity">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+            <GraduationCap className="w-4 h-4 text-amber-400" />
           </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-lg tracking-tight text-huit-blue-800">
-                HUIT<span className="text-huit-orange-600">.DRL</span>
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-huit-orange-700 border border-orange-200">
-                QĐ 3385
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 hidden sm:block">
-              Sổ điểm rèn luyện cá nhân sinh viên
-            </p>
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-base tracking-tight text-slate-900">
+              HUIT<span className="text-amber-600">.DRL</span>
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 hidden sm:inline-block">
+              QĐ 3385
+            </span>
           </div>
-        </div>
+        </Link>
 
-        {/* Semester selector & user action */}
+        {/* Semester selector & user profile */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           {semesters.length > 0 && (
             <div className="relative">
@@ -71,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onSelectSemester(e.target.value);
                   }
                 }}
-                className="appearance-none bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-xl pl-3 pr-8 py-2 border border-slate-300/80 focus:outline-none focus:ring-2 focus:ring-huit-blue-600 cursor-pointer transition-colors"
+                className="appearance-none bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-lg pl-3 pr-8 py-2 border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer transition-colors"
               >
                 {semesters.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -80,26 +77,26 @@ export const Header: React.FC<HeaderProps> = ({
                 ))}
                 <option value="__NEW__">+ Thêm học kỳ mới...</option>
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
 
           {user && (
             <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
-              <div className="text-right hidden md:block">
-                <div className="text-xs font-bold text-slate-800 truncate max-w-[130px]">
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-bold text-slate-900 truncate max-w-[150px]">
                   {user.fullName}
                 </div>
-                <div className="text-[11px] text-slate-500">
-                  {user.mssv || "Sinh viên"}
+                <div className="text-[11px] text-slate-500 font-mono">
+                  @{user.username}
                 </div>
               </div>
               <button
                 onClick={handleLogout}
                 title="Đăng xuất"
-                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           )}

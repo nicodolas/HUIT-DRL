@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ScoreGauge } from "@/components/dashboard/ScoreGauge";
@@ -9,9 +10,10 @@ import { CriteriaBreakdown } from "@/components/dashboard/CriteriaBreakdown";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { DrlRecord, Semester } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
-import { Plus, RefreshCw, AlertCircle } from "lucide-react";
+import { Plus, RefreshCw, FileText } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -26,7 +28,6 @@ export default function DashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInitialCategory, setModalInitialCategory] = useState<number | undefined>(undefined);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
-  const [newSemesterName, setNewSemesterName] = useState("");
 
   // 1. Check Auth & Load Semesters
   useEffect(() => {
@@ -113,41 +114,21 @@ export default function DashboardPage() {
     }
   };
 
-  // Handle Create Semester
-  const handleCreateSemester = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSemesterName.trim()) return;
-    try {
-      const res = await fetch("/api/semesters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newSemesterName.trim() }),
-      });
-      const data = await res.json();
-      if (data.semester) {
-        setNewSemesterModalOpen(false);
-        setNewSemesterName("");
-        await loadSemesters();
-        setCurrentSemesterId(data.semester.id);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="w-10 h-10 border-4 border-huit-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-bold text-slate-500">Đang tải dữ liệu HUIT DRL...</span>
+        <div className="flex flex-col items-center space-y-2 text-slate-500">
+          <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium">Đang tải dữ liệu...</span>
         </div>
       </div>
     );
   }
 
+  const currentSemester = semesters.find((s) => s.id === currentSemesterId);
+
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-100/60 text-slate-800">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
       <Header
         user={user}
         semesters={semesters}
@@ -156,38 +137,57 @@ export default function DashboardPage() {
         onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
-      <main className="max-w-5xl mx-auto px-4 py-5 space-y-5">
-        {/* Top welcome banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-huit-blue-800 via-huit-blue-700 to-huit-blue-900 text-white rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-950/10">
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        {/* Top greeting & summary banner */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-orange-300 text-[11px] font-bold mb-2 backdrop-blur-xs">
-              <span>Đại học Công Thương TP.HCM (HUIT)</span>
+            <div className="flex items-center space-x-2 text-xs text-slate-500 mb-1">
+              <span className="font-semibold text-slate-700">
+                {currentSemester ? currentSemester.name : "Học kỳ"}
+              </span>
+              <span>•</span>
+              <span className="font-mono text-slate-500">@{user.username}</span>
+              {user.className && (
+                <>
+                  <span>•</span>
+                  <span>Lớp: {user.className}</span>
+                </>
+              )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-              Xin chào, {user.fullName}! 👋
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              Xin chào, {user.fullName}
             </h1>
-            <p className="text-xs sm:text-sm text-blue-100/80 mt-1">
-              {user.mssv ? `MSSV: ${user.mssv}` : ""} {user.className ? `• Lớp: ${user.className}` : ""} {user.faculty ? `• Khoa: ${user.faculty}` : ""}
+            <p className="text-xs text-slate-500 mt-0.5">
+              Tự động tính điểm và theo dõi mục tiêu rèn luyện cá nhân
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link
+              href={`/report?semesterId=${currentSemesterId}`}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-600" />
+              <span>Xuất phiếu QĐ 3385</span>
+            </Link>
+
             <button
               onClick={() => {
                 setModalInitialCategory(undefined);
                 setModalOpen(true);
               }}
-              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-2xl bg-huit-orange-500 hover:bg-huit-orange-600 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-orange-600/30 transition-all active:scale-95"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer active:scale-[0.99]"
             >
-              <Plus className="w-4 h-4" />
-              <span>Cộng / Trừ điểm</span>
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ghi nhận điểm</span>
             </button>
+
             <button
               onClick={loadRecords}
-              className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-              title="Làm mới"
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+              title="Làm mới dữ liệu"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Activity & Record List */}
+        {/* Record List */}
         <RecordList
           records={records}
           onDeleteRecord={handleDeleteRecord}
@@ -246,51 +246,17 @@ export default function DashboardPage() {
         onSuccess={loadRecords}
       />
 
-      {/* Modal New Semester */}
-      {newSemesterModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200">
-            <h3 className="text-base font-bold text-slate-800 mb-1">
-              Thêm học kỳ đánh giá mới
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Mỗi học kỳ sẽ tự động được khởi tạo 60 điểm mặc định (TC 1, 2, 4).
-            </p>
-            <form onSubmit={handleCreateSemester} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Tên học kỳ:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Học kỳ 2 (2025 - 2026)"
-                  value={newSemesterName}
-                  onChange={(e) => setNewSemesterName(e.target.value)}
-                  className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-huit-blue-600 font-bold"
-                  autoFocus
-                />
-              </div>
-              <div className="flex items-center justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setNewSemesterModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-huit-blue-700 text-white rounded-xl shadow-md hover:bg-huit-blue-800"
-                >
-                  Tạo học kỳ
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Reusable New Semester Modal */}
+      <NewSemesterModal
+        isOpen={newSemesterModalOpen}
+        onClose={() => setNewSemesterModalOpen(false)}
+        onCreated={async (newSem) => {
+          await loadSemesters();
+          if (newSem?.id) setCurrentSemesterId(newSem.id);
+        }}
+      />
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Bottom Nav */}
       <BottomNav />
     </div>
   );

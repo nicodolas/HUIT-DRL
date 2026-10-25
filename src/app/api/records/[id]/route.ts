@@ -34,3 +34,4 @@ export async function DELETE(
     return NextResponse.json({ error: "Lỗi xóa bản ghi: " + error.message }, { status: 500 });
   }
 }
+

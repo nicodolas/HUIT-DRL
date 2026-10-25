@@ -11,3 +11,4 @@ export default defineConfig({
     url: process.env.DATABASE_URL_OWNER || process.env.DATABASE_URL || "",
   },
 });
+

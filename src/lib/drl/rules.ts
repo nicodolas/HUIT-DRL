@@ -133,3 +133,4 @@ export function determineRating(score: number, discipline: DisciplineLevel = "no
 
   return { code, label, color, badgeBg };
 }
+

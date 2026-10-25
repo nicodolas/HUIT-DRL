@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3 } from "lucide-react";
+import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download } from "lucide-react";
 
 interface RecordListProps {
   records: DrlRecord[];
@@ -33,6 +33,46 @@ export const RecordList: React.FC<RecordListProps> = ({
     return true;
   });
 
+  const exportToCsv = () => {
+    if (records.length === 0) return;
+    const headers = [
+      "STT",
+      "Tiêu chí",
+      "Tên hoạt động",
+      "Phân loại",
+      "Điểm mỗi lần",
+      "Số lượng",
+      "Tổng điểm",
+      "Ngày diễn ra",
+      "Ghi chú / Minh chứng",
+    ];
+
+    const rows = records.map((r, idx) => {
+      const isAdd = Number(r.points) > 0;
+      const totalPts = Number(r.points) * (r.quantity || 1);
+      return [
+        idx + 1,
+        `"TC${r.category} - ${CATEGORIES[r.category]?.name || ""}"`,
+        `"${(r.title || "").replace(/"/g, '""')}"`,
+        isAdd ? "Cộng điểm" : "Trừ điểm",
+        r.points,
+        r.quantity || 1,
+        totalPts,
+        `"${r.occurredAt || ""}"`,
+        `"${(r.note || "").replace(/"/g, '""')}"`,
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `HUIT_DRL_HoatDong_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -45,8 +85,20 @@ export const RecordList: React.FC<RecordListProps> = ({
           </p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex flex-wrap items-center gap-2">
+          {records.length > 0 && (
+            <button
+              onClick={exportToCsv}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+              title="Xuất bảng Excel/CSV nộp ban cán sự"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-600" />
+              <span>Xuất CSV</span>
+            </button>
+          )}
+
+          {/* Filter Pills */}
+          <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setFilterCat(0)}
             className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
@@ -70,6 +122,7 @@ export const RecordList: React.FC<RecordListProps> = ({
               TC {c}
             </button>
           ))}
+          </div>
         </div>
       </div>
 

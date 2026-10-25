@@ -3,7 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { X, Search, Check } from "lucide-react";
+import { X, Search, Check, Sparkles } from "lucide-react";
+
+const POPULAR_SHORTCUTS = [
+  { label: "Cổ vũ văn nghệ/TT", code: "TC3_CO_VU", badge: "+2đ" },
+  { label: "Thi VHVN/TT cấp Khoa", code: "TC3_CUOC_THI_KHOA", badge: "+4đ" },
+  { label: "Thi VHVN/TT cấp Trường", code: "TC3_CUOC_THI_TRUONG", badge: "+6đ" },
+  { label: "Thành viên CLB / Đội", code: "TC5_THANH_VIEN_CLB", badge: "+3đ" },
+  { label: "Bình chọn / Like HĐ", code: "TC5_BINH_CHON_TRUONG", badge: "+2đ" },
+  { label: "Hội thảo NCKH Trường", code: "TC5_HOI_THAO_TRUONG", badge: "+5đ" },
+  { label: "Rớt 1 môn học", code: "TC2_ROT_1_MON", badge: "-2đ" },
+  { label: "Vi phạm thẻ SV / Áo", code: "TC1_DONG_PHUC", badge: "-5đ" },
+];
 
 interface AddRecordModalProps {
   isOpen: boolean;
@@ -248,6 +259,52 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     TC {c}
                   </button>
                 ))}
+              </div>
+
+              {/* Popular Shortcuts */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    Hoạt động thường gặp
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {POPULAR_SHORTCUTS.map((item) => {
+                    const isSelected = selectedPreset?.code === item.code;
+                    return (
+                      <button
+                        key={item.code}
+                        type="button"
+                        onClick={() => {
+                          const matched = presets.find((p) => p.code === item.code);
+                          if (matched) {
+                            setSelectedPreset(matched);
+                            setSelectedCategory(matched.category);
+                          }
+                        }}
+                        className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-1 rounded ${
+                            isSelected
+                              ? "bg-slate-700 text-amber-300"
+                              : item.badge.startsWith("+")
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-red-50 text-red-700"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Search */}

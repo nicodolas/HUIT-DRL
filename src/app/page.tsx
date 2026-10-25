@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { ScoreGauge } from "@/components/dashboard/ScoreGauge";
 import { CriteriaBreakdown } from "@/components/dashboard/CriteriaBreakdown";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
+import { CumulativeStatsCard } from "@/components/dashboard/CumulativeStatsCard";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
@@ -23,10 +24,12 @@ export default function DashboardPage() {
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [scoreSummary, setScoreSummary] = useState<ScoreCalculationResult | null>(null);
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInitialCategory, setModalInitialCategory] = useState<number | undefined>(undefined);
+  const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -74,6 +77,14 @@ export default function DashboardPage() {
         setScoreSummary(data.scoreSummary);
         setGoalAnalysis(data.goalAnalysis);
       }
+
+      // Load multi-semester analytics
+      fetch("/api/analytics")
+        .then((r) => r.json())
+        .then((anData) => {
+          if (anData && anData.hasData) setAnalyticsData(anData);
+        })
+        .catch(console.error);
     } catch (e) {
       console.error(e);
     } finally {
@@ -215,6 +226,13 @@ export default function DashboardPage() {
           />
         )}
 
+        {/* Cumulative Multi-Semester Stats */}
+        <CumulativeStatsCard
+          data={analyticsData}
+          currentSemesterId={currentSemesterId}
+          onSelectSemester={setCurrentSemesterId}
+        />
+
         {/* 5 Criteria Breakdown */}
         {scoreSummary && (
           <CriteriaBreakdown
@@ -230,19 +248,28 @@ export default function DashboardPage() {
         <RecordList
           records={records}
           onDeleteRecord={handleDeleteRecord}
+          onEditRecord={(r) => {
+            setEditingRecord(r);
+            setModalOpen(true);
+          }}
           onOpenAddModal={() => {
+            setEditingRecord(null);
             setModalInitialCategory(undefined);
             setModalOpen(true);
           }}
         />
       </main>
 
-      {/* Modal Add Record */}
+      {/* Modal Add / Edit Record */}
       <AddRecordModal
         isOpen={modalOpen}
         semesterId={currentSemesterId}
         initialCategory={modalInitialCategory}
-        onClose={() => setModalOpen(false)}
+        recordToEdit={editingRecord}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingRecord(null);
+        }}
         onSuccess={loadRecords}
       />
 

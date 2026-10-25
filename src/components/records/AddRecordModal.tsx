@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { DrlCriteriaPreset } from "@/lib/db/schema";
+import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { X, Search, Check } from "lucide-react";
 
@@ -9,6 +9,7 @@ interface AddRecordModalProps {
   isOpen: boolean;
   semesterId: string;
   initialCategory?: number;
+  recordToEdit?: DrlRecord | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -17,6 +18,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   isOpen,
   semesterId,
   initialCategory,
+  recordToEdit,
   onClose,
   onSuccess,
 }) => {
@@ -39,11 +41,27 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [customCategory, setCustomCategory] = useState<number>(initialCategory || 3);
 
   useEffect(() => {
-    if (initialCategory) {
-      setSelectedCategory(initialCategory);
-      setCustomCategory(initialCategory);
+    if (recordToEdit) {
+      setTab("custom");
+      setCustomTitle(recordToEdit.title);
+      setCustomPoints(Number(recordToEdit.points));
+      setCustomCategory(recordToEdit.category);
+      setQuantity(recordToEdit.quantity || 1);
+      setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
+      setNote(recordToEdit.note || "");
+    } else {
+      setSelectedPreset(null);
+      setCustomTitle("");
+      setCustomPoints("");
+      setQuantity(1);
+      setNote("");
+      setOccurredAt(new Date().toISOString().split("T")[0]);
+      if (initialCategory) {
+        setSelectedCategory(initialCategory);
+        setCustomCategory(initialCategory);
+      }
     }
-  }, [initialCategory]);
+  }, [recordToEdit, initialCategory, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -118,8 +136,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         };
       }
 
-      const res = await fetch("/api/records", {
-        method: "POST",
+      const url = recordToEdit ? `/api/records/${recordToEdit.id}` : "/api/records";
+      const method = recordToEdit ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -150,10 +171,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-sm text-slate-900">
-              Ghi nhận điểm rèn luyện
+              {recordToEdit ? "Chỉnh sửa mục điểm" : "Ghi nhận điểm rèn luyện"}
             </h3>
             <p className="text-[11px] text-slate-500">
-              Theo quy chuẩn Quyết định số 3385/QĐ-DCT
+              {recordToEdit ? "Cập nhật thông tin hoạt động" : "Theo quy chuẩn Quyết định số 3385/QĐ-DCT"}
             </p>
           </div>
           <button
@@ -404,7 +425,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             disabled={loading}
             className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer disabled:opacity-50"
           >
-            {loading ? "Đang lưu..." : "Xác nhận"}
+            {loading ? "Đang lưu..." : recordToEdit ? "Lưu thay đổi" : "Xác nhận"}
           </button>
         </div>
       </div>

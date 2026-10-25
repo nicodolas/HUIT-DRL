@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { GraduationCap, LogOut, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 interface HeaderProps {
   user: {
@@ -125,6 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
                   @{user.username}
                 </div>
               </div>
+              <ThemeToggle />
               <button
                 onClick={handleLogout}
                 title="Đăng xuất"

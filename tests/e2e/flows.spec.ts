@@ -120,3 +120,4 @@ test.describe("Full HUIT DRL End-to-End User Journey", () => {
     expect(checkData.scoreSummary.rating.label).toBe("Xuất sắc");
   });
 });
+

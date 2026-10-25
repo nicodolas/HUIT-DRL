@@ -57,7 +57,40 @@ export async function GET() {
     });
 
     const cumulativeAverage = Math.round((sumScores / userSemesters.length) * 10) / 10;
-    const cumulativeRating = determineRating(cumulativeAverage, "none");
+    let cumulativeRating = determineRating(cumulativeAverage, "none");
+
+    // Điều 12 QĐ 3385: Hạ 1 bậc xếp loại toàn khóa nếu từng bị kỷ luật Cảnh cáo trở lên
+    const hasGraduationDisciplinePenalty = userSemesters.some(
+      (s) => s.disciplineLevel === "canh_cao" || s.disciplineLevel === "dinh_chi"
+    );
+
+    if (hasGraduationDisciplinePenalty) {
+      if (cumulativeRating.code === "xuat_sac") {
+        cumulativeRating = {
+          code: "tot",
+          label: "Tốt (Hạ 1 bậc do có án kỷ luật)",
+          color: "#0284c7",
+          badgeBg: "bg-sky-100 text-sky-800",
+          note: "Hạ từ Xuất sắc xuống Tốt theo Điều 12 QĐ 3385",
+        };
+      } else if (cumulativeRating.code === "tot") {
+        cumulativeRating = {
+          code: "kha",
+          label: "Khá (Hạ 1 bậc do có án kỷ luật)",
+          color: "#f59e0b",
+          badgeBg: "bg-amber-100 text-amber-800",
+          note: "Hạ từ Tốt xuống Khá theo Điều 12 QĐ 3385",
+        };
+      } else if (cumulativeRating.code === "kha") {
+        cumulativeRating = {
+          code: "trung_binh",
+          label: "Trung bình (Hạ 1 bậc do có án kỷ luật)",
+          color: "#f97316",
+          badgeBg: "bg-orange-100 text-orange-800",
+          note: "Hạ từ Khá xuống Trung bình theo Điều 12 QĐ 3385",
+        };
+      }
+    }
 
     return NextResponse.json({
       hasData: true,
@@ -65,6 +98,7 @@ export async function GET() {
       totalActivities: allRecords.length,
       cumulativeAverage,
       cumulativeRating,
+      hasGraduationDisciplinePenalty,
       semesterBreakdown,
     });
   } catch (error: any) {

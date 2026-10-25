@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, Award, Layers, ChevronRight } from "lucide-react";
+import { TrendingUp, Award, Layers, ChevronRight, FileText } from "lucide-react";
 
 interface SemesterSummary {
   id: string;
@@ -31,12 +31,14 @@ interface CumulativeStatsCardProps {
   } | null;
   currentSemesterId: string;
   onSelectSemester: (id: string) => void;
+  onOpenTranscript?: () => void;
 }
 
 export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
   data,
   currentSemesterId,
   onSelectSemester,
+  onOpenTranscript,
 }) => {
   if (!data || !data.hasData || data.totalSemesters <= 1) {
     return null; // Only display when there are multiple semesters to compare!
@@ -183,6 +185,17 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
           );
         })}
       </div>
+
+      {onOpenTranscript && (
+        <button
+          type="button"
+          onClick={onOpenTranscript}
+          className="w-full py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+        >
+          <FileText className="w-3.5 h-3.5 text-slate-600" />
+          <span>Xem & In Bảng Điểm Rèn Luyện Toàn Khóa (Điều 12)</span>
+        </button>
+      )}
     </div>
   );
 };

@@ -204,3 +204,4 @@ export const ScholarshipPredictionCard: React.FC<ScholarshipPredictionCardProps>
     </div>
   );
 };
+

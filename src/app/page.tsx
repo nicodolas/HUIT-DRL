@@ -19,12 +19,13 @@ import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommenda
 import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTranscriptSheet";
 import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
 import { BackupRestoreModal } from "@/components/modals/BackupRestoreModal";
+import { ClassMeetingModal } from "@/components/dashboard/ClassMeetingModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const [classMeetingModalOpen, setClassMeetingModalOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -260,6 +262,15 @@ export default function DashboardPage() {
               <span>Sao lưu</span>
             </button>
 
+            <button
+              onClick={() => setClassMeetingModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Biên bản họp lớp và bảng tổng hợp rèn luyện Điều 9-10"
+            >
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              <span>Họp lớp & Biên bản</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -454,6 +465,20 @@ export default function DashboardPage() {
           await loadSemesters();
           await loadRecords();
         }}
+      />
+
+      <ClassMeetingModal
+        isOpen={classMeetingModalOpen}
+        onClose={() => setClassMeetingModalOpen(false)}
+        currentUser={{
+          fullName: user?.fullName || "Sinh viên",
+          studentId: user?.studentId || undefined,
+          className: user?.className || undefined,
+          faculty: user?.faculty || undefined,
+        }}
+        currentScore={scoreSummary?.totalScore || 60}
+        currentSemester={currentSemester?.name || "Học kỳ 1"}
+        currentYear={currentSemester?.name.match(/\d{4}-\d{4}/)?.[0] || "2024-2025"}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

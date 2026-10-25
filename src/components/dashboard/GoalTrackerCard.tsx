@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
 import { Target, CheckCircle2, ChevronRight, Compass } from "lucide-react";
+import { triggerHaptic } from "@/lib/native/platform";
 
 interface GoalTrackerCardProps {
   analysis: GoalAnalysisResult;
@@ -24,6 +25,7 @@ export const GoalTrackerCard: React.FC<GoalTrackerCardProps> = ({
   ];
 
   const handleSelectPreset = (score: number) => {
+    triggerHaptic("light");
     onUpdateTarget(score);
     setIsEditing(false);
   };
@@ -46,7 +48,10 @@ export const GoalTrackerCard: React.FC<GoalTrackerCardProps> = ({
         </div>
 
         <button
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={() => {
+            triggerHaptic("light");
+            setIsEditing(!isEditing);
+          }}
           className="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
         >
           {isEditing ? "Đóng" : "Đổi mục tiêu"}

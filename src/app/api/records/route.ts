@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { calculateSemesterScore, analyzeGoalGap } from "@/lib/drl/calculator";
 import { DisciplineLevel } from "@/lib/drl/rules";
 import { randomUUID } from "crypto";
+import { isValidEvidenceUrl } from "@/lib/security/sanitizer";
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -76,6 +77,13 @@ export async function POST(req: Request) {
     if (!semesterId || !category || !title || points === undefined) {
       return NextResponse.json(
         { error: "Vui lòng nhập đầy đủ thông tin hoạt động." },
+        { status: 400 }
+      );
+    }
+
+    if (evidenceUrl && !isValidEvidenceUrl(evidenceUrl)) {
+      return NextResponse.json(
+        { error: "Liên kết minh chứng không an toàn hoặc không đúng định dạng HTTP/HTTPS." },
         { status: 400 }
       );
     }

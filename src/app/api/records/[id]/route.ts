@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { drlRecords } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
+import { isValidEvidenceUrl } from "@/lib/security/sanitizer";
 
 export async function DELETE(
   _req: Request,
@@ -52,6 +53,13 @@ export async function PUT(
   try {
     const body = await req.json();
     const { title, points, quantity, occurredAt, note, category, evidenceUrl } = body;
+
+    if (evidenceUrl && !isValidEvidenceUrl(evidenceUrl)) {
+      return NextResponse.json(
+        { error: "Liên kết minh chứng không an toàn hoặc không đúng định dạng HTTP/HTTPS." },
+        { status: 400 }
+      );
+    }
 
     const updateData: any = { updatedAt: new Date() };
     if (title !== undefined) updateData.title = title.trim();

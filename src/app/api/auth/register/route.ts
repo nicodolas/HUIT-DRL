@@ -4,10 +4,20 @@ import { users, semesters } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "client";
+    const rateCheck = checkRateLimit(`register_${ip}`, 5, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: `Quá nhiều yêu cầu tạo tài khoản. Vui lòng chờ ${Math.ceil(rateCheck.resetMs / 1000)} giây.` },
+        { status: 429, headers: { "Retry-After": Math.ceil(rateCheck.resetMs / 1000).toString() } }
+      );
+    }
+
     const body = await req.json();
     const { username, password, fullName, faculty, className } = body;
 

@@ -4,6 +4,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
+import { checkRateLimit, resetRateLimit } from "@/lib/security/rateLimit";
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,17 @@ export async function POST(req: Request) {
     const { username, password } = body;
 
     const cleanUsername = (username || "").trim().toLowerCase();
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "client";
+    const rateLimitKey = `login_${cleanUsername || ip}`;
+
+    // Rate limit check: 10 attempts per minute
+    const rateCheck = checkRateLimit(rateLimitKey, 10, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: `Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ ${Math.ceil(rateCheck.resetMs / 1000)} giây.` },
+        { status: 429, headers: { "Retry-After": Math.ceil(rateCheck.resetMs / 1000).toString() } }
+      );
+    }
 
     if (!cleanUsername || !password) {
       return NextResponse.json(
@@ -52,6 +64,7 @@ export async function POST(req: Request) {
     };
 
     await createSession(sessionUser);
+    resetRateLimit(rateLimitKey);
 
     return NextResponse.json({
       message: "Đăng nhập thành công!",

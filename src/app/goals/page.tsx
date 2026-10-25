@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
+import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPredictionCard";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { Semester, DrlRecord, DrlCriteriaPreset } from "@/lib/db/schema";
@@ -135,6 +136,11 @@ export default function GoalsPage() {
         )}
 
         {/* Scholarships Policy Note from HUIT */}
+        <ScholarshipPredictionCard
+          currentDrlScore={goalAnalysis ? goalAnalysis.currentScore : 60}
+          disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
+        />
+
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-2.5">
           <div className="flex items-center space-x-2 text-slate-900 font-bold text-sm">
             <Award className="w-4 h-4 text-amber-600" />

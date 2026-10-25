@@ -58,3 +58,9 @@ Thumbs.db
 # Temporary extracted docs images (keep the original PDF & MD files in docs/)
 docs/pdf_images/
 
+# Playwright test artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+

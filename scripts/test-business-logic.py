@@ -89,3 +89,4 @@ assert rating_kt == "Khá (Hạ do khiển trách)"
 print("✓ Test 4b: Discipline constraint (Khiển trách -> Khá) PASSED")
 
 print("\nALL BUSINESS ENGINE VERIFICATION TESTS PASSED SUCCESSFULLY! 🚀")
+

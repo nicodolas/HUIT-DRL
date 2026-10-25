@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, semesters } from "@/lib/db/schema";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
@@ -9,37 +9,49 @@ import { randomUUID } from "crypto";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, fullName, mssv, faculty, className } = body;
+    const { username, password, fullName, faculty, className } = body;
 
-    if (!email || !password || !fullName) {
+    const cleanUsername = (username || "").trim().toLowerCase();
+    const displayName = (fullName || "").trim() || cleanUsername;
+
+    if (!cleanUsername) {
       return NextResponse.json(
-        { error: "Vui lòng nhập đầy đủ Email, Mật khẩu và Họ tên." },
+        { error: "Vui lòng nhập tên đăng nhập." },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (cleanUsername.length < 3) {
+      return NextResponse.json(
+        { error: "Tên đăng nhập phải có ít nhất 3 ký tự." },
+        { status: 400 }
+      );
+    }
+
+    if (!/^[a-zA-Z0-9_.-]+$/.test(cleanUsername)) {
+      return NextResponse.json(
+        { error: "Tên đăng nhập chỉ bao gồm chữ cái, số, dấu gạch dưới (_), gạch nối (-) hoặc dấu chấm (.)." },
+        { status: 400 }
+      );
+    }
+
+    if (!password || password.length < 6) {
       return NextResponse.json(
         { error: "Mật khẩu phải có ít nhất 6 ký tự." },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const conditions = [eq(users.email, email.toLowerCase().trim())];
-    if (mssv && mssv.trim()) {
-      conditions.push(eq(users.mssv, mssv.trim()));
-    }
-
+    // Check if username already exists
     const existingUsers = await db
-      .select()
+      .select({ id: users.id })
       .from(users)
-      .where(or(...conditions))
+      .where(eq(users.username, cleanUsername))
       .limit(1);
 
     if (existingUsers.length > 0) {
       return NextResponse.json(
-        { error: "Email hoặc Mã số sinh viên (MSSV) đã được đăng ký." },
+        { error: "Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác." },
         { status: 409 }
       );
     }
@@ -49,15 +61,14 @@ export async function POST(req: Request) {
 
     await db.insert(users).values({
       id: userId,
-      email: email.toLowerCase().trim(),
+      username: cleanUsername,
       passwordHash,
-      fullName: fullName.trim(),
-      mssv: mssv ? mssv.trim() : null,
+      fullName: displayName,
       faculty: faculty ? faculty.trim() : null,
       className: className ? className.trim() : null,
     });
 
-    // Automatically create initial semester for the student
+    // Automatically create initial semester for the user
     const semesterId = randomUUID();
     await db.insert(semesters).values({
       id: semesterId,
@@ -70,9 +81,8 @@ export async function POST(req: Request) {
 
     const sessionUser = {
       id: userId,
-      email: email.toLowerCase().trim(),
-      fullName: fullName.trim(),
-      mssv: mssv ? mssv.trim() : null,
+      username: cleanUsername,
+      fullName: displayName,
       faculty: faculty ? faculty.trim() : null,
       className: className ? className.trim() : null,
     };
@@ -92,3 +102,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

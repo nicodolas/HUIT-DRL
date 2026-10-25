@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { DrlRecord, Semester } from "@/lib/db/schema";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -16,6 +18,7 @@ export default function RecordsPage() {
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -76,32 +79,43 @@ export default function RecordsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-100/60 text-slate-800">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
       <Header
         user={user}
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => {}}
+        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
-      <main className="max-w-5xl mx-auto px-4 py-5 space-y-4">
-        <div className="flex items-center justify-between">
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-extrabold text-slate-800">
-              Sổ điểm rèn luyện cá nhân
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              Sổ ghi nhận điểm rèn luyện
             </h1>
-            <p className="text-xs text-slate-500">
-              Xem lại toàn bộ lịch sử điểm cộng và điểm trừ của học kỳ
+            <p className="text-xs text-slate-500 mt-0.5">
+              Lịch sử các hoạt động cộng điểm và vi phạm theo học kỳ
             </p>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-huit-orange-500 hover:bg-huit-orange-600 text-white font-bold text-xs shadow-md transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Thêm mục</span>
-          </button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/report?semesterId=${currentSemesterId}`}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-600" />
+              <span>Xuất phiếu QĐ 3385</span>
+            </Link>
+
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 text-amber-400" />
+              <span>Ghi nhận mục mới</span>
+            </button>
+          </div>
         </div>
 
         <RecordList
@@ -116,6 +130,15 @@ export default function RecordsPage() {
         semesterId={currentSemesterId}
         onClose={() => setModalOpen(false)}
         onSuccess={loadRecords}
+      />
+
+      <NewSemesterModal
+        isOpen={newSemesterModalOpen}
+        onClose={() => setNewSemesterModalOpen(false)}
+        onCreated={async (newSem) => {
+          await loadSemesters();
+          if (newSem?.id) setCurrentSemesterId(newSem.id);
+        }}
       />
 
       <BottomNav />

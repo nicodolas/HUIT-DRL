@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
+import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { Semester } from "@/lib/db/schema";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
-import { Award, Compass, BookOpen } from "lucide-react";
+import { Award } from "lucide-react";
 
 export default function GoalsPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function GoalsPage() {
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
+  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -78,22 +80,22 @@ export default function GoalsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-100/60 text-slate-800">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
       <Header
         user={user}
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => {}}
+        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
-      <main className="max-w-5xl mx-auto px-4 py-5 space-y-5">
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-800">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
             Mục tiêu & Kế hoạch rèn luyện
           </h1>
-          <p className="text-xs text-slate-500">
-            Theo dõi tiến độ đạt loại Xuất sắc, Tốt để xét học bổng và khen thưởng
+          <p className="text-xs text-slate-500 mt-0.5">
+            Lập kế hoạch hoàn thành các tiêu chí xét học bổng và danh hiệu sinh viên
           </p>
         </div>
 
@@ -105,16 +107,36 @@ export default function GoalsPage() {
         )}
 
         {/* Scholarships Policy Note from HUIT */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 space-y-3">
-          <div className="flex items-center space-x-2 text-huit-blue-700 font-bold text-sm">
-            <Award className="w-5 h-5 text-huit-orange-500" />
-            <span>Chính sách xét học bổng khuyến khích học tập HUIT</span>
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-2.5">
+          <div className="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+            <Award className="w-4 h-4 text-amber-600" />
+            <span>Tiêu chuẩn xét học bổng khuyến khích học tập HUIT</span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Căn cứ quy định đào tạo và khen thưởng của Trường Đại học Công Thương TP.HCM, sinh viên cần đạt kết quả rèn luyện tối thiểu loại <strong>Khá (&gt;= 70đ)</strong> để đủ điều kiện xét học bổng khuyến khích học tập. Để đạt mức học bổng Xuất sắc, điểm rèn luyện phải đạt từ <strong>90 điểm trở lên</strong> và không vi phạm kỷ luật học vụ.
+            Căn cứ quy chế đào tạo và khen thưởng sinh viên của Trường Đại học Công Thương TP.HCM:
           </p>
+          <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-5">
+            <li>
+              Sinh viên cần đạt kết quả rèn luyện tối thiểu loại <strong>Khá (&ge; 70 điểm)</strong> để đủ điều kiện xét học bổng khuyến khích học tập.
+            </li>
+            <li>
+              Học bổng loại <strong>Xuất sắc</strong> yêu cầu kết quả rèn luyện từ <strong>90 điểm trở lên</strong> và không vi phạm kỷ luật học vụ.
+            </li>
+            <li>
+              Học bổng loại <strong>Giỏi</strong> yêu cầu kết quả rèn luyện từ <strong>80 đến dưới 90 điểm</strong>.
+            </li>
+          </ul>
         </div>
       </main>
+
+      <NewSemesterModal
+        isOpen={newSemesterModalOpen}
+        onClose={() => setNewSemesterModalOpen(false)}
+        onCreated={async (newSem) => {
+          await loadSemesters();
+          if (newSem?.id) setCurrentSemesterId(newSem.id);
+        }}
+      />
 
       <BottomNav />
     </div>

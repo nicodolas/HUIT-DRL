@@ -33,3 +33,4 @@ cur_o = conn_o.cursor()
 cur_o.execute("DROP TABLE IF EXISTS security_probe;")
 cur_o.close()
 conn_o.close()
+

@@ -3,7 +3,7 @@
 import React from "react";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { CategoryScoreResult } from "@/lib/drl/calculator";
-import { ChevronRight, Plus, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 
 interface CriteriaBreakdownProps {
   categories: Record<number, CategoryScoreResult>;
@@ -15,19 +15,17 @@ export const CriteriaBreakdown: React.FC<CriteriaBreakdownProps> = ({
   onSelectCategoryToAdd,
 }) => {
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-800">
-            5 Tiêu chí rèn luyện HUIT
-          </h2>
-          <p className="text-xs text-slate-500">
-            Khung điểm & giới hạn trần theo Quyết định số 3385/QĐ-DCT
-          </p>
-        </div>
+    <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+      <div>
+        <h2 className="text-sm font-bold text-slate-900">
+          5 Tiêu chí rèn luyện HUIT
+        </h2>
+        <p className="text-xs text-slate-500">
+          Khung điểm và giới hạn trần theo Quyết định số 3385/QĐ-DCT
+        </p>
       </div>
 
-      <div className="space-y-3.5">
+      <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((catNum) => {
           const meta = CATEGORIES[catNum];
           const result = categories[catNum] || {
@@ -48,18 +46,15 @@ export const CriteriaBreakdown: React.FC<CriteriaBreakdownProps> = ({
           return (
             <div
               key={catNum}
-              className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 hover:bg-slate-50 border border-slate-200/70 transition-all"
+              className="p-3.5 sm:p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <span
-                      className="px-2 py-0.5 rounded-lg text-xs font-black text-white"
-                      style={{ backgroundColor: meta.color }}
-                    >
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 text-slate-800">
                       {meta.code}
                     </span>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-800 leading-snug">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                       {meta.shortName}
                     </h3>
                   </div>
@@ -68,53 +63,49 @@ export const CriteriaBreakdown: React.FC<CriteriaBreakdownProps> = ({
                   </p>
                 </div>
 
-                {/* Score badge & Add button */}
                 <div className="flex items-center space-x-2 shrink-0">
                   <div className="text-right">
-                    <div className="text-sm sm:text-base font-extrabold text-slate-800">
+                    <span className="text-sm sm:text-base font-bold text-slate-900">
                       {result.cappedScore}
-                      <span className="text-xs font-normal text-slate-400">
-                        /{result.maxPoints}đ
-                      </span>
-                    </div>
+                    </span>
+                    <span className="text-xs text-slate-400 font-normal">
+                      /{result.maxPoints}đ
+                    </span>
                   </div>
 
                   <button
                     onClick={() => onSelectCategoryToAdd(catNum)}
-                    className="p-1.5 rounded-xl bg-white hover:bg-slate-200/70 text-slate-600 border border-slate-200 shadow-2xs transition-colors"
-                    title={`Thêm mục cho ${meta.code}`}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors cursor-pointer"
+                    title={`Ghi nhận thêm mục cho ${meta.code}`}
                   >
-                    <Plus className="w-4 h-4 text-huit-orange-600" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="mt-3">
-                <div className="h-2 w-full bg-slate-200/70 rounded-full overflow-hidden">
+              <div>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${percent}%`,
-                      backgroundColor: meta.color,
-                    }}
+                    className="h-full rounded-full transition-all duration-500 bg-slate-800"
+                    style={{ width: `${percent}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 mt-1.5">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1.5">
                   <span>
-                    {result.recordsCount > 0 ? `${result.recordsCount} hoạt động ghi nhận` : "Chưa có thêm hoạt động"}
+                    {result.recordsCount > 0 ? `${result.recordsCount} hoạt động ghi nhận` : "Mặc định hệ thống"}
                   </span>
                   {isOverRaw && (
-                    <span className="text-amber-600 flex items-center font-bold">
+                    <span className="text-amber-700 flex items-center font-medium">
                       <AlertCircle className="w-3 h-3 mr-0.5" />
-                      Điểm thực tế {result.rawScore}đ (khống chế trần {result.maxPoints}đ)
+                      Điểm thực {result.rawScore}đ (khống chế trần {result.maxPoints}đ)
                     </span>
                   )}
                   {!isOverRaw && isAtMax && (
-                    <span className="text-emerald-600 font-bold">Đã đạt tối đa trần điểm</span>
+                    <span className="text-emerald-700 font-medium">Đã đạt tối đa trần điểm</span>
                   )}
                   {!isAtMax && (
-                    <span>Còn dư {result.remainingCapacity}đ để tích lũy</span>
+                    <span>Còn dư {result.remainingCapacity}đ</span>
                   )}
                 </div>
               </div>

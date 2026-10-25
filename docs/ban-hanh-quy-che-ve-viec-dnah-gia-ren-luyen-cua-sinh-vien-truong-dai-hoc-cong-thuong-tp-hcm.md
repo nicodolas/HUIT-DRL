@@ -149,3 +149,4 @@ Quy định này được áp dụng để xét, đánh giá kết quả rèn lu
 - Bị kỷ luật Khiển trách: ĐRL tối đa loại Khá (< 80 điểm).
 - Bị kỷ luật Cảnh cáo trở lên: ĐRL tối đa loại Trung bình (< 70 điểm).
 - Bị đình chỉ học tập hoặc buộc thôi học: Không đánh giá ĐRL.
+

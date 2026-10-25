@@ -5,3 +5,4 @@ export async function POST() {
   await clearSession();
   return NextResponse.json({ message: "Đã đăng xuất" });
 }
+

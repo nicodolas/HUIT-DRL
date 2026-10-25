@@ -9,9 +9,8 @@ const COOKIE_NAME = "huit_drl_session";
 
 export interface SessionUser {
   id: string;
-  email: string;
+  username: string;
   fullName: string;
-  mssv?: string | null;
   faculty?: string | null;
   className?: string | null;
 }
@@ -19,9 +18,8 @@ export interface SessionUser {
 export async function createSession(user: SessionUser): Promise<string> {
   const token = await new SignJWT({
     id: user.id,
-    email: user.email,
+    username: user.username,
     fullName: user.fullName,
-    mssv: user.mssv,
     faculty: user.faculty,
     className: user.className,
   })
@@ -51,9 +49,8 @@ export async function getSession(): Promise<SessionUser | null> {
     const { payload } = await jwtVerify(token, SECRET_KEY);
     return {
       id: payload.id as string,
-      email: payload.email as string,
-      fullName: payload.fullName as string,
-      mssv: payload.mssv as string | null,
+      username: (payload.username as string) || (payload.fullName as string) || "user",
+      fullName: (payload.fullName as string) || (payload.username as string) || "Người dùng",
       faculty: payload.faculty as string | null,
       className: payload.className as string | null,
     };
@@ -66,3 +63,4 @@ export async function clearSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
 }
+

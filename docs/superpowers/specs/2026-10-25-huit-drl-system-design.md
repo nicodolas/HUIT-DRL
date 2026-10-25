@@ -124,3 +124,4 @@ Căn cứ Chương II và Chương III Quyết định 3385/QĐ-DCT:
    - Sử dụng Session JWT/Cookie an toàn (HttpOnly, Secure, SameSite=Lax).
    - Tất cả các endpoint Server Actions hoặc REST API đều xác thực `session.userId` trước khi thực thi.
    - Bắt buộc kiểm tra `WHERE user_id = $userId` trên mọi thao tác `drl_records` và `semesters`.
+

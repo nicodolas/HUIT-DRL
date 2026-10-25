@@ -112,3 +112,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Lỗi thêm hoạt động: " + error.message }, { status: 500 });
   }
 }
+

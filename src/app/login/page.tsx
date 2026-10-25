@@ -7,7 +7,7 @@ import { GraduationCap, ArrowRight, Lock, User, AlertCircle } from "lucide-react
 
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await res.json();
@@ -39,60 +39,75 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-slate-100 to-slate-200">
-      <div className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 text-slate-900">
+      <div className="max-w-md w-full bg-white rounded-2xl p-7 sm:p-8 shadow-xs border border-slate-200 space-y-6">
         {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-huit-blue-800 to-huit-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-900/20">
-            <GraduationCap className="w-8 h-8 text-orange-400" />
+        <div className="space-y-1.5">
+          <div className="flex items-center space-x-2.5 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <span className="font-bold text-lg tracking-tight text-slate-900">
+                HUIT<span className="text-amber-600">.DRL</span>
+              </span>
+              <span className="ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                QĐ 3385
+              </span>
+            </div>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-huit-blue-800">
-            HUIT<span className="text-huit-orange-600">.DRL</span>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            Đăng nhập tài khoản
           </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Hệ thống Quản lý Điểm Rèn Luyện Sinh Viên Cá Nhân
+          <p className="text-xs text-slate-500">
+            Hệ thống theo dõi & tính điểm rèn luyện cá nhân
           </p>
         </div>
 
         {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl font-semibold flex items-center space-x-2">
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              Email hoặc Mã số sinh viên (MSSV)
+            <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+              Tên đăng nhập
             </label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Ví dụ: 2001210123 hoặc email@huit.edu.vn"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Nhập tên đăng nhập của bạn"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-huit-blue-600 font-medium transition-all"
+                autoFocus
+                autoComplete="username"
+                className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 placeholder:text-slate-400 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              Mật khẩu
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                Mật khẩu
+              </label>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Nhập mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-huit-blue-600 font-medium transition-all"
+                autoComplete="current-password"
+                className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 placeholder:text-slate-400 transition-colors"
               />
             </div>
           </div>
@@ -100,20 +115,20 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl bg-gradient-to-r from-huit-blue-700 to-huit-blue-600 hover:from-huit-blue-800 hover:to-huit-blue-700 text-white font-extrabold text-sm shadow-md shadow-blue-900/15 transition-all transform active:scale-[0.98] disabled:opacity-50"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-colors active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
-            <span>{loading ? "Đang xác thực..." : "Đăng nhập ngay"}</span>
+            <span>{loading ? "Đang xác thực..." : "Đăng nhập"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="pt-2 text-center text-xs text-slate-500">
+        <div className="pt-2 border-t border-slate-100 text-center text-xs text-slate-500">
           Chưa có tài khoản?{" "}
           <Link
             href="/register"
-            className="font-bold text-huit-blue-700 hover:text-huit-blue-800 hover:underline"
+            className="font-semibold text-slate-900 hover:underline"
           >
-            Tạo tài khoản mới
+            Đăng ký tài khoản mới
           </Link>
         </div>
       </div>

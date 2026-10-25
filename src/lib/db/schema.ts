@@ -3,8 +3,7 @@ import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 64 }).primaryKey(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  mssv: varchar("mssv", { length: 32 }).unique(),
+  username: varchar("username", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   faculty: varchar("faculty", { length: 255 }),
@@ -56,3 +55,4 @@ export type User = typeof users.$inferSelect;
 export type Semester = typeof semesters.$inferSelect;
 export type DrlCriteriaPreset = typeof drlCriteriaPresets.$inferSelect;
 export type DrlRecord = typeof drlRecords.$inferSelect;
+

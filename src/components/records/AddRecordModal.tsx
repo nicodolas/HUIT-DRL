@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
-import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
+import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass } from "lucide-react";
 import { compressImage, formatBytes } from "@/lib/media/compressor";
+import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
+import { triggerHaptic } from "@/lib/native/platform";
 
 const POPULAR_SHORTCUTS = [
   { label: "Cổ vũ văn nghệ/TT", code: "TC3_CO_VU", badge: "+2đ" },
@@ -81,6 +83,9 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [customTitle, setCustomTitle] = useState("");
   const [customPoints, setCustomPoints] = useState<number | "">("");
   const [customCategory, setCustomCategory] = useState<number>(initialCategory || 3);
+
+  // Regulation 3385 Smart Classifier
+  const smartSuggestion = useMemo(() => classifyHuitActivity(customTitle), [customTitle]);
 
   useEffect(() => {
     if (recordToEdit) {
@@ -484,6 +489,55 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   onChange={(e) => setCustomTitle(e.target.value)}
                   className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
+
+                {/* Regulation 3385 Live Classifier Pill */}
+                {smartSuggestion && (
+                  <div
+                    className="mt-2 p-2.5 bg-linear-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/40 dark:to-sky-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-1.5 animate-in fade-in duration-200"
+                    data-testid="smart-classifier-suggestion"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start space-x-2">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">
+                              Gợi ý QĐ 3385:
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                              TC{smartSuggestion.matchedCategory}
+                            </span>
+                            <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+                              {smartSuggestion.suggestedPoints > 0 ? `+${smartSuggestion.suggestedPoints}` : smartSuggestion.suggestedPoints}đ
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              ({smartSuggestion.matchedRule})
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
+                            {smartSuggestion.explanation}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic("medium");
+                          setCustomCategory(smartSuggestion.matchedCategory);
+                          setCustomPoints(smartSuggestion.suggestedPoints);
+                        }}
+                        className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold cursor-pointer transition-colors shadow-2xs shrink-0"
+                      >
+                        Áp dụng gợi ý
+                      </button>
+                    </div>
+
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-800/60 p-1.5 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
+                      <strong className="text-slate-700 dark:text-slate-300">Minh chứng đề xuất:</strong> {smartSuggestion.requiredProofGuide}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

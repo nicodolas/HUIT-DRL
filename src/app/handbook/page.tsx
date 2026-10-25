@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
@@ -22,8 +22,11 @@ import {
   ChevronRight,
   ExternalLink,
   Star,
+  Sparkles,
 } from "lucide-react";
 import { getFavoritePresetIds, toggleFavoritePreset } from "@/lib/presets/favorites";
+import { classifyHuitActivity } from "@/lib/classifier/activity-classifier";
+import { triggerHaptic } from "@/lib/native/platform";
 
 export default function HandbookPage() {
   const router = useRouter();
@@ -39,6 +42,9 @@ export default function HandbookPage() {
   const [search, setSearch] = useState("");
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
+
+  // Regulation 3385 Natural Language Classifier
+  const classifierResult = useMemo(() => classifyHuitActivity(search), [search]);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -228,6 +234,62 @@ export default function HandbookPage() {
             </div>
           </div>
         </div>
+
+        {/* Natural Language Regulation Classifier Banner */}
+        {classifierResult && (
+          <div
+            className="p-4 bg-linear-to-r from-indigo-50 via-sky-50 to-indigo-50 dark:from-indigo-950/40 dark:via-sky-950/40 dark:to-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-2.5 shadow-xs animate-in fade-in duration-200"
+            data-testid="handbook-classifier-banner"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      Trợ lý Phân Loại QĐ 3385:
+                    </span>
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                      TC{classifierResult.matchedCategory}
+                    </span>
+                    <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">
+                      {classifierResult.suggestedPoints > 0 ? `+${classifierResult.suggestedPoints}` : classifierResult.suggestedPoints}đ
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      ({classifierResult.matchedRule})
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
+                    {classifierResult.explanation}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("medium");
+                  const matchedP = presets.find((item) => item.code === classifierResult.matchedPresetCode);
+                  if (matchedP) {
+                    setSelectedPresetForModal(matchedP);
+                  }
+                  setModalOpen(true);
+                }}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-2xs shrink-0 flex items-center space-x-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Ghi nhận ngay</span>
+              </button>
+            </div>
+
+            <div className="p-2.5 bg-white/80 dark:bg-slate-800/60 rounded-lg border border-indigo-100 dark:border-indigo-900/40 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
+              <strong className="text-slate-900 dark:text-slate-100 shrink-0">Hồ sơ minh chứng công nhận:</strong>
+              <span>{classifierResult.requiredProofGuide}</span>
+            </div>
+          </div>
+        )}
 
         {/* Results List */}
         <div className="space-y-2.5">

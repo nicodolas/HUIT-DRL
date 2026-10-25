@@ -23,12 +23,13 @@ import { ClassMeetingModal } from "@/components/dashboard/ClassMeetingModal";
 import { DrlAppealModal } from "@/components/modals/DrlAppealModal";
 import { CalendarExportModal } from "@/components/modals/CalendarExportModal";
 import { ProofVaultModal } from "@/components/dashboard/ProofVaultModal";
+import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users, FileQuestion, Calendar as CalendarIcon, Images as ImagesIcon } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users, FileQuestion, Calendar as CalendarIcon, Images as ImagesIcon, GraduationCap } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function DashboardPage() {
   const [appealModalOpen, setAppealModalOpen] = useState(false);
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [proofVaultOpen, setProofVaultOpen] = useState(false);
+  const [forecastModalOpen, setForecastModalOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -304,6 +306,15 @@ export default function DashboardPage() {
               <span>Kho minh chứng</span>
             </button>
 
+            <button
+              onClick={() => setForecastModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Dự báo và mô phỏng điểm ĐRL tốt nghiệp toàn khóa Điều 12"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Dự báo tốt nghiệp</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -402,6 +413,7 @@ export default function DashboardPage() {
           currentSemesterId={currentSemesterId}
           onSelectSemester={setCurrentSemesterId}
           onOpenTranscript={() => setTranscriptOpen(true)}
+          onOpenForecast={() => setForecastModalOpen(true)}
         />
 
         {/* 5 Criteria Breakdown */}
@@ -548,6 +560,14 @@ export default function DashboardPage() {
           className: user?.className || undefined,
           faculty: user?.faculty || undefined,
         }}
+      />
+
+      <GraduationForecastModal
+        isOpen={forecastModalOpen}
+        onClose={() => setForecastModalOpen(false)}
+        semesterData={analyticsData?.semesterBreakdown || []}
+        studentName={user?.fullName}
+        studentClass={user?.className}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

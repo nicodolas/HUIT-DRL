@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, Award, Layers, ChevronRight, FileText } from "lucide-react";
+import { TrendingUp, Award, Layers, ChevronRight, FileText, Compass } from "lucide-react";
 
 interface SemesterSummary {
   id: string;
@@ -32,6 +32,7 @@ interface CumulativeStatsCardProps {
   currentSemesterId: string;
   onSelectSemester: (id: string) => void;
   onOpenTranscript?: () => void;
+  onOpenForecast?: () => void;
 }
 
 export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
@@ -39,6 +40,7 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
   currentSemesterId,
   onSelectSemester,
   onOpenTranscript,
+  onOpenForecast,
 }) => {
   if (!data || !data.hasData || data.totalSemesters <= 1) {
     return null; // Only display when there are multiple semesters to compare!
@@ -186,16 +188,28 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
         })}
       </div>
 
-      {onOpenTranscript && (
-        <button
-          type="button"
-          onClick={onOpenTranscript}
-          className="w-full py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
-        >
-          <FileText className="w-3.5 h-3.5 text-slate-600" />
-          <span>Xem & In Bảng Điểm Rèn Luyện Toàn Khóa (Điều 12)</span>
-        </button>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+        {onOpenTranscript && (
+          <button
+            type="button"
+            onClick={onOpenTranscript}
+            className="w-full py-2 px-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+            <span>In Bảng Điểm Toàn Khóa</span>
+          </button>
+        )}
+        {onOpenForecast && (
+          <button
+            type="button"
+            onClick={onOpenForecast}
+            className="w-full py-2 px-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+          >
+            <Compass className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span>Dự Báo Tốt Nghiệp (Điều 12)</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

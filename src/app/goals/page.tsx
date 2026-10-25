@@ -9,11 +9,12 @@ import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPredictionCard";
 import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
+import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { Semester, DrlRecord, DrlCriteriaPreset } from "@/lib/db/schema";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
-import { Award } from "lucide-react";
+import { Award, GraduationCap } from "lucide-react";
 
 export default function GoalsPage() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function GoalsPage() {
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
+  const [forecastModalOpen, setForecastModalOpen] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [selectedPresetToAdd, setSelectedPresetToAdd] = useState<DrlCriteriaPreset | null>(null);
 
   useEffect(() => {
@@ -64,6 +67,13 @@ export default function GoalsPage() {
         if (data.records) setRecords(data.records);
         if (data.goalAnalysis) setGoalAnalysis(data.goalAnalysis);
       }
+
+      fetch("/api/analytics")
+        .then((r) => r.json())
+        .then((an) => {
+          if (an && an.hasData) setAnalyticsData(an);
+        })
+        .catch(() => {});
     } catch (e) {
       console.error(e);
     }
@@ -143,6 +153,32 @@ export default function GoalsPage() {
           disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
         />
 
+        {/* Graduation Forecast Banner */}
+        <div className="bg-linear-to-r from-indigo-50 to-sky-50 dark:from-indigo-950/40 dark:to-sky-950/40 rounded-xl p-4 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                Dự Báo & Mô Phỏng ĐRL Tốt Nghiệp Toàn Khóa
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-semibold">
+                  Điều 12
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                Tính toán số điểm trung bình cần đạt mỗi kỳ còn lại để tốt nghiệp Xuất sắc (≥90đ) hoặc Tốt (≥80đ)
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setForecastModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0 shadow-xs"
+          >
+            Mở dự báo
+          </button>
+        </div>
+
         {/* Sinh Vien 5 Tot Quick Action Banner */}
         <div className="bg-linear-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/80 flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center space-x-3">
@@ -214,6 +250,14 @@ export default function GoalsPage() {
         drlScore={goalAnalysis ? goalAnalysis.currentScore : 60}
         disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
         records={records}
+        studentName={user?.fullName}
+        studentClass={user?.className}
+      />
+
+      <GraduationForecastModal
+        isOpen={forecastModalOpen}
+        onClose={() => setForecastModalOpen(false)}
+        semesterData={analyticsData?.semesterBreakdown || []}
         studentName={user?.fullName}
         studentClass={user?.className}
       />

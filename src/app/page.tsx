@@ -15,10 +15,12 @@ import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
+import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
-import { DrlRecord, Semester } from "@/lib/db/schema";
+import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet } from "lucide-react";
+import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -33,10 +35,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInitialCategory, setModalInitialCategory] = useState<number | undefined>(undefined);
+  const [selectedPresetToAdd, setSelectedPresetToAdd] = useState<DrlCriteriaPreset | null>(null);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
   useEffect(() => {
@@ -54,7 +58,18 @@ export default function DashboardPage() {
           loadSemesters();
         }
       })
-      .catch(() => router.push("/login"));
+      .catch(() => {
+        // If offline and we have cached user or semesters, attempt to load
+        const cachedSems = getUserSemestersCache();
+        if (cachedSems && cachedSems.length > 0) {
+          setSemesters(cachedSems);
+          const current = cachedSems.find((s) => s.isCurrent) || cachedSems[0];
+          setCurrentSemesterId(current.id);
+          setIsUsingCache(true);
+        } else {
+          router.push("/login");
+        }
+      });
   }, [router]);
 
   const loadSemesters = async () => {
@@ -63,11 +78,19 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.semesters && data.semesters.length > 0) {
         setSemesters(data.semesters);
+        saveUserSemestersCache(data.semesters);
         const current = data.semesters.find((s: Semester) => s.isCurrent) || data.semesters[0];
         setCurrentSemesterId(current.id);
       }
     } catch (e) {
-      console.error(e);
+      console.warn("Semesters fetch failed, trying offline cache:", e);
+      const cached = getUserSemestersCache();
+      if (cached && cached.length > 0) {
+        setSemesters(cached);
+        const current = cached.find((s) => s.isCurrent) || cached[0];
+        setCurrentSemesterId(current.id);
+        setIsUsingCache(true);
+      }
     }
   };
 
@@ -82,6 +105,13 @@ export default function DashboardPage() {
         setRecords(data.records || []);
         setScoreSummary(data.scoreSummary);
         setGoalAnalysis(data.goalAnalysis);
+        setIsUsingCache(false);
+        // Save to offline snapshot
+        saveSemesterCache(currentSemesterId, {
+          records: data.records || [],
+          scoreSummary: data.scoreSummary,
+          goalAnalysis: data.goalAnalysis,
+        });
       }
 
       // Load multi-semester analytics
@@ -90,9 +120,16 @@ export default function DashboardPage() {
         .then((anData) => {
           if (anData && anData.hasData) setAnalyticsData(anData);
         })
-        .catch(console.error);
+        .catch(() => {});
     } catch (e) {
-      console.error(e);
+      console.warn("Records fetch failed, restoring from offline cache:", e);
+      const cached = getSemesterCache(currentSemesterId);
+      if (cached) {
+        setRecords(cached.records || []);
+        if (cached.scoreSummary) setScoreSummary(cached.scoreSummary);
+        if (cached.goalAnalysis) setGoalAnalysis(cached.goalAnalysis);
+        setIsUsingCache(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -245,6 +282,17 @@ export default function DashboardPage() {
         {/* Offline Sync Banner */}
         <OfflineSyncBanner onSyncComplete={loadRecords} />
 
+        {/* Offline Cache Indicator */}
+        {isUsingCache && (
+          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs flex items-center space-x-2.5 shadow-xs">
+            <WifiOff className="w-4 h-4 text-amber-600 shrink-0" />
+            <div className="flex-1">
+              <span className="font-bold">Đang xem bản lưu ngoại tuyến (Offline Snapshot):</span>{" "}
+              <span>Ứng dụng hiển thị bản sao gần nhất khi bạn không có kết nối internet. Mọi dữ liệu sẽ tự động cập nhật khi có mạng trở lại.</span>
+            </div>
+          </div>
+        )}
+
         {/* Score Gauge */}
         {scoreSummary && (
           <ScoreGauge
@@ -265,6 +313,17 @@ export default function DashboardPage() {
           <GoalTrackerCard
             analysis={goalAnalysis}
             onUpdateTarget={handleUpdateTarget}
+          />
+        )}
+
+        {/* Smart Recommendations */}
+        {goalAnalysis && (
+          <SmartRecommendationsCard
+            analysis={goalAnalysis}
+            onSelectPresetToAdd={(preset) => {
+              setSelectedPresetToAdd(preset);
+              setModalOpen(true);
+            }}
           />
         )}
 
@@ -307,10 +366,12 @@ export default function DashboardPage() {
         isOpen={modalOpen}
         semesterId={currentSemesterId}
         initialCategory={modalInitialCategory}
+        initialPreset={selectedPresetToAdd}
         recordToEdit={editingRecord}
         onClose={() => {
           setModalOpen(false);
           setEditingRecord(null);
+          setSelectedPresetToAdd(null);
         }}
         onSuccess={loadRecords}
       />

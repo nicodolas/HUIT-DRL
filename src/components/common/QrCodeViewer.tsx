@@ -92,3 +92,4 @@ export const QrCodeViewer: React.FC<QrCodeViewerProps> = ({
     </div>
   );
 };
+

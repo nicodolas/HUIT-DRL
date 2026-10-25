@@ -1,7 +1,12 @@
-// HUIT Điểm Rèn Luyện - Service Worker v1.0.0
-const CACHE_NAME = "huit-drl-v1";
+// HUIT Điểm Rèn Luyện - Service Worker v2.0.0
+const CACHE_NAME = "huit-drl-v2";
 const STATIC_ASSETS = [
   "/",
+  "/records",
+  "/goals",
+  "/handbook",
+  "/report",
+  "/profile",
   "/icon.svg",
   "/manifest.json",
 ];

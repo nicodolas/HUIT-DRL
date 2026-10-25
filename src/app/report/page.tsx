@@ -3,12 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon } from "lucide-react";
+import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon, Share2 } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { QrCodeViewer } from "@/components/common/QrCodeViewer";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
+import { shareTrainingSummary } from "@/lib/mobile/share";
 
 function ReportContent() {
   const router = useRouter();
@@ -22,6 +23,7 @@ function ReportContent() {
   const [scoreSummary, setScoreSummary] = useState<ScoreCalculationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"official" | "personal">("official");
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
@@ -106,22 +108,31 @@ function ReportContent() {
 
   const currentSemester = semesters.find((s) => s.id === currentSemesterId) || semesters[0];
 
-  const handleCopySummary = () => {
+  const handleShareSummary = async () => {
     if (!scoreSummary) return;
-    const text = `[HUIT - ĐIỂM RÈN LUYỆN]
-Họ và tên: ${user?.fullName || user?.username}
-Lớp: ${user?.className || "Chưa cập nhật"} | Khoa: ${user?.faculty || "Chưa cập nhật"}
-Học kỳ: ${currentSemester.name}
-- TC1 (Nội quy): ${scoreSummary.categories[1].cappedScore}/25đ
-- TC2 (Học tập): ${scoreSummary.categories[2].cappedScore}/20đ
-- TC3 (Phong trào): ${scoreSummary.categories[3].cappedScore}/20đ
-- TC4 (Cộng đồng): ${scoreSummary.categories[4].cappedScore}/15đ
-- TC5 (Cán bộ/NCKH): ${scoreSummary.categories[5].cappedScore}/20đ
-=> TỔNG ĐIỂM: ${scoreSummary.totalScore}/100đ (Xếp loại: ${scoreSummary.rating.label})
-(Căn cứ theo QĐ 3385/QĐ-DCT)`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    const catList = [1, 2, 3, 4, 5].map((c) => ({
+      category: c,
+      shortName: CATEGORIES[c].shortName,
+      score: scoreSummary.categories[c]?.cappedScore || 0,
+      maxPoints: CATEGORIES[c].maxPoints,
+    }));
+
+    const res = await shareTrainingSummary({
+      studentName: user.fullName,
+      username: user.username,
+      className: user.className,
+      faculty: user.faculty,
+      semesterName: currentSemester.name,
+      totalScore: scoreSummary.totalScore,
+      ratingLabel: scoreSummary.rating.label,
+      categories: catList,
+      evidenceUrl: evidenceFolderUrl || null,
+    });
+
+    if (res.success) {
+      setShareFeedback(res.method === "native" ? "Đã mở bảng chia sẻ!" : "Đã sao chép tin nhắn Zalo!");
+      setTimeout(() => setShareFeedback(null), 3000);
+    }
   };
 
   return (
@@ -165,19 +176,19 @@ Học kỳ: ${currentSemester.name}
           </button>
 
           <button
-            onClick={handleCopySummary}
+            onClick={handleShareSummary}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-            title="Sao chép kết quả gửi Zalo/Lớp trưởng"
+            title="Chia sẻ kết quả qua Zalo / Mobile Share"
           >
-            {copied ? (
+            {shareFeedback ? (
               <>
                 <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-700">Đã sao chép!</span>
+                <span className="text-emerald-700">{shareFeedback}</span>
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 text-slate-500" />
-                <span>Sao chép Zalo</span>
+                <Share2 className="w-4 h-4 text-blue-600" />
+                <span>Chia sẻ / Gửi Zalo</span>
               </>
             )}
           </button>

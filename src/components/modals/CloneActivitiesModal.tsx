@@ -297,3 +297,4 @@ export const CloneActivitiesModal: React.FC<CloneActivitiesModalProps> = ({
     </div>
   );
 };
+

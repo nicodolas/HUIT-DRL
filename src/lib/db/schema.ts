@@ -47,6 +47,7 @@ export const drlRecords = pgTable("drl_records", {
   quantity: integer("quantity").default(1).notNull(),
   occurredAt: varchar("occurred_at", { length: 32 }),
   note: text("note"),
+  evidenceUrl: text("evidence_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

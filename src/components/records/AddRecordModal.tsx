@@ -43,6 +43,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [occurredAt, setOccurredAt] = useState(new Date().toISOString().split("T")[0]);
   const [note, setNote] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,12 +61,14 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setQuantity(recordToEdit.quantity || 1);
       setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
       setNote(recordToEdit.note || "");
+      setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else {
       setSelectedPreset(null);
       setCustomTitle("");
       setCustomPoints("");
       setQuantity(1);
       setNote("");
+      setEvidenceUrl("");
       setOccurredAt(new Date().toISOString().split("T")[0]);
       if (initialCategory) {
         setSelectedCategory(initialCategory);
@@ -110,6 +113,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         semesterId,
         occurredAt,
         note: note.trim() || undefined,
+        evidenceUrl: evidenceUrl.trim() || undefined,
         quantity,
       };
 
@@ -163,6 +167,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
       setSelectedPreset(null);
       setNote("");
+      setEvidenceUrl("");
       setQuantity(1);
       setCustomTitle("");
       setCustomPoints("");
@@ -462,6 +467,19 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Link minh chứng (Drive / ảnh chứng nhận - tùy chọn):
+              </label>
+              <input
+                type="url"
+                placeholder="https://drive.google.com/... hoặc link ảnh"
+                value={evidenceUrl}
+                onChange={(e) => setEvidenceUrl(e.target.value)}
+                className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
               />
             </div>
           </div>

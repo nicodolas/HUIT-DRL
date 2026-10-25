@@ -8,6 +8,7 @@ import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPredictionCard";
+import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { Semester, DrlRecord, DrlCriteriaPreset } from "@/lib/db/schema";
@@ -23,6 +24,7 @@ export default function GoalsPage() {
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
   const [selectedPresetToAdd, setSelectedPresetToAdd] = useState<DrlCriteriaPreset | null>(null);
 
   useEffect(() => {
@@ -141,6 +143,29 @@ export default function GoalsPage() {
           disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
         />
 
+        {/* Sinh Vien 5 Tot Quick Action Banner */}
+        <div className="bg-linear-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/80 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-xs">
+              <Award className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-slate-900">
+                Thẩm Định Danh Hiệu "Sinh Viên 5 Tốt" HUIT
+              </h3>
+              <p className="text-[11px] text-slate-600">
+                Kiểm tra tự động 5 tiêu chuẩn: Đạo đức, Học tập, Thể lực, Tình nguyện & Hội nhập
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSv5tModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
+          >
+            Mở thẩm định
+          </button>
+        </div>
+
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-2.5">
           <div className="flex items-center space-x-2 text-slate-900 font-bold text-sm">
             <Award className="w-4 h-4 text-amber-600" />
@@ -181,6 +206,16 @@ export default function GoalsPage() {
           setSelectedPresetToAdd(null);
         }}
         onSuccess={loadData}
+      />
+
+      <Sv5tAuditorModal
+        isOpen={sv5tModalOpen}
+        onClose={() => setSv5tModalOpen(false)}
+        drlScore={goalAnalysis ? goalAnalysis.currentScore : 60}
+        disciplineLevel={semesters.find((s) => s.id === currentSemesterId)?.disciplineLevel || "none"}
+        records={records}
+        studentName={user?.fullName}
+        studentClass={user?.className}
       />
 
       <BottomNav />

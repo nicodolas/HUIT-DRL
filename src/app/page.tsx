@@ -17,11 +17,12 @@ import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTranscriptSheet";
+import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -237,6 +239,15 @@ export default function DashboardPage() {
               <span>Kiểm tra hồ sơ</span>
             </button>
 
+            <button
+              onClick={() => setSv5tModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Thẩm định tiêu chuẩn Sinh viên 5 tốt HUIT"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-600" />
+              <span>Sinh viên 5 tốt</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -410,6 +421,16 @@ export default function DashboardPage() {
         onClose={() => setTranscriptOpen(false)}
         user={user}
         analyticsData={analyticsData}
+      />
+
+      <Sv5tAuditorModal
+        isOpen={sv5tModalOpen}
+        onClose={() => setSv5tModalOpen(false)}
+        drlScore={scoreSummary?.totalScore || 60}
+        disciplineLevel={currentSemester?.disciplineLevel || "none"}
+        records={records}
+        studentName={user?.fullName}
+        studentClass={user?.className || undefined}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

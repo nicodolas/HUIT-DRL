@@ -3,10 +3,12 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check } from "lucide-react";
+import { ArrowLeft, Printer, Download, CheckCircle2, AlertCircle, Copy, Check, ShieldCheck, QrCode as QrIcon } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
 import { CATEGORIES } from "@/lib/drl/rules";
+import { QrCodeViewer } from "@/components/common/QrCodeViewer";
+import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 
 function ReportContent() {
   const router = useRouter();
@@ -21,6 +23,28 @@ function ReportContent() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [formMode, setFormMode] = useState<"official" | "personal">("official");
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
+
+  // Initialize evidenceFolderUrl from localStorage or records
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("huit_evidence_url");
+      if (saved) {
+        setEvidenceFolderUrl(saved);
+      }
+    }
+  }, []);
+
+  // If no saved evidence link, look for one in records
+  useEffect(() => {
+    if (!evidenceFolderUrl && records.length > 0) {
+      const firstWithEvidence = records.find((r) => r.evidenceUrl && r.evidenceUrl.trim().startsWith("http"));
+      if (firstWithEvidence?.evidenceUrl) {
+        setEvidenceFolderUrl(firstWithEvidence.evidenceUrl);
+      }
+    }
+  }, [records, evidenceFolderUrl]);
 
   // Load auth
   useEffect(() => {
@@ -159,6 +183,15 @@ Học kỳ: ${currentSemester.name}
           </button>
 
           <button
+            onClick={() => setAuditModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Kiểm tra tính hợp lệ và độ sẵn sàng của hồ sơ trước khi nộp"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Kiểm tra hồ sơ</span>
+          </button>
+
+          <button
             onClick={() => window.print()}
             className="flex items-center space-x-1.5 px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
@@ -206,7 +239,7 @@ Học kỳ: ${currentSemester.name}
         </div>
 
         {/* Student Information Box */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 text-xs grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4 text-xs grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <span className="text-slate-500">Họ và tên sinh viên:</span>{" "}
             <span className="font-bold text-slate-900">{user.fullName}</span>
@@ -223,6 +256,53 @@ Học kỳ: ${currentSemester.name}
             <span className="text-slate-500">Lớp sinh hoạt:</span>{" "}
             <span className="font-medium text-slate-900">{user.className || "Chưa cập nhật"}</span>
           </div>
+        </div>
+
+        {/* Evidence Online Folder & QR Code */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
+              <QrIcon className="w-4 h-4 text-slate-700" />
+              <span>Tra Cứu Minh Chứng Trực Tuyến (QR Code)</span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Mã QR liên kết trực tiếp tới thư mục lưu trữ ảnh chứng chỉ / minh chứng (Google Drive / OneDrive) để Ban cán sự và Thư ký lớp quét đối soát nhanh chóng khi họp xét.
+            </p>
+            <div className="no-print pt-1">
+              <input
+                type="url"
+                placeholder="Dán link thư mục Google Drive chứa minh chứng của bạn..."
+                value={evidenceFolderUrl}
+                onChange={(e) => {
+                  setEvidenceFolderUrl(e.target.value);
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("huit_evidence_url", e.target.value);
+                  }
+                }}
+                className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 placeholder:text-slate-400"
+              />
+            </div>
+            {evidenceFolderUrl && (
+              <div className="text-[10px] text-blue-800 font-mono truncate max-w-lg mt-0.5">
+                Link: {evidenceFolderUrl}
+              </div>
+            )}
+          </div>
+
+          {evidenceFolderUrl ? (
+            <div className="shrink-0">
+              <QrCodeViewer
+                value={evidenceFolderUrl}
+                size={105}
+                label="Quét xem minh chứng"
+                showLink={false}
+              />
+            </div>
+          ) : (
+            <div className="shrink-0 no-print text-[11px] text-slate-400 italic border border-dashed border-slate-300 rounded-lg p-3 text-center">
+              Nhập link Drive bên cạnh để tạo mã QR in lên biểu mẫu
+            </div>
+          )}
         </div>
 
         {/* 5 Criteria Summary Table */}
@@ -420,6 +500,13 @@ Học kỳ: ${currentSemester.name}
           </div>
         </div>
       </div>
+
+      <PreFlightAuditModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        semester={currentSemester || null}
+        records={records}
+      />
     </div>
   );
 }

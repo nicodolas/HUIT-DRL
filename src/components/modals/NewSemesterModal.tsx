@@ -16,6 +16,7 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
 }) => {
   const [name, setName] = useState("");
   const [targetScore, setTargetScore] = useState(90);
+  const [submissionDeadline, setSubmissionDeadline] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,7 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
           name: name.trim(),
           targetScore,
           disciplineLevel: "none",
+          submissionDeadline: submissionDeadline || null,
         }),
       });
 
@@ -48,6 +50,7 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
       }
 
       setName("");
+      setSubmissionDeadline("");
       onCreated(data.semester);
       onClose();
     } catch (err: any) {
@@ -118,6 +121,21 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
               <option value={80}>Tốt (80 điểm)</option>
               <option value={70}>Khá (70 điểm)</option>
             </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-700 block mb-1">
+              Hạn chót nộp ĐRL (tùy chọn):
+            </label>
+            <input
+              type="date"
+              value={submissionDeadline}
+              onChange={(e) => setSubmissionDeadline(e.target.value)}
+              className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"
+            />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Hạn chót nộp bản tự đánh giá cho Lớp trưởng theo Điều 13 QĐ 3385
+            </p>
           </div>
 
           <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
+import { addOfflineDraft } from "@/lib/offline/drafts";
 import { X, Search, Check, Sparkles } from "lucide-react";
 
 const POPULAR_SHORTCUTS = [
@@ -151,6 +152,19 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         };
       }
 
+      if (typeof navigator !== "undefined" && !navigator.onLine && !recordToEdit) {
+        addOfflineDraft(payload);
+        setSelectedPreset(null);
+        setNote("");
+        setEvidenceUrl("");
+        setQuantity(1);
+        setCustomTitle("");
+        setCustomPoints("");
+        onSuccess();
+        onClose();
+        return;
+      }
+
       const url = recordToEdit ? `/api/records/${recordToEdit.id}` : "/api/records";
       const method = recordToEdit ? "PUT" : "POST";
 
@@ -174,6 +188,29 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
+      if (!recordToEdit && (err.name === "TypeError" || (typeof navigator !== "undefined" && !navigator.onLine))) {
+        // Fallback to offline draft
+        addOfflineDraft({
+          semesterId,
+          occurredAt,
+          note: note.trim() || undefined,
+          evidenceUrl: evidenceUrl.trim() || undefined,
+          quantity,
+          category: tab === "preset" ? selectedPreset!.category : customCategory,
+          title: tab === "preset" ? selectedPreset!.title : customTitle.trim(),
+          type: tab === "preset" ? selectedPreset!.type : (Number(customPoints) >= 0 ? "add" : "deduct"),
+          points: tab === "preset" ? selectedPreset!.points : Number(customPoints),
+        });
+        setSelectedPreset(null);
+        setNote("");
+        setEvidenceUrl("");
+        setQuantity(1);
+        setCustomTitle("");
+        setCustomPoints("");
+        onSuccess();
+        onClose();
+        return;
+      }
       setError(err.message);
     } finally {
       setLoading(false);

@@ -1,9 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { env } from "@/lib/env";
 
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "default_huit_drl_secret_key_32_bytes_long!!"
-);
+const SECRET_KEY = new TextEncoder().encode(env.AUTH_SECRET);
 
 const COOKIE_NAME = "huit_drl_session";
 

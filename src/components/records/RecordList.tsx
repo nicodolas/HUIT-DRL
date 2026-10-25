@@ -19,13 +19,15 @@ export const RecordList: React.FC<RecordListProps> = ({
   onOpenAddModal,
 }) => {
   const [filterCat, setFilterCat] = useState<number>(0);
-  const [filterType, setFilterType] = useState<"all" | "add" | "deduct" | "evidence">("all");
+  const [filterType, setFilterType] = useState<"all" | "add" | "deduct" | "evidence" | "missing_evidence">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "points_desc">("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const addCount = records.filter((r) => Number(r.points) > 0).length;
   const deductCount = records.filter((r) => Number(r.points) < 0).length;
   const evidenceCount = records.filter((r) => !!r.evidenceUrl).length;
+  const missingEvidenceCount = records.filter((r) => !r.evidenceUrl).length;
+  const evidencePercent = records.length > 0 ? Math.round((evidenceCount / records.length) * 100) : 100;
 
   const filtered = records
     .filter((r) => {
@@ -33,6 +35,7 @@ export const RecordList: React.FC<RecordListProps> = ({
       if (filterType === "add" && Number(r.points) <= 0) return false;
       if (filterType === "deduct" && Number(r.points) >= 0) return false;
       if (filterType === "evidence" && !r.evidenceUrl) return false;
+      if (filterType === "missing_evidence" && !!r.evidenceUrl) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -227,6 +230,49 @@ export const RecordList: React.FC<RecordListProps> = ({
                 }`}
               >
                 Có minh chứng ({evidenceCount})
+              </button>
+            )}
+            {missingEvidenceCount > 0 && evidenceCount > 0 && (
+              <button
+                onClick={() => setFilterType("missing_evidence")}
+                className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  filterType === "missing_evidence"
+                    ? "bg-amber-800 text-white"
+                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                }`}
+              >
+                Chưa có link ({missingEvidenceCount})
+              </button>
+            )}
+          </div>
+
+          {/* Evidence Audit Status Bar */}
+          <div className="flex items-center justify-between p-2 rounded-lg border text-xs bg-slate-50 border-slate-200">
+            <div className="flex items-center space-x-2">
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  missingEvidenceCount === 0 ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+              />
+              <span className="text-slate-700 text-[11px]">
+                Kiểm kê minh chứng: <strong>{`${evidenceCount}/${records.length}`}</strong> mục đã gắn link ({evidencePercent}%).
+                {missingEvidenceCount > 0 ? (
+                  <span className="text-amber-700 font-medium ml-1">
+                    Còn {missingEvidenceCount} mục chưa có link Drive.
+                  </span>
+                ) : (
+                  <span className="text-emerald-700 font-medium ml-1">
+                    100% mục đã đủ minh chứng!
+                  </span>
+                )}
+              </span>
+            </div>
+            {missingEvidenceCount > 0 && filterType !== "missing_evidence" && (
+              <button
+                onClick={() => setFilterType("missing_evidence")}
+                className="text-[11px] font-semibold text-amber-800 hover:underline cursor-pointer shrink-0 ml-2"
+              >
+                Lọc mục thiếu &rarr;
               </button>
             )}
           </div>

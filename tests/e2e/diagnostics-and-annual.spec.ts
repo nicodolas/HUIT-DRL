@@ -74,3 +74,4 @@ test.describe("Phase 12: Diagnostics API & Academic Year Consolidation (Điều 
     await expect(page.locator("text=Tổng Hợp Điểm Rèn Luyện Năm Học (Điều 11)")).not.toBeVisible();
   });
 });
+

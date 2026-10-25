@@ -12,9 +12,10 @@ import { CloneActivitiesModal } from "@/components/modals/CloneActivitiesModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
+import { ExtracurricularDossierModal } from "@/components/dashboard/ExtracurricularDossierModal";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester } from "@/lib/db/schema";
-import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet } from "lucide-react";
+import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet, Award } from "lucide-react";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function RecordsPage() {
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [dossierModalOpen, setDossierModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -127,6 +129,15 @@ export default function RecordsPage() {
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Kiểm tra hồ sơ</span>
+            </button>
+
+            <button
+              onClick={() => setDossierModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Xem trích lục hồ sơ hoạt động ngoại khóa A4"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-600" />
+              <span>Hồ sơ ngoại khóa</span>
             </button>
 
             {semesters.length > 1 && (
@@ -235,6 +246,14 @@ export default function RecordsPage() {
         semester={currentSemester}
         records={records}
         onImportComplete={loadRecords}
+      />
+
+      <ExtracurricularDossierModal
+        isOpen={dossierModalOpen}
+        onClose={() => setDossierModalOpen(false)}
+        user={user}
+        records={records}
+        currentSemester={currentSemester}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

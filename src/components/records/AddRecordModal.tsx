@@ -21,6 +21,7 @@ interface AddRecordModalProps {
   isOpen: boolean;
   semesterId: string;
   initialCategory?: number;
+  initialPreset?: DrlCriteriaPreset | null;
   recordToEdit?: DrlRecord | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -30,6 +31,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   isOpen,
   semesterId,
   initialCategory,
+  initialPreset,
   recordToEdit,
   onClose,
   onSuccess,
@@ -63,6 +65,15 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
       setNote(recordToEdit.note || "");
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
+    } else if (initialPreset) {
+      setTab("preset");
+      setSelectedPreset(initialPreset);
+      setSelectedCategory(initialPreset.category);
+      setCustomCategory(initialPreset.category);
+      setQuantity(1);
+      setNote("");
+      setEvidenceUrl("");
+      setOccurredAt(new Date().toISOString().split("T")[0]);
     } else {
       setSelectedPreset(null);
       setCustomTitle("");
@@ -76,7 +87,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         setCustomCategory(initialCategory);
       }
     }
-  }, [recordToEdit, initialCategory, isOpen]);
+  }, [recordToEdit, initialCategory, initialPreset, isOpen]);
 
   useEffect(() => {
     if (isOpen) {

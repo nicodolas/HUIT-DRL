@@ -54,3 +54,4 @@ assert(disciplinedResult.rating.label === 'Khá', `Score with Khiển trách cap
 
 console.log(`\n=== PHASE 7 TEST SUMMARY: ${passed} PASSED, ${failed} FAILED ===\n`);
 if (failed > 0) process.exit(1);
+

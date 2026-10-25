@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink, Clock } from "lucide-react";
+import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink, Clock, Eye } from "lucide-react";
+import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
 
 interface RecordListProps {
   records: DrlRecord[];
@@ -23,6 +24,7 @@ export const RecordList: React.FC<RecordListProps> = ({
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "points_desc">("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
+  const [viewingProofRecord, setViewingProofRecord] = useState<DrlRecord | null>(null);
 
   const addCount = records.filter((r) => Number(r.points) > 0).length;
   const deductCount = records.filter((r) => Number(r.points) < 0).length;
@@ -398,16 +400,15 @@ export const RecordList: React.FC<RecordListProps> = ({
                       }
 
                       return (
-                        <a
-                          href={r.evidenceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border hover:opacity-80 transition-opacity ${colorClass}`}
-                          title="Mở liên kết minh chứng"
+                        <button
+                          type="button"
+                          onClick={() => setViewingProofRecord(r)}
+                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border hover:opacity-80 transition-opacity cursor-pointer ${colorClass}`}
+                          title="Xem trước minh chứng"
                         >
-                          <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                          <Eye className="w-2.5 h-2.5 shrink-0" />
                           <span>{label}</span>
-                        </a>
+                        </button>
                       );
                     })()}
                   </div>
@@ -517,6 +518,16 @@ export const RecordList: React.FC<RecordListProps> = ({
                                 {r.note}
                               </span>
                             )}
+                            {r.evidenceUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setViewingProofRecord(r)}
+                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-blue-50 text-blue-700 border-blue-200 hover:opacity-80 transition-opacity cursor-pointer"
+                              >
+                                <Eye className="w-2.5 h-2.5 shrink-0" />
+                                <span>Minh chứng</span>
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -562,6 +573,13 @@ export const RecordList: React.FC<RecordListProps> = ({
           })}
         </div>
       )}
+
+      {/* Proof Viewer Modal */}
+      <ProofViewerModal
+        isOpen={Boolean(viewingProofRecord)}
+        onClose={() => setViewingProofRecord(null)}
+        record={viewingProofRecord}
+      />
     </div>
   );
 };

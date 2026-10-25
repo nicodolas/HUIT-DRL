@@ -6,8 +6,10 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
+import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
-import { Semester, DrlRecord } from "@/lib/db/schema";
+import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { Semester, DrlRecord, DrlCriteriaPreset } from "@/lib/db/schema";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
 import { Award } from "lucide-react";
 
@@ -19,6 +21,8 @@ export default function GoalsPage() {
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [selectedPresetToAdd, setSelectedPresetToAdd] = useState<DrlCriteriaPreset | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -109,6 +113,17 @@ export default function GoalsPage() {
           />
         )}
 
+        {/* Smart Recommendations */}
+        {goalAnalysis && (
+          <SmartRecommendationsCard
+            analysis={goalAnalysis}
+            onSelectPresetToAdd={(preset) => {
+              setSelectedPresetToAdd(preset);
+              setAddModalOpen(true);
+            }}
+          />
+        )}
+
         {/* What-If Simulation Engine */}
         {currentSemesterId && (
           <WhatIfSimulator
@@ -149,6 +164,17 @@ export default function GoalsPage() {
           await loadSemesters();
           if (newSem?.id) setCurrentSemesterId(newSem.id);
         }}
+      />
+
+      <AddRecordModal
+        isOpen={addModalOpen}
+        semesterId={currentSemesterId}
+        initialPreset={selectedPresetToAdd}
+        onClose={() => {
+          setAddModalOpen(false);
+          setSelectedPresetToAdd(null);
+        }}
+        onSuccess={loadData}
       />
 
       <BottomNav />

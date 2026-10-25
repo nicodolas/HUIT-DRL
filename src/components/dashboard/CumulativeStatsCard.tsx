@@ -74,6 +74,62 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
         )}
       </div>
 
+      {/* SVG Multi-Semester Progression Chart */}
+      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+          <span className="font-semibold text-slate-700">Biểu đồ tiến trình qua các học kỳ:</span>
+          <div className="flex items-center space-x-3 text-[10px]">
+            <span className="flex items-center">
+              <span className="w-2 h-0.5 bg-amber-500 inline-block mr-1" />
+              Mốc Xuất sắc (90đ)
+            </span>
+            <span className="flex items-center">
+              <span className="w-2 h-0.5 bg-emerald-500 inline-block mr-1" />
+              Mốc Tốt (80đ)
+            </span>
+          </div>
+        </div>
+
+        <div className="h-32 w-full flex items-end justify-around gap-2 pt-4 px-2">
+          {data.semesterBreakdown.map((s) => {
+            const isSelected = s.id === currentSemesterId;
+            const barHeight = Math.min(100, Math.max(10, s.totalScore));
+
+            return (
+              <div
+                key={s.id}
+                onClick={() => onSelectSemester(s.id)}
+                className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
+              >
+                <span className="text-[10px] font-mono font-bold text-slate-700 opacity-90 group-hover:scale-105 transition-transform mb-1">
+                  {s.totalScore}đ
+                </span>
+
+                <div className="w-full max-w-[48px] h-full flex items-end relative">
+                  {/* Guideline at 90% */}
+                  <div className="absolute w-full top-[10%] border-t border-dashed border-amber-300 pointer-events-none" />
+                  {/* Guideline at 80% */}
+                  <div className="absolute w-full top-[20%] border-t border-dashed border-emerald-300 pointer-events-none" />
+
+                  <div
+                    style={{ height: `${barHeight}%` }}
+                    className={`w-full rounded-t-md transition-all duration-300 ${
+                      isSelected
+                        ? "bg-slate-900 ring-2 ring-amber-400"
+                        : "bg-slate-300 group-hover:bg-slate-400"
+                    }`}
+                  />
+                </div>
+
+                <span className="text-[10px] text-slate-600 truncate max-w-[64px] mt-1.5 font-medium">
+                  {s.name.replace("Học kỳ", "HK")}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Semester Comparison Bars */}
       <div className="space-y-2.5 pt-1">
         {data.semesterBreakdown.map((s) => {

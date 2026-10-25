@@ -8,9 +8,10 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { CloneActivitiesModal } from "@/components/modals/CloneActivitiesModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { DrlRecord, Semester } from "@/lib/db/schema";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Copy } from "lucide-react";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function RecordsPage() {
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
@@ -102,6 +104,17 @@ export default function RecordsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {semesters.length > 1 && (
+              <button
+                onClick={() => setCloneModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+                title="Sao chép các hoạt động thường niên từ học kỳ trước"
+              >
+                <Copy className="w-3.5 h-3.5 text-amber-500" />
+                <span>Sao chép từ HK trước</span>
+              </button>
+            )}
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -158,6 +171,14 @@ export default function RecordsPage() {
           await loadSemesters();
           if (newSem?.id) setCurrentSemesterId(newSem.id);
         }}
+      />
+
+      <CloneActivitiesModal
+        isOpen={cloneModalOpen}
+        currentSemesterId={currentSemesterId}
+        semesters={semesters}
+        onClose={() => setCloneModalOpen(false)}
+        onSuccess={loadRecords}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

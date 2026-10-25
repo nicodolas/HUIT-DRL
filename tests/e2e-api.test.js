@@ -281,7 +281,60 @@ async function runE2ETests() {
     assert(htmlHandbook.includes("Quy chế") || htmlHandbook.includes("3385"), "Handbook HTML includes regulation elements");
 
     // ==========================================
-    // 9. DATABASE CLEANUP
+    // 9. TEST CLONE ACTIVITIES API
+    // ==========================================
+    // Create semester 2
+    const resCreateSem2 = await fetch(`${baseUrl}/api/semesters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: newSessionCookie },
+      body: JSON.stringify({ name: "Học kỳ 2 Năm 2026-2027", academicYear: "2026-2027" }),
+    });
+    const dataSem2 = await resCreateSem2.json();
+    assert(resCreateSem2.status === 200, "Created second semester for clone test");
+
+    // Add source activity to semester 1
+    const resAddSrc = await fetch(`${baseUrl}/api/records`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: newSessionCookie },
+      body: JSON.stringify({
+        semesterId: dataReg.semesterId,
+        category: 5,
+        title: 'Tham gia CLB Tin học HUIT thường xuyên',
+        points: 3,
+        quantity: 1,
+      }),
+    });
+    const dataAddSrc = await resAddSrc.json();
+
+    // Clone to semester 2
+    const resClone = await fetch(`${baseUrl}/api/records/clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: newSessionCookie },
+      body: JSON.stringify({
+        sourceSemesterId: dataReg.semesterId,
+        targetSemesterId: dataSem2.semester.id,
+        recordIds: [dataAddSrc.recordId],
+      }),
+    });
+    const dataClone = await resClone.json();
+    assert(resClone.status === 200, "POST /api/records/clone returns 200 OK");
+    assert(dataClone.clonedCount === 1, "Cloned exactly 1 activity to target semester");
+
+    // Verify cloned record in semester 2
+    const resVerifyCloned = await fetch(`${baseUrl}/api/records?semesterId=${dataSem2.semester.id}`, {
+      headers: { Cookie: newSessionCookie },
+    });
+    const dataVerifyCloned = await resVerifyCloned.json();
+    assert(dataVerifyCloned.records.some(r => r.title.includes("CLB Tin học")), "Cloned activity found in target semester");
+
+    // Clean up semester 2
+    await fetch(`${baseUrl}/api/semesters?id=${dataSem2.semester.id}`, {
+      method: 'DELETE',
+      headers: { Cookie: newSessionCookie },
+    });
+
+    // ==========================================
+    // 10. DATABASE CLEANUP
     // ==========================================
     const { neon } = require('@neondatabase/serverless');
     require('dotenv').config({ path: '.env.local' });

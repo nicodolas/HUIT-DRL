@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
-import { X, Search, Check, Sparkles } from "lucide-react";
+import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
+import { compressImage, formatBytes } from "@/lib/media/compressor";
 
 const POPULAR_SHORTCUTS = [
   { label: "Cổ vũ văn nghệ/TT", code: "TC3_CO_VU", badge: "+2đ" },
@@ -49,6 +50,32 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [compressingImage, setCompressingImage] = useState(false);
+  const [compressedStats, setCompressedStats] = useState<{
+    originalSize: number;
+    compressedSize: number;
+    reduction: number;
+  } | null>(null);
+
+  const handleProofFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompressingImage(true);
+    setError(null);
+    try {
+      const result = await compressImage(file, { maxWidth: 1600, quality: 0.82 });
+      setEvidenceUrl(result.dataUrl);
+      setCompressedStats({
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        reduction: result.reductionPercentage,
+      });
+    } catch (err: any) {
+      setError("Lỗi xử lý ảnh: " + (err.message || "Không thể tối ưu hóa tệp"));
+    } finally {
+      setCompressingImage(false);
+    }
+  };
 
   // Custom entry states
   const [customTitle, setCustomTitle] = useState("");
@@ -519,16 +546,65 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Link minh chứng (Drive / ảnh chứng nhận - tùy chọn):
-              </label>
-              <input
-                type="url"
-                placeholder="https://drive.google.com/... hoặc link ảnh"
-                value={evidenceUrl}
-                onChange={(e) => setEvidenceUrl(e.target.value)}
-                className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Minh chứng hoạt động (URL Drive hoặc tải ảnh trực tiếp):
+                </label>
+                {compressingImage && (
+                  <span className="text-[11px] text-amber-600 flex items-center space-x-1 font-medium">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Đang nén WebP...</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="https://drive.google.com/... hoặc chọn ảnh"
+                  value={evidenceUrl.startsWith("data:image") ? "(Đã đính kèm ảnh WebP tối ưu hóa)" : evidenceUrl}
+                  onChange={(e) => {
+                    if (!evidenceUrl.startsWith("data:image")) {
+                      setEvidenceUrl(e.target.value);
+                    }
+                  }}
+                  readOnly={evidenceUrl.startsWith("data:image")}
+                  className="flex-1 text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
+                />
+
+                <label className="flex items-center space-x-1 px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs cursor-pointer border border-slate-200 transition-colors shrink-0">
+                  <Camera className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Chọn ảnh</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProofFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Compressed statistics preview */}
+              {compressedStats && evidenceUrl.startsWith("data:image") && (
+                <div className="mt-1.5 p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px] text-emerald-800">
+                  <span className="flex items-center space-x-1 font-medium">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>
+                      Đã tối ưu: {formatBytes(compressedStats.originalSize)} → {formatBytes(compressedStats.compressedSize)} (-{compressedStats.reduction}%)
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEvidenceUrl("");
+                      setCompressedStats(null);
+                    }}
+                    className="text-red-600 hover:text-red-700 font-semibold cursor-pointer underline text-[10px]"
+                  >
+                    Gỡ ảnh
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

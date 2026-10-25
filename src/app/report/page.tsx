@@ -20,6 +20,7 @@ function ReportContent() {
   const [scoreSummary, setScoreSummary] = useState<ScoreCalculationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [formMode, setFormMode] = useState<"official" | "personal">("official");
 
   // Load auth
   useEffect(() => {
@@ -132,6 +133,14 @@ Học kỳ: ${currentSemester.name}
           )}
 
           <button
+            onClick={() => setFormMode(formMode === "official" ? "personal" : "official")}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Chuyển đổi định dạng biểu mẫu"
+          >
+            <span>{formMode === "official" ? "Biểu mẫu: Mẫu 01 (Nộp Lớp)" : "Biểu mẫu: Xem Cá Nhân"}</span>
+          </button>
+
+          <button
             onClick={handleCopySummary}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             title="Sao chép kết quả gửi Zalo/Lớp trưởng"
@@ -224,8 +233,18 @@ Học kỳ: ${currentSemester.name}
                 <th className="p-2.5 border-r border-slate-300 w-12 text-center">TT</th>
                 <th className="p-2.5 border-r border-slate-300">Nội dung đánh giá rèn luyện</th>
                 <th className="p-2.5 border-r border-slate-300 text-center w-20">Khung tối đa</th>
-                <th className="p-2.5 border-r border-slate-300 text-center w-20">Mặc định</th>
-                <th className="p-2.5 text-center w-24">Điểm tự chấm</th>
+                {formMode === "personal" ? (
+                  <>
+                    <th className="p-2.5 border-r border-slate-300 text-center w-20">Mặc định</th>
+                    <th className="p-2.5 text-center w-24">Điểm tự chấm</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="p-2.5 border-r border-slate-300 text-center w-24">SV tự chấm</th>
+                    <th className="p-2.5 border-r border-slate-300 text-center w-24">Lớp đánh giá</th>
+                    <th className="p-2.5 text-center w-24">Khoa duyệt</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -250,12 +269,28 @@ Học kỳ: ${currentSemester.name}
                     <td className="p-2.5 border-r border-slate-300 text-center font-semibold">
                       {meta.maxPoints}đ
                     </td>
-                    <td className="p-2.5 border-r border-slate-300 text-center text-slate-600">
-                      +{meta.defaultPoints}đ
-                    </td>
-                    <td className="p-2.5 text-center font-bold text-slate-900 bg-slate-50">
-                      {res.cappedScore}đ
-                    </td>
+                    {formMode === "personal" ? (
+                      <>
+                        <td className="p-2.5 border-r border-slate-300 text-center text-slate-600">
+                          +{meta.defaultPoints}đ
+                        </td>
+                        <td className="p-2.5 text-center font-bold text-slate-900 bg-slate-50">
+                          {res.cappedScore}đ
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="p-2.5 border-r border-slate-300 text-center font-bold text-slate-900 bg-slate-50/50">
+                          {res.cappedScore}đ
+                        </td>
+                        <td className="p-2.5 border-r border-slate-300 text-center text-slate-300 font-mono">
+                          .....
+                        </td>
+                        <td className="p-2.5 text-center text-slate-300 font-mono">
+                          .....
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
@@ -266,10 +301,26 @@ Học kỳ: ${currentSemester.name}
                   Tổng điểm rèn luyện (Thang 100):
                 </td>
                 <td className="p-2.5 text-center border-r border-slate-300">100đ</td>
-                <td className="p-2.5 text-center border-r border-slate-300">+60đ</td>
-                <td className="p-2.5 text-center text-sm font-extrabold bg-slate-200">
-                  {scoreSummary.totalScore}đ
-                </td>
+                {formMode === "personal" ? (
+                  <>
+                    <td className="p-2.5 text-center border-r border-slate-300">+60đ</td>
+                    <td className="p-2.5 text-center text-sm font-extrabold bg-slate-200">
+                      {scoreSummary.totalScore}đ
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="p-2.5 text-center text-sm font-extrabold bg-slate-200 border-r border-slate-300">
+                      {scoreSummary.totalScore}đ
+                    </td>
+                    <td className="p-2.5 text-center text-slate-400 border-r border-slate-300 font-mono">
+                      .....
+                    </td>
+                    <td className="p-2.5 text-center text-slate-400 font-mono">
+                      .....
+                    </td>
+                  </>
+                )}
               </tr>
             </tbody>
           </table>
@@ -322,6 +373,11 @@ Học kỳ: ${currentSemester.name}
                         {r.note && (
                           <span className="text-[10px] text-slate-500 block italic">
                             Ghi chú: {r.note}
+                          </span>
+                        )}
+                        {r.evidenceUrl && (
+                          <span className="text-[10px] text-blue-700 block mt-0.5 font-mono truncate max-w-md">
+                            Minh chứng: {r.evidenceUrl}
                           </span>
                         )}
                       </td>

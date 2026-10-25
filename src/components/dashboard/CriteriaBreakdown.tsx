@@ -3,6 +3,7 @@
 import React from "react";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { CategoryScoreResult } from "@/lib/drl/calculator";
+import { CriteriaRadarChart } from "./CriteriaRadarChart";
 import { Plus, AlertCircle } from "lucide-react";
 
 interface CriteriaBreakdownProps {
@@ -24,6 +25,9 @@ export const CriteriaBreakdown: React.FC<CriteriaBreakdownProps> = ({
           Khung điểm và giới hạn trần theo Quyết định số 3385/QĐ-DCT
         </p>
       </div>
+
+      {/* Visual Pentagon Radar Chart */}
+      <CriteriaRadarChart categories={categories} />
 
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((catNum) => {

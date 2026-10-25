@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
+import { DrlRadarCard } from "@/components/dashboard/DrlRadarCard";
 import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPredictionCard";
@@ -22,6 +23,7 @@ export default function GoalsPage() {
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [records, setRecords] = useState<DrlRecord[]>([]);
+  const [scoreSummary, setScoreSummary] = useState<any>(null);
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -65,6 +67,7 @@ export default function GoalsPage() {
       const data = await res.json();
       if (data) {
         if (data.records) setRecords(data.records);
+        if (data.scoreSummary) setScoreSummary(data.scoreSummary);
         if (data.goalAnalysis) setGoalAnalysis(data.goalAnalysis);
       }
 
@@ -132,6 +135,17 @@ export default function GoalsPage() {
             analysis={goalAnalysis}
             onSelectPresetToAdd={(preset) => {
               setSelectedPresetToAdd(preset);
+              setAddModalOpen(true);
+            }}
+          />
+        )}
+
+        {/* 5 Criteria Radar & Balance Index */}
+        {scoreSummary && (
+          <DrlRadarCard
+            categories={scoreSummary.categories}
+            onSelectCategoryToAdd={(cat) => {
+              setSelectedPresetToAdd(null);
               setAddModalOpen(true);
             }}
           />

@@ -283,6 +283,19 @@ export default function DashboardPage() {
         }}
       />
 
+      {/* Mobile Floating Action Button (FAB) */}
+      <button
+        onClick={() => {
+          setEditingRecord(null);
+          setModalInitialCategory(undefined);
+          setModalOpen(true);
+        }}
+        aria-label="Thêm hoạt động"
+        className="sm:hidden fixed right-4 bottom-20 z-40 w-12 h-12 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-transform cursor-pointer"
+      >
+        <Plus className="w-5 h-5 text-amber-400" />
+      </button>
+
       {/* Bottom Nav */}
       <BottomNav />
     </div>

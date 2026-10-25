@@ -22,12 +22,13 @@ import { BackupRestoreModal } from "@/components/modals/BackupRestoreModal";
 import { ClassMeetingModal } from "@/components/dashboard/ClassMeetingModal";
 import { DrlAppealModal } from "@/components/modals/DrlAppealModal";
 import { CalendarExportModal } from "@/components/modals/CalendarExportModal";
+import { ProofVaultModal } from "@/components/dashboard/ProofVaultModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users, FileQuestion, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users, FileQuestion, Calendar as CalendarIcon, Images as ImagesIcon } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -53,6 +54,7 @@ export default function DashboardPage() {
   const [classMeetingModalOpen, setClassMeetingModalOpen] = useState(false);
   const [appealModalOpen, setAppealModalOpen] = useState(false);
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [proofVaultOpen, setProofVaultOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -293,6 +295,15 @@ export default function DashboardPage() {
               <span>Đồng bộ Lịch</span>
             </button>
 
+            <button
+              onClick={() => setProofVaultOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Kho minh chứng hình ảnh và bảng đính kèm A4"
+            >
+              <ImagesIcon className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Kho minh chứng</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -524,6 +535,19 @@ export default function DashboardPage() {
         onClose={() => setCalendarModalOpen(false)}
         semester={currentSemester || null}
         records={records}
+      />
+
+      <ProofVaultModal
+        isOpen={proofVaultOpen}
+        onClose={() => setProofVaultOpen(false)}
+        records={records}
+        semester={currentSemester || null}
+        currentUser={{
+          fullName: user?.fullName || "Sinh viên",
+          studentId: user?.studentId || undefined,
+          className: user?.className || undefined,
+          faculty: user?.faculty || undefined,
+        }}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

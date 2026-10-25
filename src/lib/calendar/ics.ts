@@ -111,3 +111,4 @@ export function buildSemesterCalendarEvents(
 
   return events;
 }
+

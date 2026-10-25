@@ -60,3 +60,4 @@ export const HUIT_APPEAL_PRESETS: AppealReasonPreset[] = [
     sampleEvidence: "Phiếu tự chấm Form 01 lưu trữ trên hệ thống và các minh chứng đính kèm tương ứng.",
   },
 ];
+

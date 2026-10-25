@@ -385,6 +385,8 @@ export default function DashboardPage() {
         {/* Record List */}
         <RecordList
           records={records}
+          studentName={user?.fullName}
+          studentClass={user?.className}
           onDeleteRecord={handleDeleteRecord}
           onEditRecord={(r) => {
             setEditingRecord(r);

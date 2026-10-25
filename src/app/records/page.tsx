@@ -192,6 +192,8 @@ export default function RecordsPage() {
 
         <RecordList
           records={records}
+          studentName={user?.fullName}
+          studentClass={user?.className}
           onDeleteRecord={handleDelete}
           onEditRecord={(r) => {
             setEditingRecord(r);

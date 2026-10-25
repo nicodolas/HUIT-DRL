@@ -3,14 +3,18 @@
 import React, { useState, useMemo } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink, Clock, Eye } from "lucide-react";
+import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink, Clock, Eye, QrCode } from "lucide-react";
 import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
+import { ActivityVerificationModal } from "@/components/records/ActivityVerificationModal";
+import { triggerHaptic } from "@/lib/native/platform";
 
 interface RecordListProps {
   records: DrlRecord[];
   onDeleteRecord: (id: string) => void;
   onEditRecord?: (record: DrlRecord) => void;
   onOpenAddModal: () => void;
+  studentName?: string;
+  studentClass?: string;
 }
 
 export const RecordList: React.FC<RecordListProps> = ({
@@ -18,6 +22,8 @@ export const RecordList: React.FC<RecordListProps> = ({
   onDeleteRecord,
   onEditRecord,
   onOpenAddModal,
+  studentName,
+  studentClass,
 }) => {
   const [filterCat, setFilterCat] = useState<number>(0);
   const [filterType, setFilterType] = useState<"all" | "add" | "deduct" | "evidence" | "missing_evidence">("all");
@@ -25,6 +31,7 @@ export const RecordList: React.FC<RecordListProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
   const [viewingProofRecord, setViewingProofRecord] = useState<DrlRecord | null>(null);
+  const [verifyingRecord, setVerifyingRecord] = useState<DrlRecord | null>(null);
 
   const addCount = records.filter((r) => Number(r.points) > 0).length;
   const deductCount = records.filter((r) => Number(r.points) < 0).length;
@@ -425,6 +432,17 @@ export const RecordList: React.FC<RecordListProps> = ({
                     {isAdd ? `+${totalItemPoints}` : totalItemPoints}đ
                   </span>
 
+                  <button
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setVerifyingRecord(r);
+                    }}
+                    className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                    title="Mã QR & Thẻ xác nhận"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                  </button>
+
                   {onEditRecord && (
                     <button
                       onClick={() => onEditRecord(r)}
@@ -542,7 +560,18 @@ export const RecordList: React.FC<RecordListProps> = ({
                             {isAdd ? `+${totalItemPoints}` : totalItemPoints}đ
                           </span>
 
-                          {onEditRecord && (
+                          <button
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setVerifyingRecord(r);
+                    }}
+                    className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                    title="Mã QR & Thẻ xác nhận"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                  </button>
+
+                  {onEditRecord && (
                             <button
                               onClick={() => onEditRecord(r)}
                               className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -579,6 +608,15 @@ export const RecordList: React.FC<RecordListProps> = ({
         isOpen={Boolean(viewingProofRecord)}
         onClose={() => setViewingProofRecord(null)}
         record={viewingProofRecord}
+      />
+
+      {/* Activity QR Verification Slip Modal */}
+      <ActivityVerificationModal
+        isOpen={Boolean(verifyingRecord)}
+        onClose={() => setVerifyingRecord(null)}
+        record={verifyingRecord}
+        studentName={studentName}
+        studentClass={studentClass}
       />
     </div>
   );

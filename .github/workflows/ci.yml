@@ -1,0 +1,50 @@
+name: HUIT DRL Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Build & E2E Playwright Tests
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      AUTH_SECRET: 0123456789abcdef0123456789abcdef
+      DATABASE_URL: postgresql://drl_app_user:TestSecret123@ep-test-123.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      DATABASE_URL_OWNER: postgresql://neondb_owner:TestSecret123@ep-test-123.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Next.js Application
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E Tests
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3088
+
+      - name: Upload Playwright Test Report (On Failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -227,3 +227,4 @@ export const CumulativeTranscriptSheet: React.FC<CumulativeTranscriptSheetProps>
     </div>
   );
 };
+

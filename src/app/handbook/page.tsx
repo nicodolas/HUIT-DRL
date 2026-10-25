@@ -21,7 +21,9 @@ import {
   Layers,
   ChevronRight,
   ExternalLink,
+  Star,
 } from "lucide-react";
+import { getFavoritePresetIds, toggleFavoritePreset } from "@/lib/presets/favorites";
 
 export default function HandbookPage() {
   const router = useRouter();
@@ -35,11 +37,17 @@ export default function HandbookPage() {
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
   const [typeFilter, setTypeFilter] = useState<"all" | "add" | "deduct">("all");
   const [search, setSearch] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPresetForModal, setSelectedPresetForModal] = useState<DrlCriteriaPreset | null>(null);
   const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
+
+  useEffect(() => {
+    setFavoriteIds(getFavoritePresetIds());
+  }, []);
 
   useEffect(() => {
     // Load auth
@@ -80,6 +88,10 @@ export default function HandbookPage() {
   };
 
   const filteredPresets = presets.filter((p) => {
+    if (showFavoritesOnly) {
+      const isFav = favoriteIds.includes(p.id) || (p.code && favoriteIds.includes(p.code));
+      if (!isFav) return false;
+    }
     if (selectedCategory > 0 && p.category !== selectedCategory) return false;
     if (typeFilter === "add" && Number(p.points) <= 0) return false;
     if (typeFilter === "deduct" && Number(p.points) >= 0) return false;
@@ -200,6 +212,19 @@ export default function HandbookPage() {
               >
                 Trừ điểm (-)
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  showFavoritesOnly
+                    ? "bg-amber-400 text-slate-900 shadow-2xs font-bold"
+                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                }`}
+              >
+                <Star className={`w-3.5 h-3.5 ${showFavoritesOnly ? "fill-slate-900" : "fill-amber-500 text-amber-500"}`} />
+                <span>Đã ghim ({favoriteIds.length})</span>
+              </button>
             </div>
           </div>
         </div>
@@ -285,6 +310,25 @@ export default function HandbookPage() {
                         <span>Ghi nhận</span>
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavoritePreset(p.code || p.id);
+                        setFavoriteIds(getFavoritePresetIds());
+                      }}
+                      title="Ghim/Bỏ ghim tiêu chí quen thuộc"
+                      className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Star
+                        className={`w-3.5 h-3.5 ${
+                          favoriteIds.includes(p.id) || (p.code && favoriteIds.includes(p.code))
+                            ? "text-amber-500 fill-amber-400"
+                            : "text-slate-300 hover:text-amber-400"
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
               );

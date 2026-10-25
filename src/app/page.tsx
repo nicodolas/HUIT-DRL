@@ -18,11 +18,13 @@ import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTranscriptSheet";
 import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
+import { BackupRestoreModal } from "@/components/modals/BackupRestoreModal";
+import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award } from "lucide-react";
+import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function DashboardPage() {
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -248,6 +251,15 @@ export default function DashboardPage() {
               <span>Sinh viên 5 tốt</span>
             </button>
 
+            <button
+              onClick={() => setBackupModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              title="Sao lưu và khôi phục dữ liệu học kỳ JSON"
+            >
+              <Database className="w-3.5 h-3.5 text-slate-600" />
+              <span>Sao lưu</span>
+            </button>
+
             <Link
               href={`/report?semesterId=${currentSemesterId}`}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
@@ -431,6 +443,17 @@ export default function DashboardPage() {
         records={records}
         studentName={user?.fullName}
         studentClass={user?.className || undefined}
+      />
+
+      <NetworkRecoveryListener onSyncComplete={loadRecords} />
+
+      <BackupRestoreModal
+        isOpen={backupModalOpen}
+        onClose={() => setBackupModalOpen(false)}
+        onRestoreComplete={async () => {
+          await loadSemesters();
+          await loadRecords();
+        }}
       />
 
       {/* Mobile Floating Action Button (FAB) */}

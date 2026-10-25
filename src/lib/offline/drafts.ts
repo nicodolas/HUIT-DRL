@@ -26,6 +26,10 @@ export function getOfflineDrafts(): OfflineDraft[] {
   }
 }
 
+export function getPendingDraftsCount(): number {
+  return getOfflineDrafts().length;
+}
+
 export function addOfflineDraft(draft: Omit<OfflineDraft, "id" | "createdAt">): OfflineDraft {
   const drafts = getOfflineDrafts();
   const newDraft: OfflineDraft = {

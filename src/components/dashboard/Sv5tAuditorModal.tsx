@@ -99,15 +99,15 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-6">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold tracking-tight">
+              <h2 className="text-base font-bold tracking-tight text-white">
                 Thẩm Định "Sinh Viên 5 Tốt" HUIT
               </h2>
               <p className="text-[11px] text-slate-300">
@@ -129,14 +129,14 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
             className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               result.isQualified
                 ? result.qualifiedLevel === "trương"
-                  ? "bg-purple-50/70 border-purple-200 text-purple-900"
-                  : "bg-emerald-50/70 border-emerald-200 text-emerald-900"
-                : "bg-amber-50/70 border-amber-200 text-amber-900"
+                  ? "bg-purple-50/70 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200"
+                  : "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+                : "bg-amber-50/70 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"
             }`}
           >
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/80 border border-current shadow-2xs">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/80 dark:bg-slate-800 border border-current shadow-2xs">
                   {result.isQualified
                     ? `ĐẠT CHUẨN CẤP ${result.qualifiedLevel.toUpperCase()}`
                     : "ĐANG HOÀN THIỆN TIÊU CHUẨN"}
@@ -155,25 +155,25 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
             <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={handleShareZalo}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                <Share2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{copiedShare ? "Đã chép!" : "Chia sẻ"}</span>
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-semibold text-xs hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5 text-amber-400" />
+                <Printer className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
                 <span>In bản khai</span>
               </button>
             </div>
           </div>
 
           {/* Quick Config Row */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 GPA học tập (thang 4):
               </label>
               <div className="flex items-center space-x-1.5">
@@ -188,16 +188,16 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                     setGpa(val);
                     localStorage.setItem("huit_student_gpa", String(val));
                   }}
-                  className="w-18 p-1.5 bg-white border border-slate-300 rounded-md font-mono font-bold text-center text-slate-900"
+                  className="w-18 p-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md font-mono font-bold text-center text-slate-900 dark:text-white"
                 />
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
                   {gpa >= 2.8 ? "✓ Đạt chuẩn" : "✗ Chưa đạt"}
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 Nợ môn / Học phần rớt:
               </label>
               <label className="flex items-center space-x-2 cursor-pointer mt-1">
@@ -205,14 +205,14 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                   type="checkbox"
                   checked={hasFailedCourse}
                   onChange={(e) => setHasFailedCourse(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-4 h-4"
+                  className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-amber-500 focus:ring-slate-900 w-4 h-4"
                 />
-                <span className="text-slate-700">Có môn bị điểm F</span>
+                <span className="text-slate-700 dark:text-slate-300">Có môn bị điểm F</span>
               </label>
             </div>
 
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 Chứng nhận thể thao & ngoại ngữ:
               </label>
               <div className="space-y-1">
@@ -224,9 +224,9 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                       setHasFitnessCertificate(e.target.checked);
                       localStorage.setItem("huit_sv5t_fitness", String(e.target.checked));
                     }}
-                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
+                    className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-amber-500 focus:ring-slate-900 w-3.5 h-3.5"
                   />
-                  <span className="text-slate-700 text-[11px]">Có chứng chỉ thể thao / giải chạy</span>
+                  <span className="text-slate-700 dark:text-slate-300 text-[11px]">Có chứng chỉ thể thao / giải chạy</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -236,9 +236,9 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                       setHasForeignLangCert(e.target.checked);
                       localStorage.setItem("huit_sv5t_lang", String(e.target.checked));
                     }}
-                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
+                    className="rounded border-slate-300 dark:border-slate-700 text-slate-900 dark:text-amber-500 focus:ring-slate-900 w-3.5 h-3.5"
                   />
-                  <span className="text-slate-700 text-[11px]">Có TOEIC / IELTS / VSTEP</span>
+                  <span className="text-slate-700 dark:text-slate-300 text-[11px]">Có TOEIC / IELTS / VSTEP</span>
                 </label>
               </div>
             </div>
@@ -246,7 +246,7 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
 
           {/* Pillars List */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Chi tiết thẩm định 5 tiêu chuẩn
             </h3>
 
@@ -255,20 +255,20 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                 key={pillar.pillarId}
                 className={`p-3.5 rounded-xl border transition-all ${
                   pillar.isPassed
-                    ? "bg-white border-slate-200"
-                    : "bg-amber-50/30 border-amber-200"
+                    ? "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700"
+                    : "bg-amber-50/30 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-slate-100">
+                    <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
                       {getPillarIcon(pillar.pillarId)}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         {pillar.title}
                       </h4>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
                         {pillar.shortDesc}
                       </p>
                     </div>
@@ -276,12 +276,12 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
 
                   <div>
                     {pillar.isPassed ? (
-                      <span className="flex items-center space-x-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      <span className="flex items-center space-x-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>ĐẠT</span>
                       </span>
                     ) : (
-                      <span className="flex items-center space-x-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                      <span className="flex items-center space-x-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
                         <AlertCircle className="w-3.5 h-3.5" />
                         <span>CHƯA ĐẠT</span>
                       </span>
@@ -293,23 +293,23 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
                   {pillar.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start justify-between text-xs py-1 border-t border-slate-100"
+                      className="flex items-start justify-between text-xs py-1 border-t border-slate-100 dark:border-slate-700/60"
                     >
                       <div className="pr-3">
                         <span
                           className={`font-medium ${
-                            item.isMet ? "text-slate-800" : "text-slate-500"
+                            item.isMet ? "text-slate-800 dark:text-slate-200" : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
                           {item.name}
                         </span>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                           Minh chứng đề xuất: {item.evidenceHint}
                         </p>
                       </div>
                       <span
                         className={`font-bold shrink-0 text-xs ${
-                          item.isMet ? "text-emerald-600" : "text-slate-300"
+                          item.isMet ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600"
                         }`}
                       >
                         {item.isMet ? "✓" : "✗"}
@@ -323,7 +323,7 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
 
           {/* Recommendations box */}
           {result.recommendations.length > 0 && (
-            <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
+            <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2 border border-slate-800">
               <div className="flex items-center space-x-1.5 text-amber-400 text-xs font-bold">
                 <HelpCircle className="w-4 h-4" />
                 <span>Gợi ý hoàn thiện tiêu chuẩn SV5T</span>
@@ -338,11 +338,11 @@ export const Sv5tAuditorModal: React.FC<Sv5tAuditorModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>Quy định xét SV5T Đoàn TN - Hội Sinh viên HUIT</span>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold cursor-pointer transition-colors"
           >
             Đóng
           </button>

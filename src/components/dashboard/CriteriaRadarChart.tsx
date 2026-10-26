@@ -66,7 +66,7 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
   const highest = sorted[sorted.length - 1];
 
   return (
-    <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-4">
       {/* SVG Radar */}
       <div className="shrink-0 w-48 h-48 flex items-center justify-center">
         <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full overflow-visible">
@@ -75,8 +75,9 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
             <polygon
               key={idx}
               points={points}
-              fill={idx === gridPolygons.length - 1 ? "#f8fafc" : "transparent"}
-              stroke="#cbd5e1"
+              fill="transparent"
+              stroke="currentColor"
+              className="text-slate-300 dark:text-slate-700"
               strokeWidth="0.75"
               strokeDasharray={idx < gridPolygons.length - 1 ? "2 2" : undefined}
             />
@@ -90,7 +91,8 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
               y1={center}
               x2={a.outerX}
               y2={a.outerY}
-              stroke="#cbd5e1"
+              stroke="currentColor"
+              className="text-slate-300 dark:text-slate-700"
               strokeWidth="0.75"
             />
           ))}
@@ -98,9 +100,7 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
           {/* User Score Area Polygon */}
           <polygon
             points={userPolygonPoints}
-            fill="#0f172a"
-            fillOpacity="0.15"
-            stroke="#0f172a"
+            className="fill-slate-900/15 dark:fill-amber-400/20 stroke-slate-900 dark:stroke-amber-400"
             strokeWidth="2"
           />
 
@@ -111,8 +111,7 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
               cx={a.pointX}
               cy={a.pointY}
               r="3.5"
-              fill="#fbbf24"
-              stroke="#0f172a"
+              className="fill-amber-400 stroke-slate-900 dark:stroke-slate-900"
               strokeWidth="1.5"
             />
           ))}
@@ -127,8 +126,7 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
               dominantBaseline="central"
               fontSize="9"
               fontWeight="bold"
-              fill="#334155"
-              fontFamily="monospace"
+              className="fill-slate-700 dark:fill-slate-300 font-mono"
             >
               {a.code}
             </text>
@@ -138,26 +136,26 @@ export const CriteriaRadarChart: React.FC<CriteriaRadarChartProps> = ({ categori
 
       {/* Insight Analysis Box */}
       <div className="flex-1 text-xs space-y-2">
-        <div className="font-bold text-slate-900 text-xs flex items-center space-x-1.5">
+        <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center space-x-1.5">
           <span>Biểu đồ cân bằng 5 Tiêu chí rèn luyện</span>
         </div>
 
-        <p className="text-slate-600 leading-relaxed text-[11px]">
+        <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
           Biểu đồ thể hiện mức độ phủ điểm của bạn trên 5 tiêu chí chuẩn. Hồ sơ rèn luyện lý tưởng đạt độ che phủ đồng đều &ge; 80% mỗi tiêu chí.
         </p>
 
         <div className="space-y-1 pt-1 text-[11px]">
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-slate-700">
-              Thế mạnh cao nhất: <strong>{highest.code} ({highest.name})</strong> — {Math.round(highest.ratio * 100)}% trần
+            <span className="text-slate-700 dark:text-slate-300">
+              Thế mạnh cao nhất: <strong className="text-slate-900 dark:text-slate-100">{highest.code} ({highest.name})</strong> — {Math.round(highest.ratio * 100)}% trần
             </span>
           </div>
 
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-            <span className="text-slate-700">
-              Cần bổ sung thêm: <strong>{lowest.code} ({lowest.name})</strong> — còn thiếu {lowest.max - lowest.score}đ để chạm trần
+            <span className="text-slate-700 dark:text-slate-300">
+              Cần bổ sung thêm: <strong className="text-slate-900 dark:text-slate-100">{lowest.code} ({lowest.name})</strong> — còn thiếu {lowest.max - lowest.score}đ để chạm trần
             </span>
           </div>
         </div>

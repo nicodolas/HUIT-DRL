@@ -197,37 +197,37 @@ export default function GoalsPage() {
         </div>
 
         {/* Sinh Vien 5 Tot Quick Action Banner */}
-        <div className="bg-linear-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/80 flex items-center justify-between gap-3 shadow-2xs">
+        <div className="bg-linear-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 rounded-xl p-4 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-xs">
               <Award className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-slate-900">
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white">
                 Thẩm Định Danh Hiệu "Sinh Viên 5 Tốt" HUIT
               </h3>
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
                 Kiểm tra tự động 5 tiêu chuẩn: Đạo đức, Học tập, Thể lực, Tình nguyện & Hội nhập
               </p>
             </div>
           </div>
           <button
             onClick={() => setSv5tModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs transition-colors cursor-pointer shrink-0"
           >
             Mở thẩm định
           </button>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-2.5">
-          <div className="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-            <Award className="w-4 h-4 text-amber-600" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5">
+          <div className="flex items-center space-x-2 text-slate-900 dark:text-white font-bold text-sm">
+            <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             <span>Tiêu chuẩn xét học bổng khuyến khích học tập HUIT</span>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Căn cứ quy chế đào tạo và khen thưởng sinh viên của Trường Đại học Công Thương TP.HCM:
           </p>
-          <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-5">
+          <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 list-disc pl-5">
             <li>
               Sinh viên cần đạt kết quả rèn luyện tối thiểu loại <strong>Khá (&ge; 70 điểm)</strong> để đủ điều kiện xét học bổng khuyến khích học tập.
             </li>

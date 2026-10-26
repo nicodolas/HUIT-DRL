@@ -81,3 +81,4 @@ test.describe("Admin Public Semesters & Strict User Isolation Suite", () => {
     await expect(page.locator("td", { hasText: officialSemName })).not.toBeVisible();
   });
 });
+

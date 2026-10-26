@@ -94,15 +94,15 @@ export const ExtracurricularDossierModal: React.FC<ExtracurricularDossierModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-6">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between no-print">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between no-print">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold tracking-tight">
+              <h2 className="text-base font-bold tracking-tight text-white">
                 Hồ Sơ Trích Lục Hoạt Động Ngoại Khóa & Thành Tích
               </h2>
               <p className="text-[11px] text-slate-300">
@@ -120,74 +120,74 @@ export const ExtracurricularDossierModal: React.FC<ExtracurricularDossierModalPr
 
         <div className="p-4 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Action Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 no-print">
-            <span className="text-xs text-slate-600 font-medium">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 no-print">
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
               Định dạng chuẩn A4 có thể in trực tiếp hoặc lưu dưới dạng PDF
             </span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleShareZalo}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                <Share2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{copied ? "Đã chép!" : "Chia sẻ"}</span>
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-semibold text-xs hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5 text-amber-400" />
+                <Printer className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
                 <span>In Hồ Sơ (A4)</span>
               </button>
             </div>
           </div>
 
           {/* Printable Sheet Wrapper */}
-          <div className="p-6 bg-white border border-slate-200 rounded-xl space-y-6 text-slate-900">
+          <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-6 text-slate-900 dark:text-slate-100">
             {/* National & University Title */}
-            <div className="text-center space-y-1 border-b border-slate-200 pb-4">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
+            <div className="text-center space-y-1 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
                 TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH
               </span>
-              <h1 className="text-base sm:text-lg font-extrabold uppercase text-slate-900 tracking-tight">
+              <h1 className="text-base sm:text-lg font-extrabold uppercase text-slate-900 dark:text-white tracking-tight">
                 BẢN TRÍCH LỤC THÀNH TÍCH HOẠT ĐỘNG NGOẠI KHÓA & RÈN LUYỆN
               </h1>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Căn cứ cơ sở dữ liệu rèn luyện sinh viên theo Quyết định 3385/QĐ-DCT
               </p>
             </div>
 
             {/* Student Info Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
               <div>
-                <span className="text-slate-500 block text-[11px]">Họ và tên:</span>
-                <span className="font-bold text-slate-900">{user?.fullName || "Sinh viên"}</span>
+                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Họ và tên:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{user?.fullName || "Sinh viên"}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Tài khoản:</span>
-                <span className="font-mono font-bold text-slate-900">@{user?.username}</span>
+                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Tài khoản:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">@{user?.username}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Khoa:</span>
-                <span className="font-semibold text-slate-900">{user?.faculty || "Công nghệ Thông tin"}</span>
+                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Khoa:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{user?.faculty || "Công nghệ Thông tin"}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Lớp:</span>
-                <span className="font-semibold text-slate-900">{user?.className || "12DHTH01"}</span>
+                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Lớp:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{user?.className || "12DHTH01"}</span>
               </div>
             </div>
 
             {/* Metric Summary Cards */}
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <span className="text-[11px] text-slate-500 block">Tổng hoạt động</span>
-                <span className="text-lg font-bold text-slate-900 mt-0.5 block">{records.length}</span>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Tổng hoạt động</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-white mt-0.5 block">{records.length}</span>
               </div>
-              <div className="p-3 bg-emerald-50/50 border border-emerald-200 rounded-lg">
-                <span className="text-[11px] text-emerald-800 block">Tổng điểm rèn luyện cộng</span>
-                <span className="text-lg font-bold text-emerald-700 mt-0.5 block">+{totalEarnedPoints}đ</span>
+              <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                <span className="text-[11px] text-emerald-800 dark:text-emerald-300 block">Tổng điểm rèn luyện cộng</span>
+                <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400 mt-0.5 block">+{totalEarnedPoints}đ</span>
               </div>
-              <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-lg">
+              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <span className="text-[11px] text-blue-800 block">Minh chứng đính kèm</span>
                 <span className="text-lg font-bold text-blue-700 mt-0.5 block">{evidenceCount}/{records.length}</span>
               </div>
@@ -308,11 +308,11 @@ export const ExtracurricularDossierModal: React.FC<ExtracurricularDossierModalPr
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 no-print">
+        <div className="p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 no-print">
           <span>Trường Đại học Công Thương TP.HCM • Cổng ĐRL Sinh Viên</span>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold cursor-pointer transition-colors"
           >
             Đóng
           </button>

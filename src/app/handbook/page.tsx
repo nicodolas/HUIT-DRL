@@ -125,7 +125,7 @@ export default function HandbookPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header
         user={user}
         semesters={semesters}
@@ -136,10 +136,10 @@ export default function HandbookPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Title & Institutional Intro */}
-        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center space-x-2 text-slate-900 font-bold text-lg">
+              <div className="flex items-center space-x-2 text-slate-900 dark:text-white font-bold text-lg">
                 <BookOpen className="w-5 h-5 text-amber-500" />
                 <h1>Sổ tay Quy chế & Khung điểm Rèn luyện HUIT</h1>
               </div>

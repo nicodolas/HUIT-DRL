@@ -294,7 +294,7 @@ function ReportContent() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 py-6 px-3 sm:px-6 text-slate-900 print:bg-white print:p-0">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-6 px-3 sm:px-6 text-slate-900 dark:text-slate-100 transition-colors print:bg-white print:text-black print:p-0">
       {/* Top action bar - Hidden when printing */}
       <div className="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
         <div className="flex items-center space-x-3">

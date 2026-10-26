@@ -104,7 +104,7 @@ export default function GoalsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header
         user={user}
         semesters={semesters}
@@ -115,10 +115,10 @@ export default function GoalsPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             Mục tiêu & Kế hoạch rèn luyện
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Lập kế hoạch hoàn thành các tiêu chí xét học bổng và danh hiệu sinh viên
           </p>
         </div>

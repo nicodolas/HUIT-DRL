@@ -125,7 +125,7 @@ export default function RecordsPage() {
   const currentSemester = semesters.find((s) => s.id === currentSemesterId) || null;
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 text-slate-900">
+    <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Header
         user={user}
         semesters={semesters}
@@ -137,10 +137,10 @@ export default function RecordsPage() {
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Sổ ghi nhận điểm rèn luyện
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Lịch sử các hoạt động cộng điểm và vi phạm theo học kỳ
             </p>
           </div>

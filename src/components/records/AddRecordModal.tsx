@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
+import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
+import { getPresetsCache, savePresetsCache } from "@/lib/offline/cache";
 import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass } from "lucide-react";
 import { compressImage, formatBytes } from "@/lib/media/compressor";
 import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
@@ -40,7 +42,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   onSuccess,
 }) => {
   const [tab, setTab] = useState<"preset" | "custom">("preset");
-  const [presets, setPresets] = useState<DrlCriteriaPreset[]>([]);
+  const [presets, setPresets] = useState<DrlCriteriaPreset[]>(() => {
+    const cached = getPresetsCache();
+    return cached && cached.length > 0 ? cached : DEFAULT_HUIT_PRESETS;
+  });
   const [selectedCategory, setSelectedCategory] = useState<number>(initialCategory || 0);
   const [search, setSearch] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<DrlCriteriaPreset | null>(null);
@@ -127,9 +132,14 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       fetch("/api/presets")
         .then((res) => res.json())
         .then((data) => {
-          if (data.presets) setPresets(data.presets);
+          if (data.presets && data.presets.length > 0) {
+            setPresets(data.presets);
+            savePresetsCache(data.presets);
+          }
         })
-        .catch(console.error);
+        .catch((err) => {
+          console.warn("Background presets fetch error, fallback to offline cache:", err);
+        });
     }
   }, [isOpen]);
 

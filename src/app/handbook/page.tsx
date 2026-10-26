@@ -27,14 +27,19 @@ import {
 import { getFavoritePresetIds, toggleFavoritePreset } from "@/lib/presets/favorites";
 import { classifyHuitActivity } from "@/lib/classifier/activity-classifier";
 import { triggerHaptic } from "@/lib/native/platform";
+import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
+import { getPresetsCache, savePresetsCache } from "@/lib/offline/cache";
 
 export default function HandbookPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
-  const [presets, setPresets] = useState<DrlCriteriaPreset[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [presets, setPresets] = useState<DrlCriteriaPreset[]>(() => {
+    const cached = getPresetsCache();
+    return cached && cached.length > 0 ? cached : DEFAULT_HUIT_PRESETS;
+  });
+  const [loading, setLoading] = useState(false);
 
   // Filters
   const [selectedCategory, setSelectedCategory] = useState<number>(0);
@@ -69,13 +74,18 @@ export default function HandbookPage() {
       })
       .catch(() => router.push("/login"));
 
-    // Load 65 presets
+    // Load criteria presets (background sync)
     fetch("/api/presets")
       .then((res) => res.json())
       .then((data) => {
-        if (data.presets) setPresets(data.presets);
+        if (data.presets && data.presets.length > 0) {
+          setPresets(data.presets);
+          savePresetsCache(data.presets);
+        }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.warn("Background handbook presets sync failed, keeping baseline:", err);
+      })
       .finally(() => setLoading(false));
   }, [router]);
 

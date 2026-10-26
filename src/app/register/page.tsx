@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap, ArrowRight, Lock, User, AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -15,6 +15,28 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const [honeypot, setHoneypot] = useState<string>("");
+  const captchaLoadedAtRef = useRef<number>(Date.now());
+
+  const fetchCaptcha = async () => {
+    try {
+      const res = await fetch("/api/auth/captcha", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          setCaptchaToken(data.token);
+          captchaLoadedAtRef.current = Date.now();
+        }
+      }
+    } catch {
+      // Fail silently
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
 
   // Real-time username existence check
   const [checkStatus, setCheckStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
@@ -93,6 +115,12 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      // Zero-friction buffer: ensure timing window (>= 1600ms) is satisfied for fast autofill / UI automation
+      const elapsed = Date.now() - captchaLoadedAtRef.current;
+      if (elapsed < 1600) {
+        await new Promise((resolve) => setTimeout(resolve, 1600 - elapsed));
+      }
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,6 +130,8 @@ export default function RegisterPage() {
           faculty: faculty.trim() || undefined,
           className: className.trim() || undefined,
           password,
+          honeypot,
+          captchaToken,
         }),
       });
 
@@ -114,6 +144,7 @@ export default function RegisterPage() {
       router.refresh();
     } catch (err: any) {
       setError(err.message);
+      fetchCaptcha();
     } finally {
       setLoading(false);
     }
@@ -154,6 +185,17 @@ export default function RegisterPage() {
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
+          {/* Honeypot field for invisible bot defense */}
+          <input
+            type="text"
+            name="honeypot"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            aria-hidden="true"
+            autoComplete="off"
+            className="opacity-0 absolute -left-[9999px] top-0 pointer-events-none h-0 w-0"
+          />
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-slate-700">

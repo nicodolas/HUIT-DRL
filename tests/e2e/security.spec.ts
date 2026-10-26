@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { getValidTestCaptchaToken } from "./helpers/auth";
 
 test.describe("Security & OWASP Hardening Suite", () => {
   test("Reject malicious javascript: evidence URLs in records", async ({ request }) => {
@@ -9,6 +10,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
         username: testUser,
         password: "ValidPassword123!",
         fullName: "Security Tester",
+        captchaToken: getValidTestCaptchaToken(),
       },
     });
     expect(regRes.status()).toBe(200);
@@ -114,6 +116,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
         username: testUser,
         password: "ValidPassword123!",
         fullName: "Minimization Tester",
+        captchaToken: getValidTestCaptchaToken(),
       },
     });
     expect(regRes.status()).toBe(200);
@@ -150,7 +153,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
     const userA = `user_a_${Date.now()}`;
 
     await pageA.request.post("/api/auth/register", {
-      data: { username: userA, password: "Password123!", fullName: "Student A" },
+      data: { username: userA, password: "Password123!", fullName: "Student A", captchaToken: getValidTestCaptchaToken() },
     });
     await pageA.request.post("/api/auth/login", {
       data: { username: userA, password: "Password123!" },
@@ -179,7 +182,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
     const userB = `user_b_${Date.now()}`;
 
     await pageB.request.post("/api/auth/register", {
-      data: { username: userB, password: "Password123!", fullName: "Student B" },
+      data: { username: userB, password: "Password123!", fullName: "Student B", captchaToken: getValidTestCaptchaToken() },
     });
     await pageB.request.post("/api/auth/login", {
       data: { username: userB, password: "Password123!" },
@@ -225,6 +228,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
           username: badUser,
           password: "ValidPassword123!",
           fullName: "Hacker Attempt",
+          captchaToken: getValidTestCaptchaToken(),
         },
       });
       // Should reject invalid characters before hitting SQL
@@ -246,7 +250,7 @@ test.describe("Security & OWASP Hardening Suite", () => {
     // 3. Register a legitimate user to test record payload and ID boundaries
     const safeUser = `sqlsec_${Date.now()}`;
     await request.post("/api/auth/register", {
-      data: { username: safeUser, password: "ValidPassword123!", fullName: "Safe Tester" },
+      data: { username: safeUser, password: "ValidPassword123!", fullName: "Safe Tester", captchaToken: getValidTestCaptchaToken() },
     });
     await request.post("/api/auth/login", {
       data: { username: safeUser, password: "ValidPassword123!" },
@@ -294,5 +298,102 @@ test.describe("Security & OWASP Hardening Suite", () => {
 
     const badRecDelRes = await request.delete(`/api/records/${encodeURIComponent("1' OR '1'='1")}`);
     expect(badRecDelRes.status()).toBe(400);
+  });
+
+  test("Invisible CAPTCHA 3-layer defense blocks bots, honeypot traps, and speed-spamming", async ({ request, page }) => {
+    // a) Bot điền honeypot field => bị chặn 400
+    const botUser1 = `bot_trap_${Date.now()}`;
+    const honeypotRes = await request.post("/api/auth/register", {
+      data: {
+        username: botUser1,
+        password: "ValidPassword123!",
+        fullName: "Spam Bot",
+        honeypot: "http://spam-link.com",
+        captchaToken: getValidTestCaptchaToken(),
+      },
+    });
+    expect(honeypotRes.status()).toBe(400);
+    const honeypotData = await honeypotRes.json();
+    expect(honeypotData.error).toContain("Phát hiện hành vi tự động.");
+
+    // b) Bot gửi không có captchaToken hoặc token giả mạo => bị chặn 400
+    const botUser2 = `bot_notoken_${Date.now()}`;
+    const noTokenRes = await request.post("/api/auth/register", {
+      data: {
+        username: botUser2,
+        password: "ValidPassword123!",
+        fullName: "No Token Bot",
+      },
+    });
+    expect(noTokenRes.status()).toBe(400);
+    const noTokenData = await noTokenRes.json();
+    expect(noTokenData.error).toBeDefined();
+
+    const forgedRes = await request.post("/api/auth/register", {
+      data: {
+        username: `bot_forged_${Date.now()}`,
+        password: "ValidPassword123!",
+        fullName: "Forged Token Bot",
+        captchaToken: "1729000000000.randomnonce.fake_hmac_signature",
+      },
+    });
+    expect(forgedRes.status()).toBe(400);
+    const forgedData = await forgedRes.json();
+    expect(forgedData.error).toContain("không hợp lệ");
+
+    // c) Bot gửi quá nhanh (< 1.5s) => bị chặn 400
+    const captchaRes = await request.get("/api/auth/captcha");
+    expect(captchaRes.status()).toBe(200);
+    expect(captchaRes.headers()["cache-control"]).toContain("no-store");
+    const { token: freshToken } = await captchaRes.json();
+    expect(freshToken).toBeDefined();
+
+    // Submit ngay lập tức với token vừa sinh (< 1.5s)
+    const tooFastRes = await request.post("/api/auth/register", {
+      data: {
+        username: `bot_fast_${Date.now()}`,
+        password: "ValidPassword123!",
+        fullName: "Fast Bot",
+        captchaToken: freshToken,
+      },
+    });
+    expect(tooFastRes.status()).toBe(400);
+    const tooFastData = await tooFastRes.json();
+    expect(tooFastData.error).toContain("Thao tác quá nhanh, vui lòng thao tác bình thường.");
+
+    // d) Người dùng hợp lệ sau độ trễ >= 1.5s qua form và API có captchaToken hợp lệ
+    // Test 1: Qua API với pre-aged token >= 1.5s
+    const validApiUser = `valid_api_${Date.now()}`;
+    const validApiRes = await request.post("/api/auth/register", {
+      data: {
+        username: validApiUser,
+        password: "ValidPassword123!",
+        fullName: "Legit Human API",
+        captchaToken: getValidTestCaptchaToken(),
+      },
+    });
+    expect(validApiRes.status()).toBe(200);
+    const validApiData = await validApiRes.json();
+    expect(validApiData.user.username).toBe(validApiUser);
+
+    // Test 2: Qua UI Form với honeypot input ẩn và đợi thời gian tự nhiên >= 1.5s
+    const formUser = `human_form_${Date.now()}`;
+    await page.goto("/register");
+
+    // Xác nhận honeypot input hiện diện trong DOM nhưng ẩn với người dùng
+    const honeypotInput = page.locator('input[name="honeypot"]');
+    await expect(honeypotInput).toBeAttached();
+    await expect(honeypotInput).toHaveClass(/opacity-0/);
+
+    await page.locator('input[placeholder*="nguyenvana"]').fill(formUser);
+    await expect(page.getByText(/khả dụng/i)).toBeVisible({ timeout: 5000 });
+    await page.locator('input[placeholder*="Nguyễn Văn"]').fill("Nguyễn Người Dùng Thật");
+    await page.locator('input[placeholder*="Tối thiểu 6 ký tự"]').fill("ValidPass123!");
+    await page.locator('input[placeholder*="Nhập lại mật khẩu"]').fill("ValidPass123!");
+
+    // Chờ đảm bảo >= 1.5s kể từ khi captcha token được tạo lúc mount form
+    await page.waitForTimeout(1600);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("/", { timeout: 15000 });
   });
 });

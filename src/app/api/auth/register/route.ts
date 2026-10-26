@@ -7,6 +7,7 @@ import { createSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { randomUUID } from "crypto";
 import { sanitizeText } from "@/lib/security/sanitizer";
+import { verifyCaptchaSubmission } from "@/lib/security/captcha";
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +22,16 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { username, password, fullName, faculty, className } = body;
+    const { username, password, fullName, faculty, className, honeypot, captchaToken } = body;
+
+    // Invisible CAPTCHA & Zero-Friction Bot Defense Verification
+    const captchaCheck = verifyCaptchaSubmission({ honeypot, token: captchaToken });
+    if (!captchaCheck.success) {
+      return NextResponse.json(
+        { error: captchaCheck.error || "Xác thực bảo vệ không thành công." },
+        { status: 400 }
+      );
+    }
 
     const cleanUsername = sanitizeText(username, 32).toLowerCase();
     const displayName = sanitizeText(fullName, 100) || cleanUsername;

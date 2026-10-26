@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { getValidTestCaptchaToken } from "./helpers/auth";
 
 test.describe("Phase 14: Criteria Favorites & Full Backup Engine", () => {
   const testUsername = `fav_${Date.now()}`;
@@ -13,6 +14,7 @@ test.describe("Phase 14: Criteria Favorites & Full Backup Engine", () => {
         password: testPassword,
         fullName: testFullName,
         className: "12DHTH04",
+        captchaToken: getValidTestCaptchaToken(),
       },
     });
     expect(regRes.status()).toBe(200);

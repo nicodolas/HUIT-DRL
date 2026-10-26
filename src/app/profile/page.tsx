@@ -343,7 +343,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Tên đăng nhập (Cố định, không thể đổi):</span>
+                    <span>Tên đăng nhập:</span>
                   </label>
                   <span className="text-[10px] text-slate-400">Định danh bất biến</span>
                 </div>
@@ -354,9 +354,6 @@ export default function ProfilePage() {
                   readOnly
                   className="w-full text-xs p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 font-mono cursor-not-allowed select-none"
                 />
-                <p className="text-[11px] text-slate-400 mt-1 italic">
-                  Tên đăng nhập là định danh duy nhất của tài khoản trên hệ thống và không thể thay đổi.
-                </p>
               </div>
 
               {/* Full Name field */}
@@ -418,7 +415,6 @@ export default function ProfilePage() {
               {/* Security notice regarding role */}
               <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 flex items-center justify-between">
                 <span>Vai trò hiện tại: <strong className="text-slate-700">{user.role === "admin" ? "Quản trị viên" : "Sinh viên"}</strong></span>
-                <span className="text-[10px] text-slate-400">Phân quyền do hệ thống quản lý</span>
               </div>
 
               <div className="flex items-center justify-end space-x-2 pt-1">

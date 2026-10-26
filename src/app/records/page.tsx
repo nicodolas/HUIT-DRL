@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
@@ -16,7 +16,7 @@ import { ExtracurricularDossierModal } from "@/components/dashboard/Extracurricu
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { APP_FEATURES } from "@/lib/config/features";
 import { DrlRecord, Semester } from "@/lib/db/schema";
-import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet, Award } from "lucide-react";
+import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet, Award, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -31,6 +31,8 @@ export default function RecordsPage() {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -45,6 +47,23 @@ export default function RecordsPage() {
       })
       .catch(() => router.push("/login"));
   }, [router]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
+        setToolsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setToolsMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const loadSemesters = async () => {
     try {
@@ -127,60 +146,99 @@ export default function RecordsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setCsvModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Xuất hoặc nhập bảng kê hoạt động bằng file Excel CSV"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Excel CSV</span>
-            </button>
+            {/* Compact Utilities Dropdown */}
+            <div className="relative" ref={toolsMenuRef}>
+              <button
+                type="button"
+                onClick={() => setToolsMenuOpen((prev) => !prev)}
+                aria-haspopup="true"
+                aria-expanded={toolsMenuOpen}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs shadow-2xs transition-colors cursor-pointer"
+                title="Công cụ & Tiện ích xuất báo cáo"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                <span>Tiện ích</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${toolsMenuOpen ? "rotate-180" : ""}`} />
+              </button>
 
-            <button
-              onClick={() => setAuditModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Kiểm tra tính hợp lệ và minh chứng của hồ sơ"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Kiểm tra hồ sơ</span>
-            </button>
+              {toolsMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg py-1.5 z-30 animate-in fade-in duration-150"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setToolsMenuOpen(false);
+                      setAuditModalOpen(true);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left cursor-pointer font-medium"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Kiểm tra hồ sơ</span>
+                  </button>
 
+                  <Link
+                    href={`/report?semesterId=${currentSemesterId}`}
+                    role="menuitem"
+                    onClick={() => setToolsMenuOpen(false)}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left cursor-pointer font-medium"
+                  >
+                    <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                    <span>Xuất phiếu QĐ 3385</span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setToolsMenuOpen(false);
+                      setCsvModalOpen(true);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left cursor-pointer font-medium"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Xuất / Nhập Excel CSV</span>
+                  </button>
+
+                  {semesters.length > 1 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setToolsMenuOpen(false);
+                        setCloneModalOpen(true);
+                      }}
+                      className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-left cursor-pointer font-medium"
+                    >
+                      <Copy className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                      <span>Sao chép từ HK trước</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Direct Extracurricular Dossier Button */}
             <button
               onClick={() => setDossierModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs shadow-2xs transition-colors cursor-pointer"
               title="Xem trích lục hồ sơ hoạt động ngoại khóa A4"
             >
-              <Award className="w-3.5 h-3.5 text-amber-600" />
+              <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>Hồ sơ ngoại khóa</span>
             </button>
 
-            {semesters.length > 1 && (
-              <button
-                onClick={() => setCloneModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-                title="Sao chép các hoạt động thường niên từ học kỳ trước"
-              >
-                <Copy className="w-3.5 h-3.5 text-amber-500" />
-                <span>Sao chép từ HK trước</span>
-              </button>
-            )}
-
-            <Link
-              href={`/report?semesterId=${currentSemesterId}`}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5 text-slate-600" />
-              <span>Xuất phiếu QĐ 3385</span>
-            </Link>
-
+            {/* Primary Action Button */}
             <button
               onClick={() => {
                 setEditingRecord(null);
                 setModalOpen(true);
               }}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-amber-400" />
+              <Plus className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
               <span>Ghi nhận mục mới</span>
             </button>
           </div>

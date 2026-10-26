@@ -15,9 +15,20 @@ import {
   Image as ImageIcon,
   Check,
   Sparkles,
+  QrCode,
 } from "lucide-react";
 import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
+import { ActivityVerificationModal } from "@/components/records/ActivityVerificationModal";
 import { triggerHaptic } from "@/lib/native/platform";
+
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase();
+}
 
 interface RecordListProps {
   records: DrlRecord[];
@@ -43,6 +54,7 @@ export const RecordList: React.FC<RecordListProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
   const [viewingProofRecord, setViewingProofRecord] = useState<DrlRecord | null>(null);
+  const [verifyingRecord, setVerifyingRecord] = useState<DrlRecord | null>(null);
 
   // Filtered & Sorted Records
   const filtered = useMemo(() => {
@@ -51,15 +63,63 @@ export const RecordList: React.FC<RecordListProps> = ({
         if (filterCat > 0 && r.category !== filterCat) return false;
         if (filterType === "add" && Number(r.points) <= 0) return false;
         if (filterType === "deduct" && Number(r.points) >= 0) return false;
-        if (filterType === "evidence" && !r.evidenceUrl) return false;
-        if (filterType === "missing_evidence" && !!r.evidenceUrl) return false;
+        if (filterType === "evidence" && (!r.evidenceUrl || !r.evidenceUrl.trim())) return false;
+        if (filterType === "missing_evidence" && (r.evidenceUrl && r.evidenceUrl.trim() !== "")) return false;
 
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
-          const matchTitle = (r.title || "").toLowerCase().includes(q);
-          const matchNote = (r.note || "").toLowerCase().includes(q);
-          const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
-          if (!matchTitle && !matchNote && !matchDate) return false;
+          const qNorm = removeVietnameseTones(q);
+
+          // 1. Title match (both accented and unaccented)
+          const titleStr = r.title || "";
+          const matchTitle =
+            titleStr.toLowerCase().includes(q) ||
+            removeVietnameseTones(titleStr).includes(qNorm);
+
+          // 2. Note match (both accented and unaccented)
+          const noteStr = r.note || "";
+          const matchNote =
+            noteStr.toLowerCase().includes(q) ||
+            removeVietnameseTones(noteStr).includes(qNorm);
+
+          // 3. Category match (code "TC1", "TC 1", and name)
+          const catMeta = CATEGORIES[r.category];
+          const matchCategory = catMeta
+            ? catMeta.code.toLowerCase().includes(q) ||
+              catMeta.code.toLowerCase().replace(/tc/i, "tc ").includes(q) ||
+              catMeta.name.toLowerCase().includes(q) ||
+              removeVietnameseTones(catMeta.name).includes(qNorm)
+            : false;
+
+          // 4. Date match (supports YYYY-MM-DD, DD/MM/YYYY, DD/MM, DD-MM-YYYY, DD-MM, MM/YYYY)
+          let matchDate = false;
+          if (r.occurredAt) {
+            const rawDate = r.occurredAt.toLowerCase();
+            if (rawDate.includes(q)) {
+              matchDate = true;
+            } else {
+              const parts = r.occurredAt.split("-");
+              if (parts.length === 3) {
+                const [year, month, day] = parts;
+                const vnSlashFull = `${day}/${month}/${year}`;
+                const vnSlashShort = `${day}/${month}`;
+                const vnHyphenFull = `${day}-${month}-${year}`;
+                const vnHyphenShort = `${day}-${month}`;
+                const monthYearSlash = `${month}/${year}`;
+                if (
+                  vnSlashFull.includes(q) ||
+                  vnSlashShort.includes(q) ||
+                  vnHyphenFull.includes(q) ||
+                  vnHyphenShort.includes(q) ||
+                  monthYearSlash.includes(q)
+                ) {
+                  matchDate = true;
+                }
+              }
+            }
+          }
+
+          if (!matchTitle && !matchNote && !matchDate && !matchCategory) return false;
         }
 
         return true;
@@ -181,39 +241,41 @@ export const RecordList: React.FC<RecordListProps> = ({
       </div>
 
       {/* Category Pills Filter */}
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setFilterCat(0)}
-          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-            filterCat === 0
-              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-          }`}
-        >
-          Tất cả ({records.length})
-        </button>
-        {[1, 2, 3, 4, 5].map((c) => {
-          const catMeta = CATEGORIES[c];
-          const count = records.filter((r) => r.category === c).length;
-          return (
-            <button
-              key={c}
-              onClick={() => setFilterCat(c)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center space-x-1.5 ${
-                filterCat === c
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              <span>{catMeta.code}</span>
-              <span className="text-[10px] opacity-75 hidden sm:inline">{catMeta.shortName}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filterCat === c ? "bg-white/20 dark:bg-black/20" : "bg-slate-200 dark:bg-slate-700"}`}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {records.length > 0 && (
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            onClick={() => setFilterCat(0)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              filterCat === 0
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Tất cả ({records.length})
+          </button>
+          {[1, 2, 3, 4, 5].map((c) => {
+            const catMeta = CATEGORIES[c];
+            const count = records.filter((r) => r.category === c).length;
+            return (
+              <button
+                key={c}
+                onClick={() => setFilterCat(c)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                  filterCat === c
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                <span>{catMeta.code}</span>
+                <span className="text-[10px] opacity-75 hidden sm:inline">{catMeta.shortName}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filterCat === c ? "bg-white/20 dark:bg-black/20" : "bg-slate-200 dark:bg-slate-700"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Search & Sub-Filter Toolbar */}
       {records.length > 0 && (
@@ -222,15 +284,17 @@ export const RecordList: React.FC<RecordListProps> = ({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Tìm kiếm hoạt động theo tên, ngày, ghi chú..."
+              placeholder="Tìm kiếm theo tên hoạt động, ngày, ghi chú..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-8 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white transition-colors"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                aria-label="Xóa từ khóa tìm kiếm"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -241,18 +305,20 @@ export const RecordList: React.FC<RecordListProps> = ({
             <select
               value={filterType}
               onChange={(e: any) => setFilterType(e.target.value)}
+              aria-label="Bộ lọc trạng thái"
               className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-xl px-2.5 py-2 border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer"
             >
-              <option value="all">Mọi loại điểm</option>
-              <option value="add">Điểm cộng (+)</option>
-              <option value="deduct">Điểm trừ (-)</option>
-              <option value="evidence">Có ảnh minh chứng</option>
-              <option value="missing_evidence">Chưa có ảnh</option>
+              <option value="all">Tất cả</option>
+              <option value="add">Cộng điểm</option>
+              <option value="deduct">Điểm trừ</option>
+              <option value="evidence">Có minh chứng</option>
+              <option value="missing_evidence">Thiếu minh chứng</option>
             </select>
 
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
+              aria-label="Sắp xếp danh sách"
               className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-xl px-2.5 py-2 border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="newest">Mới nhất</option>
@@ -287,8 +353,31 @@ export const RecordList: React.FC<RecordListProps> = ({
           </button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-          Không tìm thấy hoạt động nào phù hợp với bộ lọc hiện tại.
+        <div className="py-10 px-4 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3 shadow-2xs">
+            <Search className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            {searchQuery.trim()
+              ? `Không tìm thấy hoạt động nào phù hợp với từ khóa '${searchQuery.trim()}'`
+              : "Không tìm thấy hoạt động nào phù hợp với bộ lọc hiện tại"}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 mb-4">
+            Hãy thử kiểm tra lại từ khóa tìm kiếm hoặc bấm nút bên dưới để khôi phục toàn bộ danh sách hoạt động.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("light");
+              setSearchQuery("");
+              setFilterCat(0);
+              setFilterType("all");
+            }}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs shadow-xs transition-colors cursor-pointer active:scale-95"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Xóa bộ lọc</span>
+          </button>
         </div>
       ) : (
         /* Records List / Timeline */
@@ -374,8 +463,20 @@ export const RecordList: React.FC<RecordListProps> = ({
                   )}
                 </div>
 
-                {/* Action Buttons: Edit / Delete */}
+                {/* Action Buttons: QR Verify / Edit / Delete */}
                 <div className="flex items-center space-x-1 shrink-0 self-center">
+                  <button
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setVerifyingRecord(r);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                    title="Mã QR & Thẻ xác nhận"
+                    aria-label="Mã QR & Thẻ xác nhận"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                  </button>
+
                   {onEditRecord && (
                     <button
                       onClick={() => {
@@ -416,6 +517,17 @@ export const RecordList: React.FC<RecordListProps> = ({
           isOpen={!!viewingProofRecord}
           onClose={() => setViewingProofRecord(null)}
           record={viewingProofRecord}
+        />
+      )}
+
+      {/* Activity Verification QR Modal */}
+      {verifyingRecord && (
+        <ActivityVerificationModal
+          isOpen={!!verifyingRecord}
+          onClose={() => setVerifyingRecord(null)}
+          record={verifyingRecord}
+          studentName={studentName}
+          studentClass={studentClass}
         />
       )}
     </div>

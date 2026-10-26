@@ -62,6 +62,8 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
           triggerHaptic("medium");
           onOpenAddModal();
         }}
+        aria-label="Ghi nhận điểm"
+        title="Ghi nhận điểm rèn luyện"
         className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0"
       >
         <Plus className="w-4 h-4 text-amber-400 dark:text-slate-950" />
@@ -74,6 +76,7 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
           triggerHaptic("light");
           onOpenProofVault();
         }}
+        aria-label="Kho minh chứng"
         className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-xs transition-colors cursor-pointer shrink-0"
         title="Kho ảnh minh chứng cá nhân"
       >

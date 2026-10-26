@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { username, password, fullName, faculty, className, honeypot, captchaToken } = body;
+    const { username, password, fullName, studentId, faculty, className, honeypot, captchaToken } = body;
 
     // Invisible CAPTCHA & Zero-Friction Bot Defense Verification
     const captchaCheck = verifyCaptchaSubmission({ honeypot, token: captchaToken });
@@ -90,6 +90,7 @@ export async function POST(req: Request) {
       username: cleanUsername,
       passwordHash,
       fullName: displayName,
+      studentId: studentId ? sanitizeText(studentId, 32) : null,
       faculty: faculty ? sanitizeText(faculty, 100) : null,
       className: className ? sanitizeText(className, 50) : null,
       role: userRole,
@@ -149,6 +150,7 @@ export async function POST(req: Request) {
       id: userId,
       username: cleanUsername,
       fullName: displayName,
+      studentId: studentId ? sanitizeText(studentId, 32) : null,
       faculty: faculty ? sanitizeText(faculty, 100) : null,
       className: className ? sanitizeText(className, 50) : null,
       role: userRole,

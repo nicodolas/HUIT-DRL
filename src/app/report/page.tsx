@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   XCircle,
   ExternalLink,
+  Edit3,
 } from "lucide-react";
 import { Semester, DrlRecord } from "@/lib/db/schema";
 import { ScoreCalculationResult } from "@/lib/drl/calculator";
@@ -62,6 +63,33 @@ function ReportContent() {
   const [evidenceFolderUrl, setEvidenceFolderUrl] = useState("");
   const [exportSuccess, setExportSuccess] = useState(false);
   const [auditFilter, setAuditFilter] = useState<"all" | "valid" | "pending_review" | "missing" | "rejected">("all");
+  const [isEditingMssv, setIsEditingMssv] = useState(false);
+  const [mssvInput, setMssvInput] = useState("");
+  const [savingMssv, setSavingMssv] = useState(false);
+
+  const handleSaveMssv = async () => {
+    setSavingMssv(true);
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: mssvInput.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+        }
+        setIsEditingMssv(false);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingMssv(false);
+    }
+  };
 
   // Initialize evidenceFolderUrl from localStorage or records
   useEffect(() => {
@@ -187,6 +215,7 @@ function ReportContent() {
       {
         fullName: user.fullName,
         username: user.username,
+        studentId: user.studentId || undefined,
         faculty: user.faculty || undefined,
         className: user.className || undefined,
       },
@@ -449,7 +478,65 @@ function ReportContent() {
           </div>
           <div>
             <span className="text-slate-500">Mã số sinh viên (MSSV):</span>{" "}
-            <span className="font-mono font-semibold text-slate-900">@{user.username}</span>
+            {isEditingMssv ? (
+              <span className="inline-flex items-center space-x-1.5 print:hidden">
+                <input
+                  type="text"
+                  value={mssvInput}
+                  onChange={(e) => setMssvInput(e.target.value)}
+                  placeholder="Ví dụ: 2001210123"
+                  maxLength={32}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSaveMssv();
+                    } else if (e.key === "Escape") {
+                      setIsEditingMssv(false);
+                    }
+                  }}
+                  className="text-xs px-2 py-0.5 border border-indigo-400 focus:ring-1 focus:ring-indigo-500 rounded font-mono font-semibold text-slate-900 focus:outline-none w-32 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveMssv}
+                  disabled={savingMssv}
+                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 cursor-pointer disabled:opacity-50"
+                >
+                  {savingMssv ? "Lưu..." : "Lưu"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingMssv(false)}
+                  className="text-[11px] text-slate-500 hover:text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded cursor-pointer"
+                >
+                  Hủy
+                </button>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1.5 group">
+                <span className="font-mono font-semibold text-slate-900">
+                  {user.studentId || `@${user.username}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMssvInput(user.studentId || "");
+                    setIsEditingMssv(true);
+                  }}
+                  title="Chỉnh sửa MSSV trên phiếu (tùy chọn)"
+                  className="text-slate-400 hover:text-indigo-600 print:hidden p-0.5 rounded hover:bg-slate-200/60 transition-colors cursor-pointer"
+                  aria-label="Sửa MSSV"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+            {isEditingMssv && (
+              <span className="hidden print:inline font-mono font-semibold text-slate-900">
+                {mssvInput || user.studentId || `@${user.username}`}
+              </span>
+            )}
           </div>
           <div>
             <span className="text-slate-500">Lớp sinh hoạt:</span>{" "}

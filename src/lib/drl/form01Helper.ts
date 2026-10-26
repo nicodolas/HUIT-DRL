@@ -198,7 +198,7 @@ export interface Form01ExportPayload {
 }
 
 export function createForm01ExportData(
-  student: { fullName: string; username: string; faculty?: string; className?: string },
+  student: { fullName: string; username: string; studentId?: string; faculty?: string; className?: string },
   semester: Semester,
   scoreSummary: ScoreCalculationResult,
   records: DrlRecord[],

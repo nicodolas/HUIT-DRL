@@ -17,6 +17,7 @@ export async function GET() {
       id: session.id,
       username: session.username,
       fullName: session.fullName,
+      studentId: session.studentId || null,
       faculty: session.faculty,
       className: session.className,
       role: session.role,
@@ -63,7 +64,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { fullName, faculty, className, currentPassword, newPassword } = body;
+    const { fullName, studentId, faculty, className, currentPassword, newPassword } = body;
 
     // 4. Validate and sanitize permitted fields
     let newFullName = session.fullName;
@@ -78,6 +79,11 @@ export async function PATCH(req: Request) {
       newFullName = sanitized.trim();
     }
 
+    const newStudentId =
+      studentId !== undefined
+        ? sanitizeText(studentId, 32)?.trim() || null
+        : session.studentId;
+
     const newFaculty =
       faculty !== undefined
         ? sanitizeText(faculty, 100)?.trim() || null
@@ -91,6 +97,7 @@ export async function PATCH(req: Request) {
     // Strict whitelist payload - NEVER include role or username
     const updatePayload: Record<string, any> = {
       fullName: newFullName,
+      studentId: newStudentId,
       faculty: newFaculty,
       className: newClassName,
       updatedAt: new Date(),
@@ -142,6 +149,7 @@ export async function PATCH(req: Request) {
       id: session.id,
       username: session.username,
       fullName: newFullName,
+      studentId: newStudentId,
       faculty: newFaculty,
       className: newClassName,
       role: session.role,

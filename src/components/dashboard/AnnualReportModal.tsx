@@ -119,15 +119,15 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-6">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold tracking-tight">
+              <h2 className="text-base font-bold tracking-tight text-white">
                 Tổng Hợp Điểm Rèn Luyện Năm Học (Điều 11)
               </h2>
               <p className="text-[11px] text-slate-300">
@@ -145,16 +145,16 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
 
         <div className="p-4 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Year selector & actions toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold text-slate-700">Chọn năm học:</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Chọn năm học:</span>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="text-xs font-bold px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="text-xs font-bold px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900"
               >
                 {academicYears.map((yr) => (
-                  <option key={yr} value={yr}>
+                  <option key={yr} value={yr} className="dark:bg-slate-800">
                     Năm học {yr}
                   </option>
                 ))}
@@ -164,16 +164,16 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleShareZalo}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
               >
-                <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                <Share2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{copied ? "Đã chép!" : "Chia sẻ"}</span>
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-semibold text-xs hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
               >
-                <Printer className="w-3.5 h-3.5 text-amber-400" />
+                <Printer className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
                 <span>In A4 Năm Học</span>
               </button>
             </div>
@@ -224,12 +224,12 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               </div>
 
               {/* Breakdown Table by Criteria and Semesters */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+                <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Bảng đối chiếu điểm chi tiết giữa các học kỳ
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     Thang 100 điểm
                   </span>
                 </div>
@@ -237,7 +237,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                      <tr className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                         <th className="p-3 font-semibold">Nội dung đánh giá (QĐ 3385)</th>
                         <th className="p-3 font-semibold text-center w-24">Điểm trần</th>
                         {yearSemestersData.semesters.map((s, idx) => (
@@ -245,12 +245,12 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                             {s.semester.name.split("(")[0].trim() || `HK ${idx + 1}`}
                           </th>
                         ))}
-                        <th className="p-3 font-semibold text-center bg-amber-50/50 text-amber-900">
+                        <th className="p-3 font-semibold text-center bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-300">
                           TB Năm
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {[1, 2, 3, 4, 5].map((catNum) => {
                         const max = CATEGORIES[catNum].maxPoints;
                         const catScores = yearSemestersData.semesters.map(
@@ -262,47 +262,47 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                             : 0;
 
                         return (
-                          <tr key={catNum} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="p-3 text-slate-900 font-medium">
-                              <span className="font-bold text-slate-500 mr-1.5 font-mono">
+                          <tr key={catNum} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                            <td className="p-3 text-slate-900 dark:text-slate-200 font-medium">
+                              <span className="font-bold text-slate-500 dark:text-slate-400 mr-1.5 font-mono">
                                 TC{catNum}:
                               </span>
                               {CATEGORIES[catNum].name}
                             </td>
-                            <td className="p-3 text-center text-slate-500 font-mono">
+                            <td className="p-3 text-center text-slate-500 dark:text-slate-400 font-mono">
                               {max}đ
                             </td>
                             {catScores.map((sc, i) => (
-                              <td key={i} className="p-3 text-center font-mono font-bold text-slate-800">
+                              <td key={i} className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
                                 {sc}
                               </td>
                             ))}
-                            <td className="p-3 text-center font-mono font-extrabold text-amber-800 bg-amber-50/30">
+                            <td className="p-3 text-center font-mono font-extrabold text-amber-800 dark:text-amber-300 bg-amber-50/30 dark:bg-amber-950/20">
                               {catAvg}
                             </td>
                           </tr>
                         );
                       })}
                       {/* Total row */}
-                      <tr className="bg-slate-50 font-bold border-t-2 border-slate-300">
-                        <td className="p-3 text-slate-900 uppercase">
+                      <tr className="bg-slate-50 dark:bg-slate-800 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                        <td className="p-3 text-slate-900 dark:text-white uppercase">
                           Tổng điểm rèn luyện
                         </td>
-                        <td className="p-3 text-center text-slate-600 font-mono">
+                        <td className="p-3 text-center text-slate-600 dark:text-slate-400 font-mono">
                           100đ
                         </td>
                         {yearSemestersData.semesters.map((s) => (
-                          <td key={s.semester.id} className="p-3 text-center font-mono font-bold text-slate-900">
+                          <td key={s.semester.id} className="p-3 text-center font-mono font-bold text-slate-900 dark:text-white">
                             {s.result.totalScore}
                           </td>
                         ))}
-                        <td className="p-3 text-center font-mono font-extrabold text-amber-900 bg-amber-100/50 text-sm">
+                        <td className="p-3 text-center font-mono font-extrabold text-amber-900 dark:text-amber-300 bg-amber-100/50 dark:bg-amber-950/40 text-sm">
                           {yearSemestersData.annualScore}
                         </td>
                       </tr>
                       {/* Rating row */}
-                      <tr className="bg-white">
-                        <td className="p-3 text-slate-700 font-medium">
+                      <tr className="bg-white dark:bg-slate-900">
+                        <td className="p-3 text-slate-700 dark:text-slate-300 font-medium">
                           Xếp loại học kỳ & năm học
                         </td>
                         <td className="p-3 text-center text-slate-400 font-mono">-</td>
@@ -319,7 +319,7 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
                             </span>
                           </td>
                         ))}
-                        <td className="p-3 text-center font-bold bg-amber-50/30">
+                        <td className="p-3 text-center font-bold bg-amber-50/30 dark:bg-amber-950/20">
                           <span
                             className="px-2 py-0.5 rounded text-[10px]"
                             style={{
@@ -337,8 +337,8 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               </div>
 
               {/* Regulation Quote Box */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1">
-                <span className="font-bold text-slate-800 block">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-1">
+                <span className="font-bold text-slate-800 dark:text-slate-100 block">
                   Trích Điều 11 QĐ 3385/QĐ-DCT:
                 </span>
                 <p>
@@ -348,18 +348,18 @@ export const AnnualReportModal: React.FC<AnnualReportModalProps> = ({
               </div>
             </div>
           ) : (
-            <div className="py-12 text-center text-xs text-slate-500">
+            <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
               Không tìm thấy dữ liệu học kỳ cho năm học {selectedYear}. Vui lòng tạo học kỳ tương ứng.
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>Hệ thống ĐRL Trường ĐH Công Thương TP.HCM</span>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold cursor-pointer transition-colors"
           >
             Đóng
           </button>

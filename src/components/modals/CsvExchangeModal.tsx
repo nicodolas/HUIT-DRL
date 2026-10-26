@@ -243,16 +243,16 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold">Trao Đổi Dữ Liệu CSV / Excel</h2>
+              <h2 className="text-base font-bold text-white">Trao Đổi Dữ Liệu CSV / Excel</h2>
               <p className="text-xs text-slate-300">
                 Xuất file bảng kê hoặc nhập danh sách hàng loạt ({semester.name})
               </p>
@@ -267,14 +267,14 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 px-6 pt-3 gap-2">
           <button
             type="button"
             onClick={() => setActiveTab("export")}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center space-x-1.5 ${
               activeTab === "export"
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "border-slate-900 dark:border-amber-400 text-slate-900 dark:text-white"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Download className="w-4 h-4" />
@@ -285,8 +285,8 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
             onClick={() => setActiveTab("import")}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer flex items-center space-x-1.5 ${
               activeTab === "import"
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-500 hover:text-slate-800"
+                ? "border-slate-900 dark:border-amber-400 text-slate-900 dark:text-white"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Upload className="w-4 h-4" />
@@ -298,27 +298,27 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {activeTab === "export" ? (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Chuẩn hóa UTF-8 BOM cho Microsoft Excel</span>
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   File CSV được tạo kèm mã định danh byte order mark UTF-8, đảm bảo mở trực tiếp bằng Microsoft Excel trên Windows/Mac hoàn toàn không bị lỗi font tiếng Việt.
                 </p>
-                <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-200">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">
                   Bao gồm: Mã tiêu chí (TC1..TC5), Tên hoạt động, Loại, Số điểm, Ngày diễn ra, Link minh chứng Google Drive, Ghi chú.
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-xl p-4 bg-white">
-                <div className="flex items-center justify-between text-xs text-slate-600 mb-2 font-medium">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-800/80">
+                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 mb-2 font-medium">
                   <span>Học kỳ xuất:</span>
-                  <span className="font-bold text-slate-900">{semester.name}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{semester.name}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-slate-600 mb-4 font-medium">
+                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 mb-4 font-medium">
                   <span>Số lượng hoạt động:</span>
-                  <span className="font-bold text-slate-900">{records.length} mục</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{records.length} mục</span>
                 </div>
 
                 <button
@@ -334,13 +334,13 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
           ) : (
             <div className="space-y-4">
               {importResult ? (
-                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 text-center">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                  <h3 className="text-sm font-bold text-emerald-900">
+                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-2 text-center">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                  <h3 className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
                     Nhập thành công {importResult.success} hoạt động!
                   </h3>
                   {importResult.failed > 0 && (
-                    <p className="text-xs text-red-600">
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       Có {importResult.failed} hoạt động không thể nhập do lỗi dữ liệu.
                     </p>
                   )}
@@ -351,7 +351,7 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
                       setParsedRows([]);
                       setCsvText("");
                     }}
-                    className="mt-2 px-4 py-1.5 text-xs font-semibold bg-white border border-emerald-300 rounded-lg text-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                    className="mt-2 px-4 py-1.5 text-xs font-semibold bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-700 cursor-pointer"
                   >
                     Tiếp tục nhập thêm
                   </button>
@@ -359,8 +359,8 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
               ) : (
                 <>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <label className="w-full sm:w-auto flex-1 flex items-center justify-center px-4 py-2 bg-white border border-dashed border-slate-300 hover:border-slate-400 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer transition-colors shadow-xs">
-                      <Upload className="w-4 h-4 mr-2 text-slate-500" />
+                    <label className="w-full sm:w-auto flex-1 flex items-center justify-center px-4 py-2 bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer transition-colors shadow-xs">
+                      <Upload className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
                       <span>Chọn file .csv từ máy tính</span>
                       <input
                         type="file"
@@ -372,7 +372,7 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                       Hoặc Dán Dữ Liệu Bảng (Excel / Google Sheet / CSV):
                     </label>
                     <textarea
@@ -380,40 +380,40 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
                       value={csvText}
                       onChange={(e) => handleParseCsv(e.target.value)}
                       placeholder={`Ví dụ định dạng dán từ Excel hoặc CSV:\nTC1, Nghiên cứu khoa học sinh viên, 5, 2026-10-15, ${APP_CONFIG.sampleEvidenceDriveUrl}, Đạt giải nhì\nTC3, Tham gia ngày hội việc làm, 3, 2026-10-20, ${APP_CONFIG.sampleEvidenceDriveUrl}, Nhận giấy chứng nhận`}
-                      className="w-full text-xs font-mono p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+                      className="w-full text-xs font-mono p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
                     />
                   </div>
 
                   {parsedRows.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-800">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
                           Xem trước kết quả ({parsedRows.filter((r) => r.isValid).length}/{parsedRows.length} hợp lệ):
                         </span>
                       </div>
 
-                      <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
+                      <div className="max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                         {parsedRows.map((r, idx) => (
                           <div
                             key={idx}
                             className={`p-2.5 flex items-center justify-between ${
-                              r.isValid ? "bg-white" : "bg-red-50 text-red-900"
+                              r.isValid ? "bg-white dark:bg-slate-850 dark:bg-slate-800/80" : "bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-300"
                             }`}
                           >
                             <div className="flex items-center space-x-2 truncate">
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                                 TC{r.category}
                               </span>
-                              <span className="font-medium truncate">{r.title || "(Thiếu tên)"}</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100 truncate">{r.title || "(Thiếu tên)"}</span>
                             </div>
                             <div className="flex items-center space-x-2 shrink-0 ml-2">
-                              <span className="font-mono font-bold text-slate-700">
+                              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
                                 {r.points > 0 ? `+${r.points}` : r.points}đ
                               </span>
                               {r.isValid ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                               ) : (
-                                <AlertCircle className="w-4 h-4 text-red-600" />
+                                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                               )}
                             </div>
                           </div>
@@ -424,7 +424,7 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
                         type="button"
                         onClick={handleImportSubmit}
                         disabled={isSubmitting || parsedRows.filter((r) => r.isValid).length === 0}
-                        className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2"
+                        className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 rounded-xl text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2"
                       >
                         {isSubmitting ? (
                           <span>Đang lưu vào học kỳ...</span>
@@ -443,11 +443,11 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end">
+        <div className="bg-slate-50 dark:bg-slate-900/90 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             Đóng
           </button>

@@ -315,35 +315,35 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-sm text-slate-900">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
               {recordToEdit ? "Chỉnh sửa mục điểm" : "Ghi nhận điểm rèn luyện"}
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
               {recordToEdit ? "Cập nhật thông tin hoạt động" : "Theo quy chuẩn Quyết định số 3385/QĐ-DCT"}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab selection */}
-        <div className="px-5 pt-3 pb-2 border-b border-slate-100 flex space-x-2">
+        <div className="px-5 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 flex space-x-2">
           <button
             type="button"
             onClick={() => setTab("preset")}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
               tab === "preset"
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-bold"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             Mục chuẩn QĐ 3385 ({presets.length})
@@ -353,8 +353,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             onClick={() => setTab("custom")}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
               tab === "custom"
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 font-bold"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             Tự nhập mục riêng
@@ -364,7 +364,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {error && (
-            <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-medium">
+            <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-lg font-medium">
               {error}
             </div>
           )}
@@ -378,8 +378,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   onClick={() => setSelectedCategory(0)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                     selectedCategory === 0
-                      ? "bg-slate-800 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
                   Tất cả
@@ -391,8 +391,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     onClick={() => setSelectedCategory(c)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                       selectedCategory === c
-                        ? "bg-slate-800 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                     }`}
                   >
                     TC {c}
@@ -403,7 +403,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               {/* Popular Shortcuts */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-500" />
                     Hoạt động thường gặp
                   </span>
@@ -424,18 +424,18 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                         }}
                         className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-slate-900 text-white border-slate-900"
-                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                            ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70 hover:border-slate-300"
                         }`}
                       >
                         <span>{item.label}</span>
                         <span
                           className={`text-[10px] font-mono font-bold px-1 rounded ${
                             isSelected
-                              ? "bg-slate-700 text-amber-300"
+                              ? "bg-slate-700 dark:bg-slate-200 text-amber-300 dark:text-slate-900"
                               : item.badge.startsWith("+")
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-red-50 text-red-700"
+                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                              : "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300"
                           }`}
                         >
                           {item.badge}
@@ -448,20 +448,20 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
               {/* Search */}
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Tìm kiếm: SHCD, BHYT, rớt môn, văn nghệ, CLB, NCKH..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
                 />
               </div>
 
               {/* Presets List */}
-              <div className="max-h-52 overflow-y-auto space-y-1.5 border border-slate-200 rounded-lg p-2 bg-slate-50/50">
+              <div className="max-h-52 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-slate-800 rounded-lg p-2 bg-slate-50/50 dark:bg-slate-950/40">
                 {filteredPresets.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-400">
+                  <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
                     Không tìm thấy tiêu chí phù hợp
                   </div>
                 ) : (
@@ -474,20 +474,20 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                         onClick={() => setSelectedPreset(p)}
                         className={`p-2.5 rounded-lg border text-left cursor-pointer transition-colors flex items-center justify-between ${
                           isSelected
-                            ? "bg-white border-slate-900 shadow-2xs"
-                            : "bg-white border-slate-200 hover:border-slate-300"
+                            ? "bg-white dark:bg-slate-800 border-slate-900 dark:border-amber-400 shadow-2xs"
+                            : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
                         }`}
                       >
                         <div className="flex-1 pr-2 min-w-0">
                           <div className="flex items-center space-x-1.5">
-                            <span className="text-[10px] font-mono font-bold px-1 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                            <span className="text-[10px] font-mono font-bold px-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                               TC{p.category}
                             </span>
-                            <span className="text-xs font-semibold text-slate-900 truncate">
+                            <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                               {p.title}
                             </span>
                           </div>
-                          <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                             {p.unit ? `Đơn vị: ${p.unit}` : ""} {p.description ? `• ${p.description}` : ""}
                           </div>
                         </div>
@@ -496,14 +496,14 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                           <span
                             className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
                               isAdd
-                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                : "bg-red-50 text-red-800 border border-red-200"
+                                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                : "bg-red-50 dark:bg-red-950/60 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800"
                             }`}
                           >
                             {isAdd ? `+${p.points}` : p.points}đ
                           </span>
                           {isSelected && (
-                            <Check className="w-4 h-4 text-slate-900" />
+                            <Check className="w-4 h-4 text-slate-900 dark:text-amber-400" />
                           )}
                         </div>
                       </div>
@@ -516,16 +516,16 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             /* Custom Tab */
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Thuộc tiêu chí:
                 </label>
                 <select
                   value={customCategory}
                   onChange={(e) => setCustomCategory(Number(e.target.value))}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 font-medium cursor-pointer"
                 >
                   {[1, 2, 3, 4, 5].map((c) => (
-                    <option key={c} value={c}>
+                    <option key={c} value={c} className="dark:bg-slate-800">
                       TC {c}: {CATEGORIES[c].name} (Trần {CATEGORIES[c].maxPoints}đ)
                     </option>
                   ))}
@@ -533,7 +533,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Tên hoạt động / Lý do:
                 </label>
                 <input
@@ -541,7 +541,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   placeholder="Ví dụ: Tham gia ngày hội việc làm HUIT..."
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
                 />
 
                 {/* Regulation 3385 Live Classifier Pill */}
@@ -595,7 +595,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Số điểm (Dương để cộng, âm để trừ):
                 </label>
                 <input
@@ -604,17 +604,17 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   placeholder="Ví dụ: +4 hoặc -5"
                   value={customPoints}
                   onChange={(e) => setCustomPoints(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono font-bold"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 font-mono font-bold"
                 />
               </div>
             </div>
           )}
 
           {/* Common Fields */}
-          <div className="pt-2 border-t border-slate-100 space-y-3">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Số lần / Số lượng:
                 </label>
                 <input
@@ -623,25 +623,25 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   max="20"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono font-bold"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 font-mono font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Ngày diễn ra:
                 </label>
                 <input
                   type="date"
                   value={occurredAt}
                   onChange={(e) => setOccurredAt(e.target.value)}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 Ghi chú thêm (tùy chọn):
               </label>
               <input
@@ -649,17 +649,17 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                 placeholder="Ví dụ: Có giấy xác nhận, Hội trường A..."
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Minh chứng hoạt động (URL Drive hoặc chụp/chọn ảnh trực tiếp):
                 </label>
                 {compressingImage && (
-                  <span className="text-[11px] text-amber-600 flex items-center space-x-1 font-medium">
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center space-x-1 font-medium">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     <span>Đang nén WebP...</span>
                   </span>
@@ -677,7 +677,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     }
                   }}
                   readOnly={evidenceUrl.startsWith("data:image")}
-                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 font-mono text-[11px]"
                 />
 
                 {/* Dedicated Action Buttons: Native Camera & Gallery */}
@@ -686,10 +686,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
                     disabled={compressingImage}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
                     title="Mở camera điện thoại chụp trực tiếp giấy khen, phiếu điểm danh"
                   >
-                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <Camera className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
                     <span>Chụp Camera</span>
                   </button>
 
@@ -697,10 +697,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     type="button"
                     onClick={() => galleryInputRef.current?.click()}
                     disabled={compressingImage}
-                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs border border-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer disabled:opacity-50"
                     title="Chọn ảnh có sẵn từ máy tính hoặc thư viện ảnh"
                   >
-                    <ImageIcon className="w-3.5 h-3.5 text-slate-600" />
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                     <span>Chọn từ thư viện</span>
                   </button>
                 </div>
@@ -820,11 +820,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end space-x-2">
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-end space-x-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             Hủy
           </button>
@@ -832,7 +832,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 transition-colors cursor-pointer disabled:opacity-50"
           >
             {loading ? "Đang lưu..." : recordToEdit ? "Lưu thay đổi" : "Xác nhận"}
           </button>

@@ -47,17 +47,17 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center">
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
               Điểm rèn luyện tích lũy ({data.totalSemesters} học kỳ)
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Điểm trung bình toàn khóa theo Điều 12 QĐ 3385
             </p>
           </div>
@@ -65,8 +65,8 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
 
         {data.cumulativeRating && (
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-500">Trung bình:</span>
-            <span className="text-base font-extrabold text-slate-900">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Trung bình:</span>
+            <span className="text-base font-extrabold text-slate-900 dark:text-white">
               {data.cumulativeAverage}đ
             </span>
             <span
@@ -79,9 +79,9 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
       </div>
 
       {/* SVG Multi-Semester Progression Chart */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
-          <span className="font-semibold text-slate-700">Biểu đồ tiến trình qua các học kỳ:</span>
+      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+          <span className="font-semibold text-slate-700 dark:text-slate-300">Biểu đồ tiến trình qua các học kỳ:</span>
           <div className="flex items-center space-x-3 text-[10px]">
             <span className="flex items-center">
               <span className="w-2 h-0.5 bg-amber-500 inline-block mr-1" />
@@ -109,27 +109,27 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
                   onClick={() => onSelectSemester(s.id)}
                   className="flex-1 min-w-[42px] max-w-[68px] flex flex-col items-center h-full justify-end group cursor-pointer"
                 >
-                  <span className="text-[10px] font-mono font-bold text-slate-700 opacity-90 group-hover:scale-105 transition-transform mb-1">
+                  <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 opacity-90 group-hover:scale-105 transition-transform mb-1">
                     {s.totalScore}đ
                   </span>
 
                   <div className="w-full max-w-[42px] h-full flex items-end relative">
                     {/* Guideline at 90% */}
-                    <div className="absolute w-full top-[10%] border-t border-dashed border-amber-300 pointer-events-none" />
+                    <div className="absolute w-full top-[10%] border-t border-dashed border-amber-300 dark:border-amber-600/70 pointer-events-none" />
                     {/* Guideline at 80% */}
-                    <div className="absolute w-full top-[20%] border-t border-dashed border-emerald-300 pointer-events-none" />
+                    <div className="absolute w-full top-[20%] border-t border-dashed border-emerald-300 dark:border-emerald-600/70 pointer-events-none" />
 
                     <div
                       style={{ height: `${barHeight}%` }}
                       className={`w-full rounded-t-md transition-all duration-300 ${
                         isSelected
-                          ? "bg-slate-900 ring-2 ring-amber-400"
-                          : "bg-slate-300 group-hover:bg-slate-400"
+                          ? "bg-slate-900 dark:bg-amber-400 ring-2 ring-amber-400"
+                          : "bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400 dark:group-hover:bg-slate-500"
                       }`}
                     />
                   </div>
 
-                  <span className="text-[10px] text-slate-600 truncate max-w-[56px] mt-1.5 font-medium text-center" title={s.name}>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-400 truncate max-w-[56px] mt-1.5 font-medium text-center" title={s.name}>
                     {s.name.replace("Học kỳ", "HK")}
                   </span>
                 </div>
@@ -151,13 +151,13 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
               onClick={() => onSelectSemester(s.id)}
               className={`p-3 rounded-lg border text-xs cursor-pointer transition-all ${
                 isSelected
-                  ? "border-slate-900 bg-slate-50/80 shadow-2xs"
-                  : "border-slate-200 hover:border-slate-300 bg-white"
+                  ? "border-slate-900 dark:border-amber-400 bg-slate-50/80 dark:bg-slate-800 shadow-2xs"
+                  : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/80"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-slate-800">{s.name}</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{s.name}</span>
                   {isSelected && (
                     <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-900 text-white font-mono">
                       Đang xem
@@ -166,7 +166,7 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <span className="font-bold text-slate-900 text-sm">
+                  <span className="font-bold text-slate-900 dark:text-white text-sm">
                     {s.totalScore}đ
                   </span>
                   <span
@@ -179,7 +179,7 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
               </div>
 
               {/* Progress Bar */}
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{

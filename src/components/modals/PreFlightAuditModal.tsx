@@ -85,16 +85,16 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
   readiness = Math.max(0, Math.min(100, readiness));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold">Kiểm Tra Hồ Sơ Trước Khi Nộp</h2>
+              <h2 className="text-base font-bold text-white">Kiểm Tra Hồ Sơ Trước Khi Nộp</h2>
               <p className="text-xs text-slate-300">
                 Chẩn đoán tính hợp lệ theo Quy chế 3385/QĐ-DCT ({semester.name})
               </p>
@@ -114,29 +114,29 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
           <div
             className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               readiness >= 85
-                ? "bg-emerald-50 border-emerald-200"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
                 : readiness >= 60
-                ? "bg-amber-50 border-amber-200"
-                : "bg-red-50 border-red-200"
+                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+                : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800"
             }`}
           >
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Độ Sẵn Sàng Hồ Sơ
               </div>
               <div className="flex items-baseline space-x-2 mt-1">
                 <span
                   className={`text-3xl font-black ${
                     readiness >= 85
-                      ? "text-emerald-700"
+                      ? "text-emerald-700 dark:text-emerald-400"
                       : readiness >= 60
-                      ? "text-amber-700"
-                      : "text-red-700"
+                      ? "text-amber-700 dark:text-amber-400"
+                      : "text-red-700 dark:text-red-400"
                   }`}
                 >
                   {readiness}%
                 </span>
-                <span className="text-xs text-slate-600 font-medium">
+                <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
                   {readiness >= 85
                     ? "Hồ sơ chuẩn chỉ, sẵn sàng nộp cho Lớp trưởng"
                     : readiness >= 60
@@ -148,54 +148,54 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
 
             <div className="flex items-center space-x-3 shrink-0">
               <div className="text-right">
-                <div className="text-[11px] text-slate-500">Điểm tự đánh giá</div>
-                <div className="text-xl font-bold text-slate-900">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">Điểm tự đánh giá</div>
+                <div className="text-xl font-bold text-slate-900 dark:text-white">
                   {scoreResult.totalScore} / 100
                 </div>
               </div>
-              <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-xs">
+              <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs">
                 {scoreResult.rating.label}
               </div>
             </div>
           </div>
 
           {/* Diagnostic 1: Evidence completeness */}
-          <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 bg-white dark:bg-slate-900">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {missingEvidenceRecords.length === 0 ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 )}
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                   1. Minh Chứng Hoạt Động Ngoại Khóa ({evidencePercent}%)
                 </h3>
               </div>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {nonDefaultRecords.length - missingEvidenceRecords.length}/{nonDefaultRecords.length} đã có link
               </span>
             </div>
 
             {missingEvidenceRecords.length === 0 ? (
-              <p className="text-xs text-emerald-700 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
                 Tuyệt vời! Toàn bộ {nonDefaultRecords.length} hoạt động cộng điểm của bạn đều đã có link minh chứng (Google Drive / hình ảnh). Ban cán sự và Thư ký lớp sẽ dễ dàng phê duyệt.
               </p>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-100 dark:border-amber-800">
                   Có <strong>{missingEvidenceRecords.length} hoạt động</strong> chưa gắn link ảnh minh chứng. Theo Điều 13, nếu không có minh chứng, Ban cán sự lớp có thể trừ hoặc loại bỏ điểm này khi họp xét:
                 </p>
                 <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
                   {missingEvidenceRecords.map((r) => (
                     <div
                       key={r.id}
-                      className="text-xs p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between"
+                      className="text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between"
                     >
-                      <span className="font-medium text-slate-800 truncate max-w-xs">
+                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate max-w-xs">
                         {r.title}
                       </span>
-                      <span className="text-slate-500 font-mono text-[11px] shrink-0 ml-2">
+                      <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px] shrink-0 ml-2">
                         +{r.points}đ (TC{r.category})
                       </span>
                     </div>
@@ -206,44 +206,44 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
           </div>
 
           {/* Diagnostic 2: Category caps */}
-          <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 bg-white dark:bg-slate-900">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {overflowCategories.length === 0 ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <Info className="w-5 h-5 text-blue-600" />
+                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 )}
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                   2. Khống Chế Điểm Trần Từng Tiêu Chí
                 </h3>
               </div>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {overflowCategories.length === 0 ? "Tối ưu" : `${overflowCategories.length} tiêu chí tràn khung`}
               </span>
             </div>
 
             {overflowCategories.length === 0 ? (
-              <p className="text-xs text-emerald-700 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-100 dark:border-emerald-800">
                 Các tiêu chí đều nằm trong hạn mức điểm trần của nhà trường, không có điểm tích lũy nào bị lãng phí.
               </p>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-slate-600 bg-blue-50/60 p-2.5 rounded-lg border border-blue-100">
+                <p className="text-xs text-slate-600 dark:text-slate-300 bg-blue-50/60 dark:bg-blue-950/40 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900">
                   Theo Quy chế HUIT, điểm từng tiêu chí không được vượt mức trần quy định. Điểm vượt trần sẽ không được bù sang tiêu chí khác:
                 </p>
                 <div className="space-y-1.5">
                   {overflowCategories.map((ov) => (
                     <div
                       key={ov.category}
-                      className="text-xs p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between"
+                      className="text-xs p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between"
                     >
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
                         TC {ov.category} ({ov.name})
                       </span>
-                      <span className="text-slate-600 text-[11px]">
+                      <span className="text-slate-600 dark:text-slate-400 text-[11px]">
                         Đạt <strong>{ov.raw}đ</strong> / Trần {ov.max}đ (Dư{" "}
-                        <span className="text-amber-600 font-bold">+{ov.lost}đ</span>)
+                        <span className="text-amber-600 dark:text-amber-400 font-bold">+{ov.lost}đ</span>)
                       </span>
                     </div>
                   ))}
@@ -253,23 +253,23 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
           </div>
 
           {/* Diagnostic 3: Baseline & Discipline */}
-          <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 bg-white dark:bg-slate-900">
             <div className="flex items-center space-x-2">
-              <Award className="w-5 h-5 text-slate-700" />
-              <h3 className="text-sm font-bold text-slate-900">
+              <Award className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                 3. Điều Kiện Kỷ Luật & Khởi Điểm
               </h3>
             </div>
             <div className="text-xs space-y-2">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-slate-600">Khởi điểm mặc định (60đ):</span>
-                <span className="font-bold text-slate-900">TC1: 25đ | TC2: 20đ | TC4: 15đ</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                <span className="text-slate-600 dark:text-slate-400">Khởi điểm mặc định (60đ):</span>
+                <span className="font-bold text-slate-900 dark:text-white">TC1: 25đ | TC2: 20đ | TC4: 15đ</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">
-                <span className="text-slate-600">Tình trạng kỷ luật học kỳ:</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                <span className="text-slate-600 dark:text-slate-400">Tình trạng kỷ luật học kỳ:</span>
                 <span
                   className={`font-bold ${
-                    hasDiscipline ? "text-red-700" : "text-emerald-700"
+                    hasDiscipline ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"
                   }`}
                 >
                   {hasDiscipline
@@ -282,11 +282,11 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 dark:bg-slate-900/90 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             Đóng
           </button>
@@ -299,9 +299,9 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
                   onClose();
                   onNavigateToReport();
                 }}
-                className="px-4 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
+                className="px-4 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4 text-amber-400 dark:text-slate-950" />
                 <span>Xem & In Form 01</span>
               </button>
             )}

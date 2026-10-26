@@ -274,10 +274,10 @@ function ReportContent() {
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Dashboard</span>
+            <span>Trang chủ</span>
           </Link>
-          <div className="text-xs text-slate-500">
-            Phiếu ĐRL Form 01 • QĐ 3385/QĐ-DCT
+          <div className="text-xs text-slate-500 font-medium">
+            Mẫu số 01 - Phiếu ĐRL • QĐ 3385/QĐ-DCT
           </div>
         </div>
 
@@ -325,7 +325,7 @@ function ReportContent() {
           <button
             onClick={handleExportForm01Json}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-            title="Tải về file sao lưu hồ sơ Form 01 định dạng JSON"
+            title="Tải về file sao lưu hồ sơ Mẫu số 01"
           >
             {exportSuccess ? (
               <>
@@ -335,7 +335,7 @@ function ReportContent() {
             ) : (
               <>
                 <FileDown className="w-3.5 h-3.5 text-slate-600" />
-                <span>Sao lưu JSON</span>
+                <span>Sao lưu hồ sơ</span>
               </>
             )}
           </button>
@@ -344,7 +344,7 @@ function ReportContent() {
           <button
             onClick={handleShareSummary}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-            title="Chia sẻ kết quả qua Zalo / Mobile Share"
+            title="Chia sẻ kết quả rèn luyện"
           >
             {shareFeedback ? (
               <>
@@ -398,7 +398,7 @@ function ReportContent() {
             title="In phiếu hoặc xuất định dạng PDF"
           >
             <Printer className="w-4 h-4 text-amber-400" />
-            <span>In phiếu / PDF</span>
+            <span>In phiếu Mẫu số 01 (PDF)</span>
           </button>
         </div>
       </div>

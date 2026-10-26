@@ -9,6 +9,7 @@ import { DrlRadarCard } from "@/components/dashboard/DrlRadarCard";
 import { WhatIfSimulator } from "@/components/dashboard/WhatIfSimulator";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPredictionCard";
+import { DisciplineChecklistCard } from "@/components/dashboard/DisciplineChecklistCard";
 import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
 import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
@@ -149,6 +150,11 @@ export default function GoalsPage() {
               setAddModalOpen(true);
             }}
           />
+        )}
+
+        {/* Sổ Nhắc Phòng Ngừa Vi Phạm & Điểm Trừ (Điều 5.1 & 5.2 QĐ 3385) */}
+        {currentSemesterId && (
+          <DisciplineChecklistCard semesterId={currentSemesterId} />
         )}
 
         {/* What-If Simulation Engine */}

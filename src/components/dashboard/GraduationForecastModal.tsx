@@ -225,7 +225,7 @@ Sinh viên: ${studentName || "Sinh viên"} - Lớp: ${studentClass || "HUIT"}
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
-            Mô phỏng từng học kỳ (What-If)
+            Mô phỏng điểm từng học kỳ
           </button>
         </div>
 

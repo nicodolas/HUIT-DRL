@@ -104,7 +104,7 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
               className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <FileText className="w-3.5 h-3.5 text-slate-500" />
-              <span>Xuất phiếu Form 01 (QĐ 3385)</span>
+              <span>Xuất phiếu Mẫu số 01 (QĐ 3385)</span>
             </Link>
 
             <button
@@ -115,7 +115,7 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
               className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
             >
               <GraduationCap className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Dự phóng tốt nghiệp</span>
+              <span>Dự báo tốt nghiệp (Điều 12)</span>
             </button>
 
             <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
@@ -128,7 +128,7 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
               className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Xuất / Nhập CSV</span>
+              <span>Xuất / Nhập bảng tính Excel</span>
             </button>
 
             <button

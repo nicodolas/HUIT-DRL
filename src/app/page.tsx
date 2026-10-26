@@ -19,6 +19,7 @@ import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTran
 import { BackupRestoreModal } from "@/components/modals/BackupRestoreModal";
 import { ProofVaultModal } from "@/components/dashboard/ProofVaultModal";
 import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
+import { DisciplineChecklistCard } from "@/components/dashboard/DisciplineChecklistCard";
 import { StudentUtilitiesMenu } from "@/components/dashboard/StudentUtilitiesMenu";
 import { AdminHubModal } from "@/components/modals/AdminHubModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
@@ -284,6 +285,7 @@ export default function DashboardPage() {
             defaultPoints={scoreSummary.totalDefaultPoints}
             earnedPoints={scoreSummary.totalEarnedPoints}
             deductedPoints={scoreSummary.totalDeductedPoints}
+            categories={scoreSummary.categories}
             onOpenAddModal={() => {
               setModalInitialCategory(undefined);
               setModalOpen(true);
@@ -361,15 +363,18 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Tab 2: 5 Criteria Breakdown */}
+        {/* Tab 2: 5 Criteria Breakdown & Discipline Checklist */}
         {activeTab === "criteria" && scoreSummary && (
-          <CriteriaBreakdown
-            categories={scoreSummary.categories}
-            onSelectCategoryToAdd={(cat) => {
-              setModalInitialCategory(cat);
-              setModalOpen(true);
-            }}
-          />
+          <div className="space-y-4 animate-in fade-in duration-150">
+            <DisciplineChecklistCard semesterId={currentSemesterId} />
+            <CriteriaBreakdown
+              categories={scoreSummary.categories}
+              onSelectCategoryToAdd={(cat) => {
+                setModalInitialCategory(cat);
+                setModalOpen(true);
+              }}
+            />
+          </div>
         )}
 
         {/* Tab 3: Analytics, Radar & Goal Tracker */}

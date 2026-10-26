@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { users } from "@/lib/db/schema";
 
 export async function GET() {
   const startTime = Date.now();
 
   try {
-    // 1. Ping PostgreSQL
-    await db.execute(sql`SELECT 1`);
+    // 1. Ping PostgreSQL using typed Drizzle ORM query builder (100% Parameterized)
+    await db.select({ id: users.id }).from(users).limit(1);
     const dbLatencyMs = Date.now() - startTime;
 
     return NextResponse.json(

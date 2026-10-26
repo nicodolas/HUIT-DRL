@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { semesters, drlRecords } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { users, semesters, drlRecords } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -13,8 +13,8 @@ export async function GET() {
 
     const startTime = Date.now();
 
-    // 1. Database latency test
-    await db.execute(sql`SELECT 1`);
+    // 1. Database latency test using typed Drizzle query builder (100% Parameterized)
+    await db.select({ id: users.id }).from(users).limit(1);
     const latencyMs = Date.now() - startTime;
 
     // 2. Fetch User Semesters and Records Stats

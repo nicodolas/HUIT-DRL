@@ -4,6 +4,7 @@ import { drlRecords, semesters } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
+import { isValidId } from "@/lib/security/sanitizer";
 
 export async function POST(req: Request) {
   const session = await getSession();
@@ -18,6 +19,17 @@ export async function POST(req: Request) {
     if (!sourceSemesterId || !targetSemesterId || !Array.isArray(recordIds) || recordIds.length === 0) {
       return NextResponse.json(
         { error: "Vui lòng chọn học kỳ nguồn, học kỳ đích và ít nhất một hoạt động để sao chép." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !isValidId(sourceSemesterId) ||
+      !isValidId(targetSemesterId) ||
+      !recordIds.every((rid: any) => isValidId(rid))
+    ) {
+      return NextResponse.json(
+        { error: "Mã học kỳ hoặc mã hoạt động không hợp lệ." },
         { status: 400 }
       );
     }

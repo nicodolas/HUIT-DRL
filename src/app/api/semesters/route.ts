@@ -4,7 +4,7 @@ import { semesters } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
-import { sanitizeText } from "@/lib/security/sanitizer";
+import { sanitizeText, isValidId } from "@/lib/security/sanitizer";
 
 export async function GET() {
   const session = await getSession();
@@ -178,8 +178,8 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { id, targetScore, disciplineLevel, isCurrent, submissionDeadline, status } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "Thiếu ID học kỳ" }, { status: 400 });
+    if (!id || !isValidId(id)) {
+      return NextResponse.json({ error: "Mã học kỳ không hợp lệ" }, { status: 400 });
     }
 
     // Verify ownership and existence (Row-level authorization)
@@ -257,8 +257,8 @@ export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ error: "Thiếu ID học kỳ cần xóa" }, { status: 400 });
+    if (!id || !isValidId(id)) {
+      return NextResponse.json({ error: "Mã học kỳ cần xóa không hợp lệ" }, { status: 400 });
     }
 
     // Ensure user has more than 1 semester so they don't lock themselves out

@@ -72,3 +72,14 @@ export function validateCategory(category: unknown): number | null {
   if (isNaN(num) || num < 1 || num > 5) return null;
   return Math.floor(num);
 }
+
+/**
+ * Validates that an ID is a clean UUID or safe alphanumeric identifier.
+ * Rejects SQL injection payloads early at the boundary (e.g. quotes, semicolons, comments, spaces).
+ */
+export function isValidId(id: unknown): boolean {
+  if (typeof id !== "string") return false;
+  const trimmed = id.trim();
+  if (!trimmed || trimmed.length > 64) return false;
+  return /^[a-zA-Z0-9_-]+$/.test(trimmed);
+}

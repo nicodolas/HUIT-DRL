@@ -101,8 +101,11 @@ test.describe("Sinh Viên 5 Tốt (SV5T) & Media Security Suite", () => {
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
 
-    // Open SV5T Auditor Modal
-    await page.click("text=Sinh viên 5 tốt");
+    // Open SV5T Auditor Modal via Utilities Menu
+    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
+    await page.getByRole("button", { name: /Sinh viên 5 tốt/i }).click();
     await expect(page.locator("text=Thẩm Định \"Sinh Viên 5 Tốt\" HUIT")).toBeVisible();
     await expect(page.locator("text=1. Đạo Đức Tốt")).toBeVisible();
     await expect(page.locator("text=2. Học Tập Tốt")).toBeVisible();

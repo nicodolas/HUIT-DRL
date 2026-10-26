@@ -22,8 +22,11 @@ test.describe("Phase 18: Training Calendar Sync (.ICS & Google Calendar) Suite",
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
 
-    // 2. Open Calendar Sync Modal
-    const syncBtn = page.getByRole("button", { name: "Đồng bộ Lịch" });
+    // 2. Open Calendar Sync Modal via Utilities Menu
+    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
+    const syncBtn = page.getByRole("button", { name: /Đồng bộ Lịch/i });
     await expect(syncBtn).toBeVisible({ timeout: 10000 });
     await syncBtn.click();
 
@@ -63,6 +66,8 @@ test.describe("Phase 18: Training Calendar Sync (.ICS & Google Calendar) Suite",
     await expect(page.getByText("Hội thảo Khởi nghiệp ĐMST HUIT 2026")).toBeVisible({ timeout: 10000 });
 
     // 4. Re-open Calendar Sync Modal and verify event appears
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
     await syncBtn.click();
     await expect(page.getByText(/\[ĐRL TC3\] Hội thảo Khởi nghiệp/)).toBeVisible();
     await expect(page.locator("div", { hasText: "2026-11-15" }).first()).toBeVisible();

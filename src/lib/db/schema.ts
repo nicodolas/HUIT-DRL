@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   fullName: varchar("full_name", { length: 255 }).notNull(),
   faculty: varchar("faculty", { length: 255 }),
   className: varchar("class_name", { length: 64 }),
+  role: varchar("role", { length: 32 }).default("user").notNull(), // 'user' | 'admin'
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -21,6 +22,7 @@ export const semesters = pgTable("semesters", {
   disciplineLevel: varchar("discipline_level", { length: 32 }).default("none").notNull(), // 'none' | 'khien_trach' | 'canh_cao' | 'dinh_chi'
   submissionDeadline: varchar("submission_deadline", { length: 32 }), // e.g. '2026-11-20'
   status: varchar("status", { length: 32 }).default("active").notNull(), // 'active' | 'submitted' | 'locked'
+  isSystem: boolean("is_system").default(false).notNull(), // true if official semester created by admin
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

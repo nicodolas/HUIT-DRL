@@ -8,6 +8,7 @@ interface DeadlineAlertBannerProps {
   semesterName: string;
   deadline?: string | null;
   status?: string | null;
+  isAdmin?: boolean;
   onUpdateSemester?: (updated: { submissionDeadline?: string | null; status?: string }) => void;
 }
 
@@ -16,6 +17,7 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
   semesterName,
   deadline,
   status = "active",
+  isAdmin = false,
   onUpdateSemester,
 }) => {
   const [editing, setEditing] = useState(false);
@@ -217,13 +219,16 @@ export const DeadlineAlertBanner: React.FC<DeadlineAlertBannerProps> = ({
             </div>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className="px-2.5 py-1 text-[11px] font-medium border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 rounded-lg transition-colors cursor-pointer"
-              >
-                {deadline ? "Đổi ngày" : "Đặt hạn nộp"}
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="px-2.5 py-1 text-[11px] font-medium border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-lg transition-colors cursor-pointer"
+                  title="Thiết lập hạn nộp điểm cho toàn bộ sinh viên (Chỉ Admin)"
+                >
+                  {deadline ? "Đổi hạn nộp (Admin)" : "Đặt hạn nộp (Admin)"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleStatusChange("submitted")}

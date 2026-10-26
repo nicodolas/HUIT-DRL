@@ -259,3 +259,4 @@ export function simulateRemainingSemestersScore(
 
   return { overallAverage, overallRating: { label, color, badgeBg }, totalSemesters };
 }
+

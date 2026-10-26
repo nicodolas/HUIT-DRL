@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { getValidTestCaptchaToken } from "./helpers/auth";
 
 test.describe("Phase 12: Diagnostics API & Academic Year Consolidation (Điều 11)", () => {
   const testUsername = `diag_${Date.now()}`;
@@ -17,6 +18,7 @@ test.describe("Phase 12: Diagnostics API & Academic Year Consolidation (Điều 
         password: testPassword,
         fullName: testFullName,
         className: "12DHTH02",
+        captchaToken: getValidTestCaptchaToken(),
       },
     });
     expect(regRes.status()).toBe(200);

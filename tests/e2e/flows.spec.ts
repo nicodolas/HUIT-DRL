@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { getValidTestCaptchaToken } from "./helpers/auth";
 
 test.describe("Full HUIT DRL End-to-End User Journey", () => {
   const username = `sv_${Date.now()}`;
@@ -19,6 +20,7 @@ test.describe("Full HUIT DRL End-to-End User Journey", () => {
         fullName,
         faculty: "Công nghệ Thông tin",
         className: "14DHTH08",
+        captchaToken: getValidTestCaptchaToken(),
       },
     });
     expect(regRes.status()).toBe(200);

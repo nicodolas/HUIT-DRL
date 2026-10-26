@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { GraduationCap, LogOut, ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { clearAuthToken } from "@/lib/api/client";
 
@@ -37,7 +37,17 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNewSemesterModal,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const isAdmin = user?.role === "admin";
+
+  const navLinks = [
+    { href: "/", label: "Tổng quan" },
+    { href: "/records", label: "Sổ điểm" },
+    { href: "/goals", label: "Mục tiêu & Dự phòng" },
+    { href: "/handbook", label: "Sổ tay quy chế" },
+    { href: "/report", label: "Phiếu ĐRL" },
+    { href: "/profile", label: "Hồ sơ" },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -70,42 +80,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Desktop Navigation Links (Visible on large screens >= 1024px to prevent tablet header collision) */}
         <nav className="hidden lg:flex items-center space-x-1">
-          <Link
-            href="/"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Tổng quan
-          </Link>
-          <Link
-            href="/records"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Sổ điểm
-          </Link>
-          <Link
-            href="/goals"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Mục tiêu
-          </Link>
-          <Link
-            href="/handbook"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Sổ tay quy chế
-          </Link>
-          <Link
-            href="/report"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Phiếu ĐRL
-          </Link>
-          <Link
-            href="/profile"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center space-x-1"
-          >
-            <span>Hồ sơ</span>
-          </Link>
+          {navLinks.map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  isActive
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Semester selector & user profile */}

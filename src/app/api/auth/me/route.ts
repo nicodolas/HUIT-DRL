@@ -32,25 +32,63 @@ export async function PATCH(req: Request) {
 
   try {
     const body = await req.json();
-    const { fullName, faculty, className, currentPassword, newPassword } = body;
 
-    const newFullName =
-      fullName !== undefined
-        ? sanitizeText(fullName, 100) || session.fullName
-        : session.fullName;
-    const newFaculty =
-      faculty !== undefined
-        ? sanitizeText(faculty, 100) || null
-        : session.faculty;
-    const newClassName =
-      className !== undefined
-        ? sanitizeText(className, 50) || null
-        : session.className;
-
-    if (!newFullName) {
-      return NextResponse.json({ error: "Tên hiển thị không được để trống" }, { status: 400 });
+    // 1. Security Check: Detect and reject any privilege escalation attempt (Mass Assignment Defense)
+    const FORBIDDEN_PRIVILEGE_FIELDS = ["role", "isAdmin", "is_admin", "admin", "roles", "permissions"];
+    for (const field of FORBIDDEN_PRIVILEGE_FIELDS) {
+      if (body[field] !== undefined) {
+        // Even if an attacker passes role="admin" or role="user", non-admin users cannot alter role
+        if (session.role !== "admin" || (field === "role" && body[field] !== session.role)) {
+          return NextResponse.json(
+            { error: "Cảnh báo bảo mật: Bạn không có quyền thay đổi vai trò (role) của tài khoản." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
+    // 2. Security Check: Username is strictly immutable
+    if (body.username !== undefined && body.username !== session.username) {
+      return NextResponse.json(
+        { error: "Tên đăng nhập là định danh cố định, không được phép thay đổi." },
+        { status: 400 }
+      );
+    }
+
+    // 3. Security Check: ID is strictly immutable
+    if (body.id !== undefined && body.id !== session.id) {
+      return NextResponse.json(
+        { error: "Mã định danh người dùng không được phép thay đổi." },
+        { status: 400 }
+      );
+    }
+
+    const { fullName, faculty, className, currentPassword, newPassword } = body;
+
+    // 4. Validate and sanitize permitted fields
+    let newFullName = session.fullName;
+    if (fullName !== undefined) {
+      const sanitized = sanitizeText(fullName, 100);
+      if (!sanitized || sanitized.trim().length < 2) {
+        return NextResponse.json(
+          { error: "Họ và tên phải có tối thiểu 2 ký tự và không được để trống." },
+          { status: 400 }
+        );
+      }
+      newFullName = sanitized.trim();
+    }
+
+    const newFaculty =
+      faculty !== undefined
+        ? sanitizeText(faculty, 100)?.trim() || null
+        : session.faculty;
+
+    const newClassName =
+      className !== undefined
+        ? sanitizeText(className, 50)?.trim().toUpperCase() || null
+        : session.className;
+
+    // Strict whitelist payload - NEVER include role or username
     const updatePayload: Record<string, any> = {
       fullName: newFullName,
       faculty: newFaculty,
@@ -126,3 +164,5 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export const PUT = PATCH;

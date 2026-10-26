@@ -39,9 +39,10 @@ export default function RegisterPage() {
     fetchCaptcha();
   }, []);
 
-  // Real-time username existence check
+  // Real-time username existence check with In-Memory Cache and AbortController
   const [checkStatus, setCheckStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
   const [checkMessage, setCheckMessage] = useState<string>("");
+  const usernameCacheRef = useRef<Map<string, { available: boolean; valid: boolean; message: string }>>(new Map());
 
   useEffect(() => {
     const clean = username.trim().toLowerCase();
@@ -63,11 +64,44 @@ export default function RegisterPage() {
       return;
     }
 
+    // 1. Check in-memory cache first (0ms latency, zero DB queries)
+    const cached = usernameCacheRef.current.get(clean);
+    if (cached) {
+      if (cached.available) {
+        setCheckStatus("available");
+        setCheckMessage(cached.message || "Tên đăng nhập khả dụng.");
+      } else {
+        setCheckStatus(cached.valid ? "taken" : "invalid");
+        setCheckMessage(cached.message || "Tên đăng nhập đã tồn tại.");
+      }
+      return;
+    }
+
+    // 2. Debounce & AbortController to cancel stale in-flight requests
     setCheckStatus("checking");
+    const controller = new AbortController();
+
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(clean)}`);
+        const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(clean)}`, {
+          signal: controller.signal,
+        });
+
+        if (res.status === 429) {
+          const data = await res.json();
+          setCheckStatus("invalid");
+          setCheckMessage(data.message || "Kiểm tra quá thường xuyên. Vui lòng thử lại sau giây lát.");
+          return;
+        }
+
         const data = await res.json();
+        // Save to cache
+        usernameCacheRef.current.set(clean, {
+          available: Boolean(data.available),
+          valid: Boolean(data.valid),
+          message: data.message || "",
+        });
+
         if (data.available) {
           setCheckStatus("available");
           setCheckMessage(data.message || "Tên đăng nhập khả dụng.");
@@ -75,12 +109,17 @@ export default function RegisterPage() {
           setCheckStatus(data.valid ? "taken" : "invalid");
           setCheckMessage(data.message || "Tên đăng nhập đã tồn tại.");
         }
-      } catch {
-        setCheckStatus("idle");
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          setCheckStatus("idle");
+        }
       }
     }, 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {

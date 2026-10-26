@@ -3,9 +3,40 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sanitizeText } from "@/lib/security/sanitizer";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function GET(req: Request) {
   try {
+    // 1. IP Rate Limiting: Prevent automated username enumeration & DB DoS
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "client_ip";
+    const rateLimitKey = `check_username_${ip}`;
+
+    // Max 45 checks per minute per IP
+    const rateCheck = checkRateLimit(rateLimitKey, 45, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        {
+          available: false,
+          valid: false,
+          rateLimited: true,
+          message: `Bạn đang kiểm tra tên quá thường xuyên. Vui lòng thử lại sau ${Math.ceil(
+            rateCheck.resetMs / 1000
+          )} giây.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil(rateCheck.resetMs / 1000).toString(),
+            "X-RateLimit-Limit": "45",
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const rawUsername = searchParams.get("username");
 

@@ -5,13 +5,14 @@ import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { checkRateLimit, resetRateLimit } from "@/lib/security/rateLimit";
+import { sanitizeText } from "@/lib/security/sanitizer";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { username, password } = body;
 
-    const cleanUsername = (username || "").trim().toLowerCase();
+    const cleanUsername = sanitizeText(username, 32).toLowerCase();
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "client";
     const rateLimitKey = `login_${cleanUsername || ip}`;
 
@@ -31,9 +32,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Query user by username
+    // Query user by username - only select required fields for authentication
     const matchingUsers = await db
-      .select()
+      .select({
+        id: users.id,
+        username: users.username,
+        passwordHash: users.passwordHash,
+        fullName: users.fullName,
+        faculty: users.faculty,
+        className: users.className,
+        role: users.role,
+      })
       .from(users)
       .where(eq(users.username, cleanUsername))
       .limit(1);
@@ -55,8 +64,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const userRole = (user.role as "user" | "admin") || (user.username === "admin" ? "admin" : "user");
+    const userRole = (user.role as "user" | "admin") || "user";
 
+    // Data Minimization: Exclude passwordHash from session payload and response
     const sessionUser = {
       id: user.id,
       username: user.username,
@@ -76,9 +86,8 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { error: "Đã xảy ra lỗi đăng nhập: " + (error?.message || "Lỗi máy chủ") },
+      { error: "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }
 }
-

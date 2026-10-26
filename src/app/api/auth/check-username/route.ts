@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { sanitizeText } from "@/lib/security/sanitizer";
 
 export async function GET(req: Request) {
   try {
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const cleanUsername = rawUsername.trim().toLowerCase();
+    const cleanUsername = sanitizeText(rawUsername, 32).toLowerCase();
 
     if (cleanUsername.length < 3) {
       return NextResponse.json({
@@ -64,7 +65,7 @@ export async function GET(req: Request) {
   } catch (error: any) {
     console.error("Check username error:", error);
     return NextResponse.json(
-      { available: false, valid: false, message: "Lỗi kiểm tra: " + error.message },
+      { available: false, valid: false, message: "Lỗi hệ thống khi kiểm tra tên đăng nhập." },
       { status: 500 }
     );
   }

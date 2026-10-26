@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { randomUUID } from "crypto";
+import { sanitizeText } from "@/lib/security/sanitizer";
 
 export async function POST(req: Request) {
   try {
@@ -22,8 +23,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { username, password, fullName, faculty, className } = body;
 
-    const cleanUsername = (username || "").trim().toLowerCase();
-    const displayName = (fullName || "").trim() || cleanUsername;
+    const cleanUsername = sanitizeText(username, 32).toLowerCase();
+    const displayName = sanitizeText(fullName, 100) || cleanUsername;
 
     if (!cleanUsername) {
       return NextResponse.json(
@@ -69,28 +70,37 @@ export async function POST(req: Request) {
 
     const userId = randomUUID();
     const passwordHash = await hashPassword(password);
-    const userRole: "user" | "admin" = cleanUsername === "admin" ? "admin" : "user";
+    
+    // SECURITY & RBAC: All public user registrations are strictly provisioned as "user"
+    // Administrative accounts must only be configured directly in production database credentials.
+    const userRole: "user" = "user";
 
     await db.insert(users).values({
       id: userId,
       username: cleanUsername,
       passwordHash,
       fullName: displayName,
-      faculty: faculty ? faculty.trim() : null,
-      className: className ? className.trim() : null,
+      faculty: faculty ? sanitizeText(faculty, 100) : null,
+      className: className ? sanitizeText(className, 50) : null,
       role: userRole,
     });
 
     // Check existing official system semesters created by admin
     const sysSemesters = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        submissionDeadline: semesters.submissionDeadline,
+        status: semesters.status,
+      })
       .from(semesters)
       .where(eq(semesters.isSystem, true));
 
     let activeSemesterId = randomUUID();
 
     if (sysSemesters.length > 0) {
-      // Provision user's semester records matching admin's official semesters
+      // Provision user's personal semester records cloned from official template
       for (const sysSem of sysSemesters) {
         const userSemId = randomUUID();
         if (sysSem.isCurrent) {
@@ -117,16 +127,17 @@ export async function POST(req: Request) {
         isCurrent: true,
         targetScore: 90,
         disciplineLevel: "none",
-        isSystem: true,
+        isSystem: false,
       });
     }
 
+    // Return strictly necessary user fields (Least Privilege / Data Minimization)
     const sessionUser = {
       id: userId,
       username: cleanUsername,
       fullName: displayName,
-      faculty: faculty ? faculty.trim() : null,
-      className: className ? className.trim() : null,
+      faculty: faculty ? sanitizeText(faculty, 100) : null,
+      className: className ? sanitizeText(className, 50) : null,
       role: userRole,
     };
 
@@ -138,11 +149,11 @@ export async function POST(req: Request) {
       semesterId: activeSemesterId,
     });
   } catch (error: any) {
+    // Log complete error internally on the server, never leak stack traces to client
     console.error("Register error:", error);
     return NextResponse.json(
-      { error: "Đã xảy ra lỗi khi tạo tài khoản: " + (error?.message || "Lỗi máy chủ") },
+      { error: "Đã xảy ra lỗi khi tạo tài khoản. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }
 }
-

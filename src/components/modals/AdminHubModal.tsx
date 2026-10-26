@@ -290,34 +290,36 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
                 Danh sách các học kỳ hiện hành:
               </div>
 
-              {semesters.map((s) => (
-                <div
-                  key={s.id}
-                  className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3"
-                >
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                        {s.name}
-                      </span>
-                      {s.isCurrent && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
-                          Đang hoạt động
+              <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                {semesters.map((s) => (
+                  <div
+                    key={s.id}
+                    className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                          {s.name}
                         </span>
-                      )}
+                        {s.isCurrent && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            Đang hoạt động
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-2">
+                        <span>Hạn nộp: {s.submissionDeadline || "Chưa thiết lập"}</span>
+                        <span>•</span>
+                        <span>Trạng thái: {s.status === "locked" ? "Đã khóa" : "Đang mở"}</span>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-2">
-                      <span>Hạn nộp: {s.submissionDeadline || "Chưa thiết lập"}</span>
-                      <span>•</span>
-                      <span>Trạng thái: {s.status === "locked" ? "Đã khóa" : "Đang mở"}</span>
-                    </div>
-                  </div>
 
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    Chính thức
-                  </span>
-                </div>
-              ))}
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      Chính thức
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -94,48 +94,53 @@ export const CumulativeStatsCard: React.FC<CumulativeStatsCardProps> = ({
           </div>
         </div>
 
-        <div className="h-32 w-full flex items-end justify-around gap-2 pt-4 px-2">
-          {data.semesterBreakdown.map((s) => {
-            const isSelected = s.id === currentSemesterId;
-            const barHeight = Math.min(100, Math.max(10, s.totalScore));
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <div
+            className="h-32 flex items-end justify-around gap-2 pt-4 px-2"
+            style={{ minWidth: `${Math.max(100, data.semesterBreakdown.length * 52)}px` }}
+          >
+            {data.semesterBreakdown.map((s) => {
+              const isSelected = s.id === currentSemesterId;
+              const barHeight = Math.min(100, Math.max(10, s.totalScore));
 
-            return (
-              <div
-                key={s.id}
-                onClick={() => onSelectSemester(s.id)}
-                className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
-              >
-                <span className="text-[10px] font-mono font-bold text-slate-700 opacity-90 group-hover:scale-105 transition-transform mb-1">
-                  {s.totalScore}đ
-                </span>
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => onSelectSemester(s.id)}
+                  className="flex-1 min-w-[42px] max-w-[68px] flex flex-col items-center h-full justify-end group cursor-pointer"
+                >
+                  <span className="text-[10px] font-mono font-bold text-slate-700 opacity-90 group-hover:scale-105 transition-transform mb-1">
+                    {s.totalScore}đ
+                  </span>
 
-                <div className="w-full max-w-[48px] h-full flex items-end relative">
-                  {/* Guideline at 90% */}
-                  <div className="absolute w-full top-[10%] border-t border-dashed border-amber-300 pointer-events-none" />
-                  {/* Guideline at 80% */}
-                  <div className="absolute w-full top-[20%] border-t border-dashed border-emerald-300 pointer-events-none" />
+                  <div className="w-full max-w-[42px] h-full flex items-end relative">
+                    {/* Guideline at 90% */}
+                    <div className="absolute w-full top-[10%] border-t border-dashed border-amber-300 pointer-events-none" />
+                    {/* Guideline at 80% */}
+                    <div className="absolute w-full top-[20%] border-t border-dashed border-emerald-300 pointer-events-none" />
 
-                  <div
-                    style={{ height: `${barHeight}%` }}
-                    className={`w-full rounded-t-md transition-all duration-300 ${
-                      isSelected
-                        ? "bg-slate-900 ring-2 ring-amber-400"
-                        : "bg-slate-300 group-hover:bg-slate-400"
-                    }`}
-                  />
+                    <div
+                      style={{ height: `${barHeight}%` }}
+                      className={`w-full rounded-t-md transition-all duration-300 ${
+                        isSelected
+                          ? "bg-slate-900 ring-2 ring-amber-400"
+                          : "bg-slate-300 group-hover:bg-slate-400"
+                      }`}
+                    />
+                  </div>
+
+                  <span className="text-[10px] text-slate-600 truncate max-w-[56px] mt-1.5 font-medium text-center" title={s.name}>
+                    {s.name.replace("Học kỳ", "HK")}
+                  </span>
                 </div>
-
-                <span className="text-[10px] text-slate-600 truncate max-w-[64px] mt-1.5 font-medium">
-                  {s.name.replace("Học kỳ", "HK")}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Semester Comparison Bars */}
-      <div className="space-y-2.5 pt-1">
+      {/* Semester Comparison Bars (Scrollable if > 4 semesters) */}
+      <div className={`space-y-2.5 pt-1 ${data.semesterBreakdown.length > 4 ? "max-h-[340px] overflow-y-auto pr-1" : ""}`}>
         {data.semesterBreakdown.map((s) => {
           const isSelected = s.id === currentSemesterId;
           const percent = Math.min(100, Math.max(0, s.totalScore));

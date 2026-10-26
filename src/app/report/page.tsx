@@ -286,7 +286,8 @@ function ReportContent() {
             <select
               value={currentSemesterId}
               onChange={(e) => setCurrentSemesterId(e.target.value)}
-              className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none shadow-2xs"
+              className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none shadow-2xs max-w-[160px] sm:max-w-[220px] truncate"
+              title={semesters.find((s) => s.id === currentSemesterId)?.name || "Chọn học kỳ"}
             >
               {semesters.map((s) => (
                 <option key={s.id} value={s.id}>

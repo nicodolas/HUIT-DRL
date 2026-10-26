@@ -106,7 +106,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             points: item.points,
             quantity: 1,
             occurredAt: new Date().toISOString().split("T")[0],
-            note: "Thêm từ kế hoạch mô phỏng What-If",
+            note: "Thêm từ kế hoạch mô phỏng điểm rèn luyện",
           }),
         });
       }
@@ -129,7 +129,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
         <div>
           <div className="flex items-center space-x-1.5 text-slate-900 font-bold text-sm">
             <Sliders className="w-4 h-4 text-slate-700" />
-            <h2>Mô phỏng điểm dự phóng (What-If Simulator)</h2>
+            <h2>Mô phỏng điểm rèn luyện dự kiến</h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Chọn dự kiến các hoạt động sắp tham gia để xem điểm và xếp loại trước khi ghi nhận

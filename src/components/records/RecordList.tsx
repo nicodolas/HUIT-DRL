@@ -162,7 +162,7 @@ export const RecordList: React.FC<RecordListProps> = ({
                 title="Tải bảng tính CSV cá nhân"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Xuất CSV</span>
+                <span className="hidden sm:inline">Xuất bảng tính</span>
               </button>
             </>
           )}

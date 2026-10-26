@@ -105,7 +105,7 @@ export function ProofVaultModal({
             }`}
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Bảng Đính Kèm In A4 (Contact Sheet)</span>
+            <span>Bảng Đính Kèm In A4</span>
           </button>
         </div>
 
@@ -325,7 +325,7 @@ export function ProofVaultModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
-                  Bảng tổng hợp minh chứng hình ảnh sẵn sàng in kèm theo Form 01 nộp Khoa/Trường
+                  Bảng tổng hợp minh chứng hình ảnh sẵn sàng in kèm theo Mẫu số 01 nộp Khoa/Trường
                 </p>
                 <button
                   onClick={() => {
@@ -353,7 +353,7 @@ export function ProofVaultModal({
                     BẢNG ĐÍNH KÈM HÌNH ẢNH MINH CHỨNG ĐIỂM RÈN LUYỆN
                   </h3>
                   <p className="italic text-[11px] font-sans text-slate-600 dark:text-slate-400">
-                    (Kèm theo Phiếu đánh giá Form 01 - {semester?.name || "Học kỳ"} - Năm học 2024-2025)
+                    (Kèm theo Phiếu đánh giá Mẫu số 01 - {semester?.name || "Học kỳ"} - Năm học 2024-2025)
                   </p>
                   <div className="pt-2 font-sans flex justify-center space-x-6 text-xs text-slate-700 dark:text-slate-300">
                     <span>Sinh viên: <strong>{currentUser.fullName}</strong></span>

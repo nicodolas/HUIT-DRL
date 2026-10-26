@@ -237,7 +237,7 @@ export default function DashboardPage() {
             </Link>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] sm:max-w-[280px]" title={currentSemester?.name}>
                   {currentSemester ? currentSemester.name : "Chưa chọn học kỳ"}
                 </span>
                 <span>•</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   X,
   Settings,
@@ -45,6 +45,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
   const [submissionDeadline, setSubmissionDeadline] = useState("");
   const [isCurrent, setIsCurrent] = useState(true);
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -52,8 +53,11 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
 
   const handleCreateSemester = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     if (!name.trim()) {
       setError("Vui lòng nhập tên học kỳ");
+      submittingRef.current = false;
       return;
     }
 
@@ -86,6 +90,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
     } catch (err: any) {
       setError(err.message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

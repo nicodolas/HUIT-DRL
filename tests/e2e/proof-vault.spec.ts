@@ -61,13 +61,14 @@ test.describe("Phase 19: Proof Vault & Printable A4 Contact Sheet Suite", () => 
     await expect(page.getByText("Còn thiếu minh chứng")).toBeVisible();
 
     // 5. Test Filters
+    const vaultModal = page.locator('[data-testid="proof-vault-modal"]');
     const hasProofFilterBtn = page.getByRole("button", { name: /Có ảnh/i });
     await hasProofFilterBtn.click();
-    await expect(page.locator("h4", { hasText: "Chứng chỉ Ngoại ngữ B1 HUIT" })).toBeVisible();
+    await expect(vaultModal.locator("h4", { hasText: "Chứng chỉ Ngoại ngữ B1 HUIT" })).toBeVisible();
 
     const missingProofFilterBtn = page.getByRole("button", { name: /^Thiếu/ });
     await missingProofFilterBtn.click();
-    await expect(page.locator("h4", { hasText: "Tham gia phong trào thể thao HUIT" })).toBeVisible();
+    await expect(vaultModal.locator("h4", { hasText: "Tham gia phong trào thể thao HUIT" })).toBeVisible();
 
     // 6. Test Printable Contact Sheet Tab
     const contactSheetTab = page.getByRole("button", { name: "Bảng Đính Kèm In A4 (Contact Sheet)" });

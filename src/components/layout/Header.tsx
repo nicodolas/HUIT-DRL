@@ -86,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
             href="/goals"
             className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            Mục tiêu & Dự phóng
+            Mục tiêu
           </Link>
           <Link
             href="/handbook"

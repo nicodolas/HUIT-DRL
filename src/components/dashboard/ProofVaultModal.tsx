@@ -50,7 +50,7 @@ export function ProofVaultModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden my-auto">
+      <div data-testid="proof-vault-modal" className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden my-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
           <div className="flex items-center space-x-2.5">
@@ -103,6 +103,8 @@ export function ProofVaultModal({
                 ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
                 : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
+            aria-label="Bảng Đính Kèm In A4 (Contact Sheet)"
+            title="Bảng Đính Kèm In A4 (Contact Sheet)"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Bảng Đính Kèm In A4</span>

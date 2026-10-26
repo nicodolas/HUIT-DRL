@@ -111,16 +111,19 @@ export async function POST(req: Request) {
 
     if (sysSemesters.length > 0) {
       // Provision user's personal semester records cloned from official template
-      for (const sysSem of sysSemesters) {
+      const hasCurrent = sysSemesters.some((s) => s.isCurrent);
+      for (let i = 0; i < sysSemesters.length; i++) {
+        const sysSem = sysSemesters[i];
         const userSemId = randomUUID();
-        if (sysSem.isCurrent) {
+        const isCur = hasCurrent ? !!sysSem.isCurrent : i === 0;
+        if (isCur) {
           activeSemesterId = userSemId;
         }
         await db.insert(semesters).values({
           id: userSemId,
           userId,
           name: sysSem.name,
-          isCurrent: sysSem.isCurrent,
+          isCurrent: isCur,
           targetScore: 90,
           disciplineLevel: "none",
           submissionDeadline: sysSem.submissionDeadline,

@@ -42,6 +42,26 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   onSuccess,
 }) => {
   const [tab, setTab] = useState<"preset" | "custom">("preset");
+  const [effectiveSemesterId, setEffectiveSemesterId] = useState(semesterId);
+
+  useEffect(() => {
+    if (semesterId) {
+      setEffectiveSemesterId(semesterId);
+    } else if (isOpen) {
+      fetch("/api/semesters")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.semesters && data.semesters.length > 0) {
+            const cur = data.semesters.find((s: any) => s.isCurrent) || data.semesters[0];
+            if (cur?.id) {
+              setEffectiveSemesterId(cur.id);
+            }
+          }
+        })
+        .catch((err) => console.warn("Failed to auto-resolve semester in AddRecordModal:", err));
+    }
+  }, [semesterId, isOpen]);
+
   const [presets, setPresets] = useState<DrlCriteriaPreset[]>(() => {
     const cached = getPresetsCache();
     return cached && cached.length > 0 ? cached : DEFAULT_HUIT_PRESETS;
@@ -57,6 +77,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const submittingRef = useRef(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [compressingImage, setCompressingImage] = useState(false);
   const [compressedStats, setCompressedStats] = useState<{
@@ -71,7 +93,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
     setCompressingImage(true);
     setError(null);
     try {
-      const result = await compressImage(file, { maxWidth: 1600, quality: 0.82 });
+      const result = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.78 });
       setEvidenceUrl(result.dataUrl);
       setCompressedStats({
         originalSize: result.originalSize,
@@ -82,6 +104,9 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setError("Lỗi xử lý ảnh: " + (err.message || "Không thể tối ưu hóa tệp"));
     } finally {
       setCompressingImage(false);
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   };
 
@@ -165,9 +190,17 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
     setError(null);
     setLoading(true);
 
+    const activeSemesterId = effectiveSemesterId || semesterId;
+
     try {
+      if (!activeSemesterId || !activeSemesterId.trim()) {
+        setError("Chưa chọn học kỳ hợp lệ. Vui lòng thử lại sau giây lát.");
+        setLoading(false);
+        return;
+      }
+
       let payload: any = {
-        semesterId,
+        semesterId: activeSemesterId,
         occurredAt,
         note: note.trim() || undefined,
         evidenceUrl: evidenceUrl.trim() || undefined,
@@ -254,7 +287,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       if (!recordToEdit && isNetworkError) {
         // Fallback to offline draft on mobile network drop / timeout
         addOfflineDraft({
-          semesterId,
+          semesterId: activeSemesterId,
           occurredAt,
           note: note.trim() || undefined,
           evidenceUrl: evidenceUrl.trim() || undefined,
@@ -623,7 +656,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-slate-700">
-                  Minh chứng hoạt động (URL Drive hoặc tải ảnh trực tiếp):
+                  Minh chứng hoạt động (URL Drive hoặc chụp/chọn ảnh trực tiếp):
                 </label>
                 {compressingImage && (
                   <span className="text-[11px] text-amber-600 flex items-center space-x-1 font-medium">
@@ -633,53 +666,155 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="space-y-2">
                 <input
                   type="text"
-                  placeholder="https://drive.google.com/... hoặc chọn ảnh"
-                  value={evidenceUrl.startsWith("data:image") ? "(Đã đính kèm ảnh WebP tối ưu hóa)" : evidenceUrl}
+                  placeholder="https://drive.google.com/... hoặc chụp/chọn ảnh bên dưới"
+                  value={evidenceUrl.startsWith("data:image") ? "(Đã đính kèm ảnh chụp minh chứng)" : evidenceUrl}
                   onChange={(e) => {
                     if (!evidenceUrl.startsWith("data:image")) {
                       setEvidenceUrl(e.target.value);
                     }
                   }}
                   readOnly={evidenceUrl.startsWith("data:image")}
-                  className="flex-1 text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
+                  className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono text-[11px]"
                 />
 
-                <label className="flex items-center space-x-1 px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs cursor-pointer border border-slate-200 transition-colors shrink-0">
-                  <Camera className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Chọn ảnh</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProofFileChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {/* Compressed statistics preview */}
-              {compressedStats && evidenceUrl.startsWith("data:image") && (
-                <div className="mt-1.5 p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px] text-emerald-800">
-                  <span className="flex items-center space-x-1 font-medium">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>
-                      Đã tối ưu: {formatBytes(compressedStats.originalSize)} → {formatBytes(compressedStats.compressedSize)} (-{compressedStats.reduction}%)
-                    </span>
-                  </span>
+                {/* Dedicated Action Buttons: Native Camera & Gallery */}
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setEvidenceUrl("");
-                      setCompressedStats(null);
-                    }}
-                    className="text-red-600 hover:text-red-700 font-semibold cursor-pointer underline text-[10px]"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={compressingImage}
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition-colors cursor-pointer disabled:opacity-50"
+                    title="Mở camera điện thoại chụp trực tiếp giấy khen, phiếu điểm danh"
                   >
-                    Gỡ ảnh
+                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Chụp Camera</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={compressingImage}
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs border border-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                    title="Chọn ảnh có sẵn từ máy tính hoặc thư viện ảnh"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Chọn từ thư viện</span>
                   </button>
                 </div>
-              )}
+
+                {/* Hidden HTML5 File Inputs */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleProofFileChange}
+                  className="hidden"
+                  data-testid="camera-input"
+                />
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProofFileChange}
+                  className="hidden"
+                  data-testid="gallery-input"
+                />
+
+                {/* Visual Thumbnail Preview Card with Remove/Replace Actions */}
+                {evidenceUrl && (
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-3 mt-1.5">
+                    {evidenceUrl.startsWith("data:image") ? (
+                      <div className="relative shrink-0">
+                        <img
+                          src={evidenceUrl}
+                          alt="Xem trước ảnh minh chứng"
+                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-slate-300 dark:border-slate-600 shadow-2xs"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>{evidenceUrl.startsWith("data:image") ? "Ảnh minh chứng sẵn sàng" : "Đường dẫn minh chứng hợp lệ"}</span>
+                      </div>
+
+                      {compressedStats ? (
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
+                          Đã tối ưu: <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{formatBytes(compressedStats.compressedSize)}</span>{" "}
+                          (giảm {compressedStats.reduction}%)
+                        </p>
+                      ) : evidenceUrl.startsWith("data:image") ? (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Đã tối ưu định dạng WebP
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-mono">
+                          {evidenceUrl}
+                        </p>
+                      )}
+
+                      <div className="flex items-center space-x-3 mt-1.5 text-xs">
+                        {evidenceUrl.startsWith("data:image") ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => galleryInputRef.current?.click()}
+                              className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium cursor-pointer transition-colors"
+                              title="Chọn ảnh khác từ thư viện"
+                            >
+                              Thay ảnh
+                            </button>
+                            <span className="text-slate-300 dark:text-slate-600">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEvidenceUrl("");
+                                setCompressedStats(null);
+                                if (cameraInputRef.current) cameraInputRef.current.value = "";
+                                if (galleryInputRef.current) galleryInputRef.current.value = "";
+                              }}
+                              className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-medium cursor-pointer transition-colors"
+                            >
+                              Gỡ ảnh
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <a
+                              href={evidenceUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium cursor-pointer transition-colors inline-flex items-center space-x-1"
+                            >
+                              <span>Mở liên kết ↗</span>
+                            </a>
+                            <span className="text-slate-300 dark:text-slate-600">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEvidenceUrl("");
+                                setCompressedStats(null);
+                              }}
+                              className="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 font-medium cursor-pointer transition-colors"
+                            >
+                              Gỡ liên kết
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

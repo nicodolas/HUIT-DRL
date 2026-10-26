@@ -25,11 +25,15 @@ export async function compressImage(
   options: CompressionOptions = {}
 ): Promise<CompressionResult> {
   const {
-    maxWidth = 1600,
-    maxHeight = 1600,
-    quality = 0.82,
+    maxWidth = 1200,
+    maxHeight = 1200,
+    quality = 0.78,
     format = "image/webp",
   } = options;
+
+  if (file.size > 20 * 1024 * 1024) {
+    return Promise.reject(new Error("Kích thước tệp quá lớn (>20MB). Vui lòng chọn ảnh có dung lượng nhỏ hơn."));
+  }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -80,8 +84,8 @@ export async function compressImage(
         }
 
         // Calculate approximate byte size from base64
-        const stringLength = dataUrl.length - "data:image/webp;base64,".length;
-        const compressedSize = Math.round((stringLength * 3) / 4);
+        const base64Content = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+        const compressedSize = Math.round((base64Content.length * 3) / 4);
         const originalSize = file.size;
         const reduction = originalSize > 0 
           ? Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100))

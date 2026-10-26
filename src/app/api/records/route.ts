@@ -6,7 +6,14 @@ import { getSession } from "@/lib/auth/session";
 import { calculateSemesterScore, analyzeGoalGap } from "@/lib/drl/calculator";
 import { DisciplineLevel } from "@/lib/drl/rules";
 import { randomUUID } from "crypto";
-import { isValidEvidenceUrl } from "@/lib/security/sanitizer";
+import {
+  isValidEvidenceUrl,
+  sanitizeTitle,
+  sanitizeNote,
+  validateCategory,
+  validatePoints,
+  validateQuantity,
+} from "@/lib/security/sanitizer";
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -22,20 +29,41 @@ export async function GET(req: Request) {
   }
 
   try {
-    // 1. Verify semester belongs to user
+    // 1. Verify semester belongs to the authenticated user (Row-level isolation / IDOR prevention)
     const [semester] = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        targetScore: semesters.targetScore,
+        disciplineLevel: semesters.disciplineLevel,
+        submissionDeadline: semesters.submissionDeadline,
+        status: semesters.status,
+      })
       .from(semesters)
       .where(and(eq(semesters.id, semesterId), eq(semesters.userId, session.id)))
       .limit(1);
 
     if (!semester) {
-      return NextResponse.json({ error: "Không tìm thấy học kỳ" }, { status: 404 });
+      return NextResponse.json({ error: "Không tìm thấy học kỳ hoặc bạn không có quyền truy cập" }, { status: 404 });
     }
 
-    // 2. Fetch all records for this semester
+    // 2. Fetch records strictly scoped to this user and semester
     const records = await db
-      .select()
+      .select({
+        id: drlRecords.id,
+        semesterId: drlRecords.semesterId,
+        presetId: drlRecords.presetId,
+        category: drlRecords.category,
+        title: drlRecords.title,
+        type: drlRecords.type,
+        points: drlRecords.points,
+        quantity: drlRecords.quantity,
+        occurredAt: drlRecords.occurredAt,
+        note: drlRecords.note,
+        evidenceUrl: drlRecords.evidenceUrl,
+        createdAt: drlRecords.createdAt,
+      })
       .from(drlRecords)
       .where(and(eq(drlRecords.semesterId, semesterId), eq(drlRecords.userId, session.id)))
       .orderBy(desc(drlRecords.createdAt));
@@ -60,7 +88,10 @@ export async function GET(req: Request) {
     });
   } catch (error: any) {
     console.error("Records GET error:", error);
-    return NextResponse.json({ error: "Lỗi tải bản ghi: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi tải dữ liệu hoạt động. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
 
@@ -74,9 +105,26 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note, evidenceUrl } = body;
 
-    if (!semesterId || !category || !title || points === undefined) {
+    const cleanTitle = sanitizeTitle(title);
+    if (!cleanTitle) {
       return NextResponse.json(
-        { error: "Vui lòng nhập đầy đủ thông tin hoạt động." },
+        { error: "Vui lòng nhập tên hoạt động rèn luyện." },
+        { status: 400 }
+      );
+    }
+
+    const validCat = validateCategory(category);
+    if (!validCat) {
+      return NextResponse.json(
+        { error: "Tiêu chí rèn luyện không hợp lệ (phải từ Tiêu chí 1 đến 5)." },
+        { status: 400 }
+      );
+    }
+
+    const { valid: isPointsValid, value: validatedPoints } = validatePoints(points);
+    if (!isPointsValid) {
+      return NextResponse.json(
+        { error: "Điểm số không hợp lệ (chỉ chấp nhận từ -100 đến 100 điểm)." },
         { status: 400 }
       );
     }
@@ -90,35 +138,40 @@ export async function POST(req: Request) {
 
     // Verify semester belongs to user
     const [semester] = await db
-      .select()
+      .select({ id: semesters.id })
       .from(semesters)
       .where(and(eq(semesters.id, semesterId), eq(semesters.userId, session.id)))
       .limit(1);
 
     if (!semester) {
-      return NextResponse.json({ error: "Học kỳ không hợp lệ" }, { status: 403 });
+      return NextResponse.json({ error: "Học kỳ không hợp lệ hoặc bạn không có quyền truy cập" }, { status: 403 });
     }
 
     const recordId = randomUUID();
+    const finalQuantity = validateQuantity(quantity);
+    const finalNote = sanitizeNote(note);
+
     await db.insert(drlRecords).values({
       id: recordId,
       userId: session.id,
       semesterId,
-      presetId: presetId || null,
-      category: Number(category),
-      title: title.trim(),
-      type: type || (Number(points) >= 0 ? "add" : "deduct"),
-      points: String(points),
-      quantity: quantity ? Number(quantity) : 1,
-      occurredAt: occurredAt || null,
-      note: note ? note.trim() : null,
-      evidenceUrl: evidenceUrl ? evidenceUrl.trim() : null,
+      presetId: presetId ? String(presetId).trim() : null,
+      category: validCat,
+      title: cleanTitle,
+      type: type || (Number(validatedPoints) >= 0 ? "add" : "deduct"),
+      points: validatedPoints,
+      quantity: finalQuantity,
+      occurredAt: occurredAt ? String(occurredAt).trim().slice(0, 32) : null,
+      note: finalNote,
+      evidenceUrl: evidenceUrl ? String(evidenceUrl).trim() : null,
     });
 
     return NextResponse.json({ message: "Đã thêm hoạt động!", recordId });
   } catch (error: any) {
     console.error("Records POST error:", error);
-    return NextResponse.json({ error: "Lỗi thêm hoạt động: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi lưu hoạt động. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
-

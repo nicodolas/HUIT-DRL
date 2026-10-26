@@ -4,13 +4,24 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyPassword, hashPassword } from "@/lib/auth/password";
+import { sanitizeText } from "@/lib/security/sanitizer";
 
 export async function GET() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
-  return NextResponse.json({ authenticated: true, user: session });
+  return NextResponse.json({
+    authenticated: true,
+    user: {
+      id: session.id,
+      username: session.username,
+      fullName: session.fullName,
+      faculty: session.faculty,
+      className: session.className,
+      role: session.role,
+    },
+  });
 }
 
 export async function PATCH(req: Request) {
@@ -23,9 +34,18 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const { fullName, faculty, className, currentPassword, newPassword } = body;
 
-    const newFullName = fullName !== undefined ? (fullName || "").trim() : session.fullName;
-    const newFaculty = faculty !== undefined ? (faculty || "").trim() || null : session.faculty;
-    const newClassName = className !== undefined ? (className || "").trim() || null : session.className;
+    const newFullName =
+      fullName !== undefined
+        ? sanitizeText(fullName, 100) || session.fullName
+        : session.fullName;
+    const newFaculty =
+      faculty !== undefined
+        ? sanitizeText(faculty, 100) || null
+        : session.faculty;
+    const newClassName =
+      className !== undefined
+        ? sanitizeText(className, 50) || null
+        : session.className;
 
     if (!newFullName) {
       return NextResponse.json({ error: "Tên hiển thị không được để trống" }, { status: 400 });
@@ -47,7 +67,7 @@ export async function PATCH(req: Request) {
         );
       }
 
-      if (newPassword.length < 6) {
+      if (typeof newPassword !== "string" || newPassword.length < 6) {
         return NextResponse.json(
           { error: "Mật khẩu mới phải có ít nhất 6 ký tự." },
           { status: 400 }
@@ -81,10 +101,12 @@ export async function PATCH(req: Request) {
       .where(eq(users.id, session.id));
 
     const updatedUser = {
-      ...session,
+      id: session.id,
+      username: session.username,
       fullName: newFullName,
       faculty: newFaculty,
       className: newClassName,
+      role: session.role,
     };
 
     await createSession(updatedUser);
@@ -99,7 +121,7 @@ export async function PATCH(req: Request) {
   } catch (error: any) {
     console.error("Update profile error:", error);
     return NextResponse.json(
-      { error: "Lỗi cập nhật thông tin: " + (error?.message || "Lỗi máy chủ") },
+      { error: "Đã xảy ra lỗi khi cập nhật thông tin. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }

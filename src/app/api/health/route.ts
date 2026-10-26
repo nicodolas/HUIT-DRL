@@ -26,6 +26,7 @@ export async function GET() {
     );
   } catch (error: any) {
     const errorLatencyMs = Date.now() - startTime;
+    // Log internal error on the server side only
     console.error("Health check failure:", error);
 
     return NextResponse.json(
@@ -36,7 +37,6 @@ export async function GET() {
         database: {
           status: "disconnected",
           latencyMs: errorLatencyMs,
-          error: error.message,
         },
       },
       { status: 503 }

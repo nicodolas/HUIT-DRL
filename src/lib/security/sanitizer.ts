@@ -36,10 +36,39 @@ export function isValidEvidenceUrl(url?: string | null): boolean {
   }
 }
 
-export function sanitizeText(text: string): string {
+export function sanitizeText(text?: string | null, maxLength = 1000): string {
   if (!text) return "";
   return text
     .trim()
-    .replace(/[<>]/g, "") // remove angle brackets to prevent simple HTML injection
-    .substring(0, 1000); // enforce maximum length
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // remove non-printable control chars
+    .substring(0, maxLength);
+}
+
+export function sanitizeTitle(title?: string | null): string {
+  return sanitizeText(title, 255);
+}
+
+export function sanitizeNote(note?: string | null): string | null {
+  if (!note || !note.trim()) return null;
+  return sanitizeText(note, 1000);
+}
+
+export function validatePoints(points: unknown): { valid: boolean; value: string } {
+  const num = Number(points);
+  if (isNaN(num) || num < -100 || num > 100) {
+    return { valid: false, value: "0" };
+  }
+  return { valid: true, value: String(Math.round(num * 10) / 10) };
+}
+
+export function validateQuantity(quantity: unknown): number {
+  const num = Number(quantity);
+  if (isNaN(num) || num < 1) return 1;
+  return Math.min(Math.floor(num), 50);
+}
+
+export function validateCategory(category: unknown): number | null {
+  const num = Number(category);
+  if (isNaN(num) || num < 1 || num > 5) return null;
+  return Math.floor(num);
 }

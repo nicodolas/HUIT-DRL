@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     // Verify ownership of both semesters
     const userSemesters = await db
-      .select()
+      .select({ id: semesters.id })
       .from(semesters)
       .where(
         and(
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch source records belonging to user
+    // Fetch source records belonging strictly to user
     const sourceRecords = await db
       .select()
       .from(drlRecords)
@@ -91,9 +91,8 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Clone records error:", error);
     return NextResponse.json(
-      { error: "Lỗi sao chép hoạt động: " + error.message },
+      { error: "Lỗi sao chép hoạt động. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }
 }
-

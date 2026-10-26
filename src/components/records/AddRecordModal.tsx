@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
@@ -51,6 +51,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const [note, setNote] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [compressingImage, setCompressingImage] = useState(false);
   const [compressedStats, setCompressedStats] = useState<{
@@ -149,6 +150,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setError(null);
     setLoading(true);
 
@@ -263,6 +266,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       }
       setError(err.message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

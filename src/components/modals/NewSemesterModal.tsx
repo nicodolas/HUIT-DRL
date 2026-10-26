@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { X, CalendarPlus } from "lucide-react";
 
 interface NewSemesterModalProps {
@@ -18,14 +18,18 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
   const [targetScore, setTargetScore] = useState(90);
   const [submissionDeadline, setSubmissionDeadline] = useState("");
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     if (!name.trim()) {
       setError("Vui lòng nhập tên học kỳ");
+      submittingRef.current = false;
       return;
     }
 
@@ -56,6 +60,7 @@ export const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
     } catch (err: any) {
       setError(err.message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

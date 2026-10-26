@@ -65,7 +65,7 @@ export const CATEGORIES: Record<number, CategoryMeta> = {
 export type DisciplineLevel = "none" | "khien_trach" | "canh_cao" | "dinh_chi";
 
 export interface RatingResult {
-  code: "xuat_sac" | "tot" | "kha" | "trung_binh" | "yeu" | "khong_danh_gia";
+  code: "xuat_sac" | "tot" | "kha" | "trung_binh" | "yeu" | "kem" | "khong_danh_gia";
   label: string;
   color: string;
   badgeBg: string;
@@ -83,10 +83,13 @@ export function determineRating(score: number, discipline: DisciplineLevel = "no
     };
   }
 
-  let code: RatingResult["code"] = "yeu";
-  let label = "Yếu";
-  let color = "#ef4444";
-  let badgeBg = "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400";
+  let code: RatingResult["code"] = score < 35 ? "kem" : "yeu";
+  let label = score < 35 ? "Kém" : "Yếu";
+  let color = score < 35 ? "#dc2626" : "#ef4444";
+  let badgeBg =
+    score < 35
+      ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-400"
+      : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400";
 
   if (score >= 90) {
     code = "xuat_sac";

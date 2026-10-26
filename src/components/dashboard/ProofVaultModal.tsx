@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Images, Printer, ExternalLink, ShieldCheck, AlertTriangle, Filter, CheckCircle2, Eye } from "lucide-react";
+import { X, Images, Printer, ExternalLink, ShieldCheck, AlertTriangle, Filter, CheckCircle2, Eye, Clock } from "lucide-react";
 import { DrlRecord, Semester } from "@/lib/db/schema";
 import { triggerHaptic } from "@/lib/native/platform";
 
@@ -27,7 +27,7 @@ export function ProofVaultModal({
 }: ProofVaultModalProps) {
   const [activeTab, setActiveTab] = useState<"gallery" | "contact_sheet">("gallery");
   const [filterCat, setFilterCat] = useState<number>(0);
-  const [filterStatus, setFilterStatus] = useState<"all" | "has_proof" | "missing_proof">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "has_proof" | "missing_proof" | "valid" | "pending_review">("all");
   const [previewingRecord, setPreviewingRecord] = useState<DrlRecord | null>(null);
 
   if (!isOpen) return null;
@@ -35,12 +35,16 @@ export function ProofVaultModal({
   const totalRecords = records.length;
   const withProof = records.filter((r) => Boolean(r.evidenceUrl));
   const missingProof = records.filter((r) => !r.evidenceUrl);
+  const validProof = records.filter((r) => (r.auditStatus || (r.evidenceUrl ? "pending_review" : "missing")) === "valid");
   const proofPercentage = totalRecords > 0 ? Math.round((withProof.length / totalRecords) * 100) : 100;
 
   const filteredRecords = records.filter((r) => {
+    const st = r.auditStatus || (r.evidenceUrl ? "pending_review" : "missing");
     if (filterCat > 0 && r.category !== filterCat) return false;
     if (filterStatus === "has_proof" && !r.evidenceUrl) return false;
     if (filterStatus === "missing_proof" && Boolean(r.evidenceUrl)) return false;
+    if (filterStatus === "valid" && st !== "valid") return false;
+    if (filterStatus === "pending_review" && st !== "pending_review") return false;
     return true;
   });
 
@@ -155,7 +159,7 @@ export function ProofVaultModal({
                   ))}
                 </div>
 
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                   <button
                     onClick={() => setFilterStatus("all")}
                     className={`px-2.5 py-1 text-xs rounded-lg font-medium ${
@@ -165,9 +169,17 @@ export function ProofVaultModal({
                     Tất cả ({records.length})
                   </button>
                   <button
+                    onClick={() => setFilterStatus("valid")}
+                    className={`px-2.5 py-1 text-xs rounded-lg font-medium ${
+                      filterStatus === "valid" ? "bg-emerald-600 text-white font-semibold" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    Hợp lệ ({validProof.length})
+                  </button>
+                  <button
                     onClick={() => setFilterStatus("has_proof")}
                     className={`px-2.5 py-1 text-xs rounded-lg font-medium ${
-                      filterStatus === "has_proof" ? "bg-emerald-600 text-white font-semibold" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      filterStatus === "has_proof" ? "bg-sky-600 text-white font-semibold" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                   >
                     Có ảnh ({withProof.length})
@@ -255,17 +267,39 @@ export function ProofVaultModal({
                           </div>
 
                           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-                            {r.evidenceUrl ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center space-x-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Hợp lệ</span>
-                              </span>
-                            ) : (
-                              <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center space-x-1">
-                                <AlertTriangle className="w-3 h-3" />
-                                <span>Cần bổ sung</span>
-                              </span>
-                            )}
+                            {(() => {
+                              const st = r.auditStatus || (r.evidenceUrl ? "pending_review" : "missing");
+                              if (st === "valid") {
+                                return (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center space-x-1">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    <span>Hợp lệ</span>
+                                  </span>
+                                );
+                              }
+                              if (st === "pending_review") {
+                                return (
+                                  <span className="text-sky-600 dark:text-sky-400 font-medium flex items-center space-x-1">
+                                    <Clock className="w-3 h-3 text-sky-500" />
+                                    <span>Chờ lớp duyệt</span>
+                                  </span>
+                                );
+                              }
+                              if (st === "rejected") {
+                                return (
+                                  <span className="text-rose-600 dark:text-rose-400 font-medium flex items-center space-x-1">
+                                    <AlertTriangle className="w-3 h-3 text-rose-500" />
+                                    <span>Cần bổ sung</span>
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center space-x-1">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  <span>Thiếu ảnh</span>
+                                </span>
+                              );
+                            })()}
 
                             {r.evidenceUrl && !hasImage && (
                               <a

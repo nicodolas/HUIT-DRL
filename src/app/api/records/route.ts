@@ -64,6 +64,8 @@ export async function GET(req: Request) {
         occurredAt: drlRecords.occurredAt,
         note: drlRecords.note,
         evidenceUrl: drlRecords.evidenceUrl,
+        auditStatus: drlRecords.auditStatus,
+        auditComment: drlRecords.auditComment,
         createdAt: drlRecords.createdAt,
         updatedAt: drlRecords.updatedAt,
       })
@@ -83,11 +85,20 @@ export async function GET(req: Request) {
       scoreSummary.categories
     );
 
+    const auditSummary = {
+      total: records.length,
+      valid: records.filter((r) => r.auditStatus === "valid").length,
+      pendingReview: records.filter((r) => r.auditStatus === "pending_review").length,
+      missing: records.filter((r) => r.auditStatus === "missing" || (!r.evidenceUrl && r.auditStatus !== "valid")).length,
+      rejected: records.filter((r) => r.auditStatus === "rejected").length,
+    };
+
     return NextResponse.json({
       semester,
       records,
       scoreSummary,
       goalAnalysis,
+      auditSummary,
     });
   } catch (error: any) {
     console.error("Records GET error:", error);
@@ -106,7 +117,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note, evidenceUrl } = body;
+    const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note, evidenceUrl, auditStatus, auditComment } = body;
 
     if (!semesterId || !isValidId(semesterId)) {
       return NextResponse.json({ error: "Mã học kỳ không hợp lệ." }, { status: 400 });
@@ -162,6 +173,13 @@ export async function POST(req: Request) {
     const finalQuantity = validateQuantity(quantity);
     const finalNote = sanitizeNote(note);
 
+    const validAuditStatuses = ["missing", "pending_review", "valid", "rejected"];
+    const finalAuditStatus = auditStatus && validAuditStatuses.includes(auditStatus)
+      ? auditStatus
+      : evidenceUrl && String(evidenceUrl).trim()
+        ? "pending_review"
+        : "missing";
+
     await db.insert(drlRecords).values({
       id: recordId,
       userId: session.id,
@@ -175,6 +193,8 @@ export async function POST(req: Request) {
       occurredAt: occurredAt ? String(occurredAt).trim().slice(0, 32) : null,
       note: finalNote,
       evidenceUrl: evidenceUrl ? String(evidenceUrl).trim() : null,
+      auditStatus: finalAuditStatus,
+      auditComment: auditComment ? sanitizeNote(auditComment) : null,
     });
 
     return NextResponse.json({ message: "Đã thêm hoạt động!", recordId });

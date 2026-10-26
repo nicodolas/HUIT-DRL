@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { DisciplineLevel } from "@/lib/drl/rules";
 import { calculateSemesterScore } from "@/lib/drl/calculator";
 import { DrlRecord } from "@/lib/db/schema";
-import { Sparkles, Check, ArrowRight, Plus, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Sliders, Check, ArrowRight, Plus, RefreshCw, CheckCircle2 } from "lucide-react";
 
 interface SimulationItem {
   id: string;
@@ -128,7 +128,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
           <div className="flex items-center space-x-1.5 text-slate-900 font-bold text-sm">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Sliders className="w-4 h-4 text-slate-700" />
             <h2>Mô phỏng điểm dự phóng (What-If Simulator)</h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">

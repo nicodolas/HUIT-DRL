@@ -14,6 +14,7 @@ import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { ExtracurricularDossierModal } from "@/components/dashboard/ExtracurricularDossierModal";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
+import { APP_FEATURES } from "@/lib/config/features";
 import { DrlRecord, Semester } from "@/lib/db/schema";
 import { Plus, FileText, Copy, ShieldCheck, FileSpreadsheet, Award } from "lucide-react";
 
@@ -81,6 +82,19 @@ export default function RecordsPage() {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/records/${id}`, { method: "DELETE" });
+      if (res.ok) loadRecords();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleUpdateAuditStatus = async (id: string, auditStatus: string, auditComment?: string) => {
+    try {
+      const res = await fetch(`/api/records/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auditStatus, auditComment }),
+      });
       if (res.ok) loadRecords();
     } catch (e) {
       console.error(e);
@@ -172,8 +186,8 @@ export default function RecordsPage() {
           </div>
         </div>
 
-        {/* Semester Deadline & Status Banner */}
-        {currentSemester && (
+        {/* Semester Deadline & Status Banner (Administrative - guarded by feature flag) */}
+        {APP_FEATURES.ENABLE_SUBMISSION_WORKFLOW && currentSemester && (
           <DeadlineAlertBanner
             semesterId={currentSemester.id}
             semesterName={currentSemester.name}
@@ -203,6 +217,7 @@ export default function RecordsPage() {
             setEditingRecord(null);
             setModalOpen(true);
           }}
+          onUpdateAuditStatus={handleUpdateAuditStatus}
         />
       </main>
 

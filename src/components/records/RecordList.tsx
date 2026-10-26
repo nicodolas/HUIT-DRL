@@ -3,9 +3,20 @@
 import React, { useState, useMemo } from "react";
 import { DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
-import { Trash2, Calendar, FileText, Layers, Plus, Search, X, Edit3, Download, ExternalLink, Clock, Eye, QrCode } from "lucide-react";
+import {
+  Trash2,
+  Calendar,
+  FileText,
+  Plus,
+  Search,
+  X,
+  Edit3,
+  Download,
+  Image as ImageIcon,
+  Check,
+  Sparkles,
+} from "lucide-react";
 import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
-import { ActivityVerificationModal } from "@/components/records/ActivityVerificationModal";
 import { triggerHaptic } from "@/lib/native/platform";
 
 interface RecordListProps {
@@ -15,6 +26,7 @@ interface RecordListProps {
   onOpenAddModal: () => void;
   studentName?: string;
   studentClass?: string;
+  onUpdateAuditStatus?: (id: string, auditStatus: string, auditComment?: string) => Promise<void> | void;
 }
 
 export const RecordList: React.FC<RecordListProps> = ({
@@ -31,87 +43,60 @@ export const RecordList: React.FC<RecordListProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
   const [viewingProofRecord, setViewingProofRecord] = useState<DrlRecord | null>(null);
-  const [verifyingRecord, setVerifyingRecord] = useState<DrlRecord | null>(null);
 
-  const addCount = records.filter((r) => Number(r.points) > 0).length;
-  const deductCount = records.filter((r) => Number(r.points) < 0).length;
-  const evidenceCount = records.filter((r) => !!r.evidenceUrl).length;
-  const missingEvidenceCount = records.filter((r) => !r.evidenceUrl).length;
-  const evidencePercent = records.length > 0 ? Math.round((evidenceCount / records.length) * 100) : 100;
+  // Filtered & Sorted Records
+  const filtered = useMemo(() => {
+    return records
+      .filter((r) => {
+        if (filterCat > 0 && r.category !== filterCat) return false;
+        if (filterType === "add" && Number(r.points) <= 0) return false;
+        if (filterType === "deduct" && Number(r.points) >= 0) return false;
+        if (filterType === "evidence" && !r.evidenceUrl) return false;
+        if (filterType === "missing_evidence" && !!r.evidenceUrl) return false;
 
-  const filtered = records
-    .filter((r) => {
-      if (filterCat > 0 && r.category !== filterCat) return false;
-      if (filterType === "add" && Number(r.points) <= 0) return false;
-      if (filterType === "deduct" && Number(r.points) >= 0) return false;
-      if (filterType === "evidence" && !r.evidenceUrl) return false;
-      if (filterType === "missing_evidence" && !!r.evidenceUrl) return false;
-
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchTitle = (r.title || "").toLowerCase().includes(q);
-        const matchNote = (r.note || "").toLowerCase().includes(q);
-        const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
-        if (!matchTitle && !matchNote && !matchDate) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "points_desc") {
-        return Number(b.points) * (b.quantity || 1) - Number(a.points) * (a.quantity || 1);
-      }
-      if (sortBy === "oldest") {
-        return (a.occurredAt || "").localeCompare(b.occurredAt || "");
-      }
-      // newest
-      return (b.occurredAt || "").localeCompare(a.occurredAt || "");
-    });
-
-  const groupedByMonth = useMemo(() => {
-    const groups: Record<string, DrlRecord[]> = {};
-    for (const r of filtered) {
-      let key = "Khác / Chưa rõ ngày";
-      if (r.occurredAt && r.occurredAt.includes("-")) {
-        const parts = r.occurredAt.split("-");
-        if (parts.length >= 2) {
-          key = `Tháng ${parts[1]}/${parts[0]}`;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const matchTitle = (r.title || "").toLowerCase().includes(q);
+          const matchNote = (r.note || "").toLowerCase().includes(q);
+          const matchDate = (r.occurredAt || "").toLowerCase().includes(q);
+          if (!matchTitle && !matchNote && !matchDate) return false;
         }
-      }
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(r);
-    }
-    return groups;
-  }, [filtered]);
 
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "newest") {
+          const dateA = a.occurredAt || a.createdAt;
+          const dateB = b.occurredAt || b.createdAt;
+          return new Date(dateB).getTime() - new Date(dateA).getTime();
+        }
+        if (sortBy === "oldest") {
+          const dateA = a.occurredAt || a.createdAt;
+          const dateB = b.occurredAt || b.createdAt;
+          return new Date(dateA).getTime() - new Date(dateB).getTime();
+        }
+        if (sortBy === "points_desc") {
+          return Number(b.points) * (b.quantity || 1) - Number(a.points) * (a.quantity || 1);
+        }
+        return 0;
+      });
+  }, [records, filterCat, filterType, sortBy, searchQuery]);
+
+  // Export clean CSV
   const exportToCsv = () => {
     if (records.length === 0) return;
-    const headers = [
-      "STT",
-      "Tiêu chí",
-      "Tên hoạt động",
-      "Phân loại",
-      "Điểm mỗi lần",
-      "Số lượng",
-      "Tổng điểm",
-      "Ngày diễn ra",
-      "Ghi chú",
-      "Link minh chứng",
-    ];
-
+    const headers = ["STT", "Tiêu chí", "Tên hoạt động", "Điểm", "Số lượng", "Tổng điểm", "Ngày diễn ra", "Ghi chú"];
     const rows = records.map((r, idx) => {
-      const isAdd = Number(r.points) > 0;
       const totalPts = Number(r.points) * (r.quantity || 1);
       return [
         idx + 1,
         `"TC${r.category} - ${CATEGORIES[r.category]?.name || ""}"`,
         `"${(r.title || "").replace(/"/g, '""')}"`,
-        isAdd ? "Cộng điểm" : "Trừ điểm",
         r.points,
         r.quantity || 1,
         totalPts,
         `"${r.occurredAt || ""}"`,
         `"${(r.note || "").replace(/"/g, '""')}"`,
-        `"${(r.evidenceUrl || "").replace(/"/g, '""')}"`,
       ].join(",");
     });
 
@@ -120,34 +105,39 @@ export const RecordList: React.FC<RecordListProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `HUIT_DRL_HoatDong_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `SoTay_DRL_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 transition-colors">
+      {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">
-            Nhật ký ghi nhận điểm ({records.length})
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+            <span>Nhật ký hoạt động</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              {records.length}
+            </span>
           </h2>
-          <p className="text-xs text-slate-500">
-            Các hoạt động cộng điểm và vi phạm trong học kỳ
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Sổ ghi chép các hoạt động phong trào, học thuật và ý thức rèn luyện cá nhân
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           {records.length > 0 && (
-            <div className="flex items-center space-x-1">
-              <div className="flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+            <>
+              {/* View Switcher */}
+              <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                     viewMode === "list"
-                      ? "bg-white text-slate-900 shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   Danh sách
@@ -155,299 +145,246 @@ export const RecordList: React.FC<RecordListProps> = ({
                 <button
                   type="button"
                   onClick={() => setViewMode("timeline")}
-                  className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                     viewMode === "timeline"
-                      ? "bg-white text-slate-900 shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  Dòng thời gian
+                  Thời gian
                 </button>
               </div>
 
+              {/* Export CSV */}
               <button
                 onClick={exportToCsv}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
-                title="Xuất bảng Excel/CSV nộp ban cán sự"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                title="Tải bảng tính CSV cá nhân"
               >
-                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Xuất CSV</span>
               </button>
-            </div>
+            </>
           )}
 
-          {/* Filter Pills */}
-          <div className="flex items-center space-x-1 overflow-x-auto pb-1 scrollbar-none">
           <button
-            onClick={() => setFilterCat(0)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              filterCat === 0
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
+            onClick={() => {
+              triggerHaptic("medium");
+              onOpenAddModal();
+            }}
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 text-xs font-semibold shadow-xs transition-transform active:scale-95 cursor-pointer"
           >
-            Tất cả
+            <Plus className="w-3.5 h-3.5 text-amber-400 dark:text-slate-950" />
+            <span>Thêm</span>
           </button>
-          {[1, 2, 3, 4, 5].map((c) => (
-            <button
-              key={c}
-              onClick={() => setFilterCat(c)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                filterCat === c
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              TC {c}
-            </button>
-          ))}
-          </div>
         </div>
       </div>
 
-      {/* Filter and Search Toolbar */}
-      {records.length > 0 && (
-        <div className="space-y-2 pt-1">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {/* Quick Search Bar */}
-            <div className="relative flex-1">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Tìm theo tên hoạt động, ngày hoặc ghi chú..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900 transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+      {/* Category Pills Filter */}
+      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => setFilterCat(0)}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            filterCat === 0
+              ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+          }`}
+        >
+          Tất cả ({records.length})
+        </button>
+        {[1, 2, 3, 4, 5].map((c) => {
+          const catMeta = CATEGORIES[c];
+          const count = records.filter((r) => r.category === c).length;
+          return (
+            <button
+              key={c}
+              onClick={() => setFilterCat(c)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                filterCat === c
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-xs"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+            >
+              <span>{catMeta.code}</span>
+              <span className="text-[10px] opacity-75 hidden sm:inline">{catMeta.shortName}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${filterCat === c ? "bg-white/20 dark:bg-black/20" : "bg-slate-200 dark:bg-slate-700"}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-            {/* Sort Dropdown */}
+      {/* Search & Sub-Filter Toolbar */}
+      {records.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm hoạt động theo tên, ngày, ghi chú..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-8 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-white transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={filterType}
+              onChange={(e: any) => setFilterType(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-xl px-2.5 py-2 border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer"
+            >
+              <option value="all">Mọi loại điểm</option>
+              <option value="add">Điểm cộng (+)</option>
+              <option value="deduct">Điểm trừ (-)</option>
+              <option value="evidence">Có ảnh minh chứng</option>
+              <option value="missing_evidence">Chưa có ảnh</option>
+            </select>
+
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none cursor-pointer font-medium"
+              className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-xl px-2.5 py-2 border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="newest">Mới nhất</option>
               <option value="oldest">Cũ nhất</option>
               <option value="points_desc">Điểm cao nhất</option>
             </select>
           </div>
-
-          {/* Type Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <button
-              onClick={() => setFilterType("all")}
-              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
-                filterType === "all"
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              Tất cả ({records.length})
-            </button>
-            <button
-              onClick={() => setFilterType("add")}
-              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
-                filterType === "add"
-                  ? "bg-emerald-800 text-white"
-                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-              }`}
-            >
-              Cộng điểm ({addCount})
-            </button>
-            <button
-              onClick={() => setFilterType("deduct")}
-              className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
-                filterType === "deduct"
-                  ? "bg-red-800 text-white"
-                  : "bg-red-50 text-red-800 hover:bg-red-100"
-              }`}
-            >
-              Trừ điểm ({deductCount})
-            </button>
-            {evidenceCount > 0 && (
-              <button
-                onClick={() => setFilterType("evidence")}
-                className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  filterType === "evidence"
-                    ? "bg-blue-800 text-white"
-                    : "bg-blue-50 text-blue-800 hover:bg-blue-100"
-                }`}
-              >
-                Có minh chứng ({evidenceCount})
-              </button>
-            )}
-            {missingEvidenceCount > 0 && evidenceCount > 0 && (
-              <button
-                onClick={() => setFilterType("missing_evidence")}
-                className={`px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer ${
-                  filterType === "missing_evidence"
-                    ? "bg-amber-800 text-white"
-                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
-                }`}
-              >
-                Chưa có link ({missingEvidenceCount})
-              </button>
-            )}
-          </div>
-
-          {/* Evidence Audit Status Bar */}
-          <div className="flex items-center justify-between p-2 rounded-lg border text-xs bg-slate-50 border-slate-200">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  missingEvidenceCount === 0 ? "bg-emerald-500" : "bg-amber-500"
-                }`}
-              />
-              <span className="text-slate-700 text-[11px]">
-                Kiểm kê minh chứng: <strong>{`${evidenceCount}/${records.length}`}</strong> mục đã gắn link ({evidencePercent}%).
-                {missingEvidenceCount > 0 ? (
-                  <span className="text-amber-700 font-medium ml-1">
-                    Còn {missingEvidenceCount} mục chưa có link Drive.
-                  </span>
-                ) : (
-                  <span className="text-emerald-700 font-medium ml-1">
-                    100% mục đã đủ minh chứng!
-                  </span>
-                )}
-              </span>
-            </div>
-            {missingEvidenceCount > 0 && filterType !== "missing_evidence" && (
-              <button
-                onClick={() => setFilterType("missing_evidence")}
-                className="text-[11px] font-semibold text-amber-800 hover:underline cursor-pointer shrink-0 ml-2"
-              >
-                Lọc mục thiếu &rarr;
-              </button>
-            )}
-          </div>
         </div>
       )}
 
-      {filtered.length === 0 ? (
-        <div className="py-10 flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-200 rounded-lg">
-          <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-2.5">
-            <Layers className="w-5 h-5" />
+      {/* Empty State */}
+      {records.length === 0 ? (
+        <div className="py-12 px-4 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3 shadow-2xs">
+            <FileText className="w-6 h-6" />
           </div>
-          <h3 className="text-xs font-semibold text-slate-700">
-            Chưa có mục ghi nhận nào trong danh mục này
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            Sổ tay học kỳ này đang trống
           </h3>
-          <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm">
-            Điểm mặc định (60đ) đã được tính sẵn. Hãy ghi nhận các hoạt động tham gia để nâng cao điểm rèn luyện.
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+            Bạn đã có sẵn <strong>60 điểm mặc định</strong> (TC1: 25đ, TC2: 20đ, TC4: 15đ). Hãy bắt đầu ghi chép các hoạt động phong trào, NCKH hoặc khen thưởng để nâng hạng điểm!
           </p>
           <button
-            onClick={onOpenAddModal}
-            className="mt-3 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+            onClick={() => {
+              triggerHaptic("medium");
+              onOpenAddModal();
+            }}
+            className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 font-semibold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
           >
-            + Ghi nhận hoạt động
+            <Plus className="w-4 h-4 text-amber-400 dark:text-slate-950" />
+            <span>Ghi chép hoạt động đầu tiên</span>
           </button>
         </div>
-      ) : viewMode === "list" ? (
-        <div className="space-y-2">
+      ) : filtered.length === 0 ? (
+        <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+          Không tìm thấy hoạt động nào phù hợp với bộ lọc hiện tại.
+        </div>
+      ) : (
+        /* Records List / Timeline */
+        <div className="space-y-2.5">
           {filtered.map((r) => {
-            const meta = CATEGORIES[r.category] || CATEGORIES[1];
+            const cat = CATEGORIES[r.category] || { code: `TC${r.category}`, shortName: "Khác", color: "#64748b" };
             const isAdd = Number(r.points) > 0;
-            const totalItemPoints = Number(r.points) * (r.quantity || 1);
+            const totalPts = Number(r.points) * (r.quantity || 1);
 
             return (
               <div
                 key={r.id}
-                className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white transition-colors flex items-start justify-between gap-3"
+                className="group relative bg-white dark:bg-slate-800/80 hover:bg-slate-50/70 dark:hover:bg-slate-800 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 dark:border-slate-700/80 transition-all shadow-2xs hover:shadow-xs flex items-start gap-3 sm:gap-4"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                      {meta.code}
-                    </span>
-                    <h3 className="text-xs font-semibold text-slate-900 leading-snug truncate">
-                      {r.title}
-                    </h3>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 mt-1">
-                    {r.occurredAt && (
-                      <span className="flex items-center">
-                        <Calendar className="w-3 h-3 mr-1 text-slate-400" />
-                        {r.occurredAt}
-                      </span>
-                    )}
-                    {r.quantity && r.quantity > 1 && (
-                      <span className="font-mono text-slate-600 bg-slate-100 px-1 rounded">
-                        x{r.quantity}
-                      </span>
-                    )}
-                    {r.note && (
-                      <span className="flex items-center text-slate-500 italic truncate max-w-xs">
-                        <FileText className="w-3 h-3 mr-1 text-slate-400 shrink-0" />
-                        {r.note}
-                      </span>
-                    )}
-                    {r.evidenceUrl && (() => {
-                      const lower = r.evidenceUrl.toLowerCase();
-                      let label = "Minh chứng";
-                      let colorClass = "bg-slate-100 text-slate-700 border-slate-200";
-
-                      if (lower.includes("drive.google.com") || lower.includes("docs.google.com")) {
-                        label = "Google Drive";
-                        colorClass = "bg-blue-50 text-blue-700 border-blue-200";
-                      } else if (lower.includes("1drv.ms") || lower.includes("onedrive") || lower.includes("sharepoint")) {
-                        label = "OneDrive";
-                        colorClass = "bg-sky-50 text-sky-700 border-sky-200";
-                      } else if (lower.includes("facebook.com") || lower.includes("fb.com")) {
-                        label = "Facebook";
-                        colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
-                      }
-
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => setViewingProofRecord(r)}
-                          className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border hover:opacity-80 transition-opacity cursor-pointer ${colorClass}`}
-                          title="Xem trước minh chứng"
-                        >
-                          <Eye className="w-2.5 h-2.5 shrink-0" />
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })()}
-                  </div>
+                {/* Category Pill Tag */}
+                <div
+                  className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 text-white font-bold text-[10px] shadow-2xs"
+                  style={{ backgroundColor: cat.color }}
+                  title={`${cat.code} - ${cat.shortName}`}
+                >
+                  <span>{cat.code}</span>
                 </div>
 
-                <div className="flex items-center space-x-1.5 shrink-0">
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${
-                      isAdd
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : "bg-red-50 text-red-800 border border-red-200"
-                    }`}
-                  >
-                    {isAdd ? `+${totalItemPoints}` : totalItemPoints}đ
-                  </span>
+                {/* Main Content */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                      {r.title}
+                    </h4>
 
-                  <button
-                    onClick={() => {
-                      triggerHaptic("light");
-                      setVerifyingRecord(r);
-                    }}
-                    className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                    title="Mã QR & Thẻ xác nhận"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                  </button>
+                    {/* Score Tag */}
+                    <div className="shrink-0 text-right">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold ${
+                          isAdd
+                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                            : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                        }`}
+                      >
+                        {isAdd ? `+${totalPts}` : totalPts}đ
+                      </span>
+                    </div>
+                  </div>
 
+                  {/* Metadata Row */}
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="font-medium text-slate-600 dark:text-slate-300">{cat.shortName}</span>
+
+                    {r.occurredAt && (
+                      <span className="flex items-center space-x-1">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <span>{r.occurredAt}</span>
+                      </span>
+                    )}
+
+                    {r.quantity && r.quantity > 1 && (
+                      <span className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.2 rounded text-[10px]">
+                        x{r.quantity} lần ({r.points}đ/lần)
+                      </span>
+                    )}
+
+                    {/* Proof Indicator */}
+                    {r.evidenceUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setViewingProofRecord(r)}
+                        className="inline-flex items-center space-x-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium cursor-pointer"
+                        title="Bấm để xem ảnh minh chứng"
+                      >
+                        <ImageIcon className="w-3 h-3" />
+                        <span>Có minh chứng</span>
+                      </button>
+                    ) : (
+                      <span className="text-slate-400 text-[10px]">Chưa đính kèm ảnh</span>
+                    )}
+                  </div>
+
+                  {/* Personal Note */}
+                  {r.note && (
+                    <p className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/60 rounded-lg p-2 mt-1 border border-slate-100 dark:border-slate-800/80">
+                      {r.note}
+                    </p>
+                  )}
+                </div>
+
+                {/* Action Buttons: Edit / Delete */}
+                <div className="flex items-center space-x-1 shrink-0 self-center">
                   {onEditRecord && (
                     <button
-                      onClick={() => onEditRecord(r)}
-                      className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="Sửa mục này"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        onEditRecord(r);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      title="Sửa hoạt động"
+                      aria-label="Sửa hoạt động"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
@@ -455,12 +392,14 @@ export const RecordList: React.FC<RecordListProps> = ({
 
                   <button
                     onClick={() => {
-                      if (confirm(`Bạn có chắc muốn xóa "${r.title}"?`)) {
+                      if (confirm(`Bạn có chắc muốn xóa hoạt động "${r.title}" khỏi sổ tay?`)) {
+                        triggerHaptic("medium");
                         onDeleteRecord(r.id);
                       }
                     }}
-                    className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                    title="Xóa mục này"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    title="Xóa hoạt động"
+                    aria-label="Xóa hoạt động"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -469,155 +408,16 @@ export const RecordList: React.FC<RecordListProps> = ({
             );
           })}
         </div>
-      ) : (
-        /* Monthly Timeline View */
-        <div className="space-y-6 pt-2">
-          {Object.entries(groupedByMonth).map(([month, monthRecords]) => {
-            const netPoints = monthRecords.reduce(
-              (sum, r) => sum + Number(r.points) * (r.quantity || 1),
-              0
-            );
-
-            return (
-              <div key={month} className="space-y-2.5">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-900 shrink-0" />
-                  <h4 className="font-bold text-xs text-slate-900">{month}</h4>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    ({monthRecords.length} hoạt động)
-                  </span>
-                  <span
-                    className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ml-auto ${
-                      netPoints >= 0
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                        : "bg-red-50 text-red-800 border border-red-200"
-                    }`}
-                  >
-                    {netPoints >= 0 ? `+${netPoints}` : netPoints}đ
-                  </span>
-                </div>
-
-                <div className="border-l-2 border-slate-200 ml-1 pl-3.5 space-y-2">
-                  {monthRecords.map((r) => {
-                    const meta = CATEGORIES[r.category] || CATEGORIES[1];
-                    const isAdd = Number(r.points) > 0;
-                    const totalItemPoints = Number(r.points) * (r.quantity || 1);
-
-                    return (
-                      <div
-                        key={r.id}
-                        className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white transition-colors flex items-start justify-between gap-3 shadow-2xs"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                              {meta.code}
-                            </span>
-                            <h3 className="text-xs font-semibold text-slate-900 leading-snug truncate">
-                              {r.title}
-                            </h3>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 mt-1">
-                            {r.occurredAt && (
-                              <span className="flex items-center">
-                                <Calendar className="w-3 h-3 mr-1 text-slate-400" />
-                                {r.occurredAt}
-                              </span>
-                            )}
-                            {r.quantity && r.quantity > 1 && (
-                              <span className="font-mono text-slate-600 bg-slate-100 px-1 rounded">
-                                x{r.quantity}
-                              </span>
-                            )}
-                            {r.note && (
-                              <span className="flex items-center text-slate-500 italic truncate max-w-xs">
-                                <FileText className="w-3 h-3 mr-1 text-slate-400 shrink-0" />
-                                {r.note}
-                              </span>
-                            )}
-                            {r.evidenceUrl && (
-                              <button
-                                type="button"
-                                onClick={() => setViewingProofRecord(r)}
-                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-blue-50 text-blue-700 border-blue-200 hover:opacity-80 transition-opacity cursor-pointer"
-                              >
-                                <Eye className="w-2.5 h-2.5 shrink-0" />
-                                <span>Minh chứng</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-1.5 shrink-0">
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${
-                              isAdd
-                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                : "bg-red-50 text-red-800 border border-red-200"
-                            }`}
-                          >
-                            {isAdd ? `+${totalItemPoints}` : totalItemPoints}đ
-                          </span>
-
-                          <button
-                    onClick={() => {
-                      triggerHaptic("light");
-                      setVerifyingRecord(r);
-                    }}
-                    className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
-                    title="Mã QR & Thẻ xác nhận"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                  </button>
-
-                  {onEditRecord && (
-                            <button
-                              onClick={() => onEditRecord(r)}
-                              className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                              title="Sửa mục này"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => {
-                              if (confirm(`Bạn có chắc muốn xóa "${r.title}"?`)) {
-                                onDeleteRecord(r.id);
-                              }
-                            }}
-                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                            title="Xóa mục này"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       )}
 
       {/* Proof Viewer Modal */}
-      <ProofViewerModal
-        isOpen={Boolean(viewingProofRecord)}
-        onClose={() => setViewingProofRecord(null)}
-        record={viewingProofRecord}
-      />
-
-      {/* Activity QR Verification Slip Modal */}
-      <ActivityVerificationModal
-        isOpen={Boolean(verifyingRecord)}
-        onClose={() => setVerifyingRecord(null)}
-        record={verifyingRecord}
-        studentName={studentName}
-        studentClass={studentClass}
-      />
+      {viewingProofRecord && (
+        <ProofViewerModal
+          isOpen={!!viewingProofRecord}
+          onClose={() => setViewingProofRecord(null)}
+          record={viewingProofRecord}
+        />
+      )}
     </div>
   );
 };

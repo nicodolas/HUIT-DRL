@@ -51,6 +51,8 @@ export const drlRecords = pgTable("drl_records", {
   occurredAt: varchar("occurred_at", { length: 32 }),
   note: text("note"),
   evidenceUrl: text("evidence_url"),
+  auditStatus: varchar("audit_status", { length: 32 }).default("pending_review").notNull(), // 'missing' | 'pending_review' | 'valid' | 'rejected'
+  auditComment: text("audit_comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -6,6 +6,7 @@ import { GoalAnalysisResult } from "@/lib/drl/calculator";
 import { DrlCriteriaPreset } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { getPresetsCache, savePresetsCache } from "@/lib/offline/cache";
+import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
 
 interface SmartRecommendationsCardProps {
   analysis: GoalAnalysisResult;
@@ -16,8 +17,11 @@ export const SmartRecommendationsCard: React.FC<SmartRecommendationsCardProps> =
   analysis,
   onSelectPresetToAdd,
 }) => {
-  const [presets, setPresets] = useState<DrlCriteriaPreset[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [presets, setPresets] = useState<DrlCriteriaPreset[]>(() => {
+    const cached = getPresetsCache();
+    return cached && cached.length > 0 ? cached : DEFAULT_HUIT_PRESETS;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // 1. Try cache first

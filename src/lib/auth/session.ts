@@ -12,6 +12,7 @@ export interface SessionUser {
   fullName: string;
   faculty?: string | null;
   className?: string | null;
+  role: "user" | "admin";
 }
 
 export async function createSession(user: SessionUser): Promise<string> {
@@ -21,6 +22,7 @@ export async function createSession(user: SessionUser): Promise<string> {
     fullName: user.fullName,
     faculty: user.faculty,
     className: user.className,
+    role: user.role || "user",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -52,6 +54,7 @@ export async function getSession(): Promise<SessionUser | null> {
       fullName: (payload.fullName as string) || (payload.username as string) || "Người dùng",
       faculty: payload.faculty as string | null,
       className: payload.className as string | null,
+      role: (payload.role as "user" | "admin") || "user",
     };
   } catch {
     return null;

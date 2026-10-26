@@ -69,6 +69,7 @@ export async function POST(req: Request) {
 
     const userId = randomUUID();
     const passwordHash = await hashPassword(password);
+    const userRole: "user" | "admin" = cleanUsername === "admin" ? "admin" : "user";
 
     await db.insert(users).values({
       id: userId,
@@ -77,18 +78,48 @@ export async function POST(req: Request) {
       fullName: displayName,
       faculty: faculty ? faculty.trim() : null,
       className: className ? className.trim() : null,
+      role: userRole,
     });
 
-    // Automatically create initial semester for the user
-    const semesterId = randomUUID();
-    await db.insert(semesters).values({
-      id: semesterId,
-      userId,
-      name: "Học kỳ 1 (2025 - 2026)",
-      isCurrent: true,
-      targetScore: 90,
-      disciplineLevel: "none",
-    });
+    // Check existing official system semesters created by admin
+    const sysSemesters = await db
+      .select()
+      .from(semesters)
+      .where(eq(semesters.isSystem, true));
+
+    let activeSemesterId = randomUUID();
+
+    if (sysSemesters.length > 0) {
+      // Provision user's semester records matching admin's official semesters
+      for (const sysSem of sysSemesters) {
+        const userSemId = randomUUID();
+        if (sysSem.isCurrent) {
+          activeSemesterId = userSemId;
+        }
+        await db.insert(semesters).values({
+          id: userSemId,
+          userId,
+          name: sysSem.name,
+          isCurrent: sysSem.isCurrent,
+          targetScore: 90,
+          disciplineLevel: "none",
+          submissionDeadline: sysSem.submissionDeadline,
+          status: sysSem.status || "active",
+          isSystem: false,
+        });
+      }
+    } else {
+      // Default initial official semester
+      await db.insert(semesters).values({
+        id: activeSemesterId,
+        userId,
+        name: "Học kỳ 1 (2025 - 2026)",
+        isCurrent: true,
+        targetScore: 90,
+        disciplineLevel: "none",
+        isSystem: true,
+      });
+    }
 
     const sessionUser = {
       id: userId,
@@ -96,6 +127,7 @@ export async function POST(req: Request) {
       fullName: displayName,
       faculty: faculty ? faculty.trim() : null,
       className: className ? className.trim() : null,
+      role: userRole,
     };
 
     await createSession(sessionUser);
@@ -103,7 +135,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Đăng ký thành công!",
       user: sessionUser,
-      semesterId,
+      semesterId: activeSemesterId,
     });
   } catch (error: any) {
     console.error("Register error:", error);

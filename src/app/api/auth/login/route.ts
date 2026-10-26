@@ -55,12 +55,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const userRole = (user.role as "user" | "admin") || (user.username === "admin" ? "admin" : "user");
+
     const sessionUser = {
       id: user.id,
       username: user.username,
       fullName: user.fullName,
       faculty: user.faculty,
       className: user.className,
+      role: userRole,
     };
 
     await createSession(sessionUser);

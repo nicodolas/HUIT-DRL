@@ -39,8 +39,11 @@ test.describe("Phase 17: Official HUIT DRL Appeal (Điều 13) & Theme Engine Su
     const isLight = await page.evaluate(() => !document.documentElement.classList.contains("dark"));
     expect(isLight).toBe(true);
 
-    // 3. Open DRL Appeal Modal on Dashboard
-    const appealBtn = page.getByRole("button", { name: "Khiếu nại ĐRL" });
+    // 3. Open DRL Appeal Modal on Dashboard via Utilities Menu
+    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
+    const appealBtn = page.getByRole("button", { name: /Soạn đơn khiếu nại|Khiếu nại/i });
     await expect(appealBtn).toBeVisible();
     await appealBtn.click();
 

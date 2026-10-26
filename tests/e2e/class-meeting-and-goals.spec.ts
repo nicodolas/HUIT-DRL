@@ -38,7 +38,10 @@ test.describe("Phase 15: Class Meeting Minutes & Goal Tracker", () => {
     // Verify target updated
     await expect(page.getByText("Mục tiêu: 80 điểm")).toBeVisible();
 
-    // 3. Open Class Meeting & Minutes Modal
+    // 3. Open Class Meeting & Minutes Modal (available in Tiện ích khác for Class Monitors / Ban cán sự)
+    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
     const classMeetingBtn = page.getByRole("button", { name: "Họp lớp & Biên bản" });
     await expect(classMeetingBtn).toBeVisible();
     await classMeetingBtn.click();

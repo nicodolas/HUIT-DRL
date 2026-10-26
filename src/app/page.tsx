@@ -25,12 +25,14 @@ import { DrlAppealModal } from "@/components/modals/DrlAppealModal";
 import { CalendarExportModal } from "@/components/modals/CalendarExportModal";
 import { ProofVaultModal } from "@/components/dashboard/ProofVaultModal";
 import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
+import { StudentUtilitiesMenu } from "@/components/dashboard/StudentUtilitiesMenu";
+import { AdminHubModal } from "@/components/modals/AdminHubModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { DeadlineAlertBanner } from "@/components/common/DeadlineAlertBanner";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { Plus, RefreshCw, FileText, ShieldCheck, FileSpreadsheet, WifiOff, Award, Database, Users, FileQuestion, Calendar as CalendarIcon, Images as ImagesIcon, GraduationCap } from "lucide-react";
+import { Plus, WifiOff } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -58,6 +60,7 @@ export default function DashboardPage() {
   const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [proofVaultOpen, setProofVaultOpen] = useState(false);
   const [forecastModalOpen, setForecastModalOpen] = useState(false);
+  const [adminHubOpen, setAdminHubOpen] = useState(false);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -206,142 +209,66 @@ export default function DashboardPage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
+        onOpenNewSemesterModal={() => {
+          if (user?.role === "admin") {
+            setAdminHubOpen(true);
+          } else {
+            setNewSemesterModalOpen(true);
+          }
+        }}
       />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         {/* Top greeting & summary banner */}
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2 text-xs text-slate-500 mb-1">
-              <span className="font-semibold text-slate-700">
-                {currentSemester ? currentSemester.name : "Học kỳ"}
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-1.5">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-200 text-xs truncate max-w-xs">
+                {currentSemester ? currentSemester.name : "Chưa chọn học kỳ"}
               </span>
               <span>•</span>
               <span className="font-mono text-slate-500">@{user.username}</span>
               {user.className && (
                 <>
                   <span>•</span>
-                  <span>Lớp: {user.className}</span>
+                  <span className="font-medium text-slate-600">Lớp: {user.className}</span>
                 </>
               )}
+              {user.role === "admin" && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                  Quản trị / CVHT
+                </span>
+              )}
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">
               Xin chào, {user.fullName}
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Tự động tính điểm và theo dõi mục tiêu rèn luyện cá nhân
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Tự động tính điểm và theo dõi mục tiêu rèn luyện cá nhân theo QĐ 3385/QĐ-ĐHCNTP
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              onClick={() => setCsvModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Xuất hoặc nhập bảng kê hoạt động bằng file Excel CSV"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Excel CSV</span>
-            </button>
-
-            <button
-              onClick={() => setAuditModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Kiểm tra tính hợp lệ và minh chứng của hồ sơ"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Kiểm tra hồ sơ</span>
-            </button>
-
-            <button
-              onClick={() => setSv5tModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Thẩm định tiêu chuẩn Sinh viên 5 tốt HUIT"
-            >
-              <Award className="w-3.5 h-3.5 text-amber-600" />
-              <span>Sinh viên 5 tốt</span>
-            </button>
-
-            <button
-              onClick={() => setBackupModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Sao lưu và khôi phục dữ liệu học kỳ JSON"
-            >
-              <Database className="w-3.5 h-3.5 text-slate-600" />
-              <span>Sao lưu</span>
-            </button>
-
-            <button
-              onClick={() => setClassMeetingModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Biên bản họp lớp và bảng tổng hợp rèn luyện Điều 9-10"
-            >
-              <Users className="w-3.5 h-3.5 text-blue-600" />
-              <span>Họp lớp & Biên bản</span>
-            </button>
-
-            <button
-              onClick={() => setAppealModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Soạn đơn khiếu nại kết quả rèn luyện Điều 13 QĐ 3385"
-            >
-              <FileQuestion className="w-3.5 h-3.5 text-rose-600" />
-              <span>Khiếu nại ĐRL</span>
-            </button>
-
-            <button
-              onClick={() => setCalendarModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Đồng bộ lịch nhắc nhở .ICS và Google Calendar"
-            >
-              <CalendarIcon className="w-3.5 h-3.5 text-sky-600" />
-              <span>Đồng bộ Lịch</span>
-            </button>
-
-            <button
-              onClick={() => setProofVaultOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Kho minh chứng hình ảnh và bảng đính kèm A4"
-            >
-              <ImagesIcon className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Kho minh chứng</span>
-            </button>
-
-            <button
-              onClick={() => setForecastModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-              title="Dự báo và mô phỏng điểm ĐRL tốt nghiệp toàn khóa Điều 12"
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Dự báo tốt nghiệp</span>
-            </button>
-
-            <Link
-              href={`/report?semesterId=${currentSemesterId}`}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5 text-slate-600" />
-              <span>Xuất phiếu QĐ 3385</span>
-            </Link>
-
-            <button
-              onClick={() => {
+          <div className="shrink-0 flex items-center justify-start lg:justify-end">
+            <StudentUtilitiesMenu
+              currentSemesterId={currentSemesterId}
+              isAdmin={user?.role === "admin"}
+              onOpenAddModal={() => {
                 setModalInitialCategory(undefined);
                 setModalOpen(true);
               }}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors cursor-pointer active:scale-[0.99]"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ghi nhận điểm</span>
-            </button>
-
-            <button
-              onClick={loadRecords}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            </button>
+              onOpenProofVault={() => setProofVaultOpen(true)}
+              onOpenForecastModal={() => setForecastModalOpen(true)}
+              onOpenSv5tModal={() => setSv5tModalOpen(true)}
+              onOpenCalendarModal={() => setCalendarModalOpen(true)}
+              onOpenAppealModal={() => setAppealModalOpen(true)}
+              onOpenAuditModal={() => setAuditModalOpen(true)}
+              onOpenCsvModal={() => setCsvModalOpen(true)}
+              onOpenBackupModal={() => setBackupModalOpen(true)}
+              onOpenClassMeetingModal={() => setClassMeetingModalOpen(true)}
+              onOpenAdminHub={user?.role === "admin" ? () => setAdminHubOpen(true) : undefined}
+              onRefresh={loadRecords}
+              loading={loading}
+            />
           </div>
         </div>
 
@@ -352,6 +279,7 @@ export default function DashboardPage() {
             semesterName={currentSemester.name}
             deadline={currentSemester.submissionDeadline}
             status={currentSemester.status}
+            isAdmin={user?.role === "admin"}
             onUpdateSemester={(up) => {
               setSemesters((prev) =>
                 prev.map((s) => (s.id === currentSemester.id ? { ...s, ...up } : s))
@@ -539,6 +467,24 @@ export default function DashboardPage() {
         currentSemester={currentSemester?.name || "Học kỳ 1"}
         currentYear={currentSemester?.name.match(/\d{4}-\d{4}/)?.[0] || "2024-2025"}
       />
+
+      {user?.role === "admin" && (
+        <AdminHubModal
+          isOpen={adminHubOpen}
+          onClose={() => setAdminHubOpen(false)}
+          semesters={semesters}
+          onSemesterCreated={(newSem) => {
+            setSemesters((prev) => [newSem, ...prev]);
+            setCurrentSemesterId(newSem.id);
+            loadSemesters();
+          }}
+          onOpenClassMeeting={() => {
+            setAdminHubOpen(false);
+            setClassMeetingModalOpen(true);
+          }}
+          adminName={user.fullName}
+        />
+      )}
 
       <DrlAppealModal
         isOpen={appealModalOpen}

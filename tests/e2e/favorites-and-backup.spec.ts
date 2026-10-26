@@ -46,8 +46,11 @@ test.describe("Phase 14: Criteria Favorites & Full Backup Engine", () => {
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
 
-    // Open Backup modal from Dashboard
-    await page.click("text=Sao lưu");
+    // Open Backup modal from Dashboard via Utilities Menu
+    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    await expect(utilitiesDropdown).toBeVisible({ timeout: 10000 });
+    await utilitiesDropdown.click();
+    await page.getByRole("button", { name: /Sao lưu & Phục hồi/i }).click();
     await expect(page.locator("text=Sao Lưu & Khôi Phục Dữ Liệu")).toBeVisible();
     await expect(page.locator("text=Tải về file sao lưu (JSON Backup)")).toBeVisible();
     await expect(page.locator("text=Khôi phục từ file JSON đã lưu")).toBeVisible();

@@ -86,3 +86,4 @@ test.describe("Phase 20: Multi-Year Graduation DRL Forecast & Target Simulator (
     await expect(page.locator('[data-testid="graduation-forecast-modal"]')).not.toBeVisible();
   });
 });
+

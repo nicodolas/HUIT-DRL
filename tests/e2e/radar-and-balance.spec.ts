@@ -60,3 +60,4 @@ test.describe("Phase 22: 5-Pillar Radar Chart & Training Balance Index Suite", (
     await expect(goalsRadarCard.getByText("Biểu Đồ Radar & Mức Độ Cân Bằng (5 Tiêu Chí)")).toBeVisible();
   });
 });
+

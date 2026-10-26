@@ -42,7 +42,7 @@ interface GraduationForecastModalProps {
 export const GraduationForecastModal: React.FC<GraduationForecastModalProps> = ({
   isOpen,
   onClose,
-  semesterData,
+  semesterData = [],
   studentName,
   studentClass,
 }) => {
@@ -57,6 +57,7 @@ export const GraduationForecastModal: React.FC<GraduationForecastModalProps> = (
 
   // Format completed semesters
   const completedSemesters: CompletedSemesterScore[] = useMemo(() => {
+    if (!Array.isArray(semesterData)) return [];
     return semesterData.map((s) => ({
       id: s.id,
       name: s.name,
@@ -66,6 +67,7 @@ export const GraduationForecastModal: React.FC<GraduationForecastModalProps> = (
 
   // Check if any semester already has a warning
   useEffect(() => {
+    if (!Array.isArray(semesterData)) return;
     const foundDiscipline = semesterData.some(
       (s) => s.disciplineLevel === "canh_cao" || s.disciplineLevel === "dinh_chi"
     );

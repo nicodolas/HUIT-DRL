@@ -67,7 +67,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, points, quantity, occurredAt, note, category, evidenceUrl } = body;
+    const { title, points, quantity, occurredAt, note, category, evidenceUrl, auditStatus, auditComment } = body;
 
     if (evidenceUrl && !isValidEvidenceUrl(evidenceUrl)) {
       return NextResponse.json(
@@ -108,6 +108,25 @@ export async function PUT(
 
     if (evidenceUrl !== undefined) {
       updateData.evidenceUrl = evidenceUrl ? String(evidenceUrl).trim() : null;
+      // If evidenceUrl changed to empty and auditStatus not explicitly set, auto set to missing
+      if (!evidenceUrl || !String(evidenceUrl).trim()) {
+        if (auditStatus === undefined) {
+          updateData.auditStatus = "missing";
+        }
+      } else if (auditStatus === undefined && updateData.auditStatus === undefined) {
+        updateData.auditStatus = "pending_review";
+      }
+    }
+
+    if (auditStatus !== undefined) {
+      const validAuditStatuses = ["missing", "pending_review", "valid", "rejected"];
+      if (validAuditStatuses.includes(auditStatus)) {
+        updateData.auditStatus = auditStatus;
+      }
+    }
+
+    if (auditComment !== undefined) {
+      updateData.auditComment = sanitizeNote(auditComment);
     }
 
     if (category !== undefined) {
@@ -133,6 +152,8 @@ export async function PUT(
         occurredAt: drlRecords.occurredAt,
         note: drlRecords.note,
         evidenceUrl: drlRecords.evidenceUrl,
+        auditStatus: drlRecords.auditStatus,
+        auditComment: drlRecords.auditComment,
       });
 
     if (updated.length === 0) {

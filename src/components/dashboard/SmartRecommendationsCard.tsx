@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, Plus, CheckCircle2, ChevronRight } from "lucide-react";
+import { Compass, ArrowRight, Plus, CheckCircle2, ChevronRight } from "lucide-react";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
 import { DrlCriteriaPreset } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
@@ -79,8 +79,8 @@ export const SmartRecommendationsCard: React.FC<SmartRecommendationsCardProps> =
     <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-amber-600" />
+          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+            <Compass className="w-4 h-4 text-blue-600" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900">

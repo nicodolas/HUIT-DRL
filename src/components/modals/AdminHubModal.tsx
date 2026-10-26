@@ -20,22 +20,22 @@ import { APP_CONFIG } from "@/lib/config/env";
 interface AdminHubModalProps {
   isOpen: boolean;
   onClose: () => void;
-  semesters: Array<{
+  semesters?: Array<{
     id: string;
     name: string;
     isCurrent: boolean;
     submissionDeadline?: string | null;
     status?: string;
   }>;
-  onSemesterCreated: (semester: any) => void;
-  onOpenClassMeeting: () => void;
+  onSemesterCreated?: (semester: any) => void;
+  onOpenClassMeeting?: () => void;
   adminName?: string;
 }
 
 export const AdminHubModal: React.FC<AdminHubModalProps> = ({
   isOpen,
   onClose,
-  semesters,
+  semesters = [],
   onSemesterCreated,
   onOpenClassMeeting,
   adminName,
@@ -86,7 +86,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
       setSuccessMsg(`Đã tạo học kỳ chính thức "${name.trim()}" thành công!`);
       setName("");
       setSubmissionDeadline("");
-      onSemesterCreated(data.semester);
+      onSemesterCreated?.(data.semester);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -265,7 +265,7 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
                   type="button"
                   onClick={() => {
                     onClose();
-                    onOpenClassMeeting();
+                    onOpenClassMeeting?.();
                   }}
                   className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 cursor-pointer transition-colors shadow-xs"
                 >

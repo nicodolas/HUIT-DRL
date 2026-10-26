@@ -76,12 +76,13 @@ export async function POST(req: Request) {
       role: userRole,
     };
 
-    await createSession(sessionUser);
+    const token = await createSession(sessionUser);
     resetRateLimit(rateLimitKey);
 
     return NextResponse.json({
       message: "Đăng nhập thành công!",
       user: sessionUser,
+      token,
     });
   } catch (error: any) {
     console.error("Login error:", error);

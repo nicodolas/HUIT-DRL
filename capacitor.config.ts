@@ -5,8 +5,17 @@ const config: CapacitorConfig = {
   appName: "HUIT Điểm Rèn Luyện",
   webDir: "out",
   server: {
-    // During local dev on mobile or test apk, can connect to live server URL
     androidScheme: "https",
+    cleartext: true,
+    url: process.env.CAPACITOR_SERVER_URL,
+  },
+  plugins: {
+    CapacitorHttp: {
+      enabled: true, // Native Android network bridge bypasses WebView CORS & cookie blocks
+    },
+    CapacitorCookies: {
+      enabled: true, // Sync native Android CookieManager with WebView
+    },
   },
 };
 

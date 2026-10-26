@@ -1,3 +1,5 @@
+import { apiFetch } from "@/lib/api/client";
+
 export interface OfflineDraft {
   id: string;
   semesterId: string;
@@ -74,7 +76,7 @@ export async function syncOfflineDrafts(): Promise<{ synced: number; failed: num
 
   for (const draft of drafts) {
     try {
-      const res = await fetch("/api/records", {
+      const res = await apiFetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),

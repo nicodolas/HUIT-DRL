@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { Semester } from "@/lib/db/schema";
+import { clearAuthToken } from "@/lib/api/client";
 import {
   User,
   Shield,
@@ -246,6 +247,7 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
+    clearAuthToken();
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };

@@ -231,8 +231,15 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      if (!recordToEdit && (err.name === "TypeError" || (typeof navigator !== "undefined" && !navigator.onLine))) {
-        // Fallback to offline draft
+      const isNetworkError =
+        err.name === "TypeError" ||
+        err.message?.toLowerCase().includes("fetch") ||
+        err.message?.toLowerCase().includes("network") ||
+        err.message?.toLowerCase().includes("failed to") ||
+        (typeof navigator !== "undefined" && !navigator.onLine);
+
+      if (!recordToEdit && isNetworkError) {
+        // Fallback to offline draft on mobile network drop / timeout
         addOfflineDraft({
           semesterId,
           occurredAt,

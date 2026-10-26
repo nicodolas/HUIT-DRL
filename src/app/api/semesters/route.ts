@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { semesters } from "@/lib/db/schema";
+import { semesters, drlRecords } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
@@ -261,38 +261,30 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Mã học kỳ cần xóa không hợp lệ" }, { status: 400 });
     }
 
-    // Ensure user has more than 1 semester so they don't lock themselves out
-    const userSemesters = await db
-      .select({ id: semesters.id, isCurrent: semesters.isCurrent })
-      .from(semesters)
-      .where(eq(semesters.userId, session.id));
+    // 1. Cascade delete all DRL records in this semester
+    await db.delete(drlRecords).where(eq(drlRecords.semesterId, id));
 
-    if (userSemesters.length <= 1) {
-      return NextResponse.json(
-        { error: "Bạn không thể xóa học kỳ duy nhất còn lại." },
-        { status: 400 }
-      );
-    }
-
+    // 2. Delete the semester itself (admin can delete any semester)
     const deleted = await db
       .delete(semesters)
-      .where(and(eq(semesters.id, id), eq(semesters.userId, session.id)))
-      .returning({ id: semesters.id, isCurrent: semesters.isCurrent });
+      .where(eq(semesters.id, id))
+      .returning({ id: semesters.id, name: semesters.name, isCurrent: semesters.isCurrent, userId: semesters.userId });
 
     if (deleted.length === 0) {
       return NextResponse.json(
-        { error: "Không tìm thấy học kỳ hoặc không có quyền xóa" },
+        { error: "Không tìm thấy học kỳ để xóa" },
         { status: 404 }
       );
     }
 
-    // If the deleted one was current, make another one current
+    // 3. If the deleted one was current for a user, activate another one
     const wasCurrent = deleted[0].isCurrent;
-    if (wasCurrent) {
+    const targetUserId = deleted[0].userId;
+    if (wasCurrent && targetUserId) {
       const remaining = await db
         .select({ id: semesters.id })
         .from(semesters)
-        .where(eq(semesters.userId, session.id))
+        .where(eq(semesters.userId, targetUserId))
         .orderBy(desc(semesters.createdAt))
         .limit(1);
 
@@ -304,7 +296,7 @@ export async function DELETE(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, message: "Đã xóa học kỳ thành công!" });
+    return NextResponse.json({ success: true, message: `Đã xóa học kỳ "${deleted[0].name}" thành công!` });
   } catch (error: any) {
     console.error("Semesters DELETE error:", error);
     return NextResponse.json(

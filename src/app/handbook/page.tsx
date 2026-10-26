@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
-import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { DrlCriteriaPreset, Semester } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import {
@@ -54,7 +53,6 @@ export default function HandbookPage() {
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPresetForModal, setSelectedPresetForModal] = useState<DrlCriteriaPreset | null>(null);
-  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   useEffect(() => {
     setFavoriteIds(getFavoritePresetIds());
@@ -131,7 +129,6 @@ export default function HandbookPage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -420,15 +417,6 @@ export default function HandbookPage() {
         }}
         onSuccess={() => {
           router.push("/records");
-        }}
-      />
-
-      <NewSemesterModal
-        isOpen={newSemesterModalOpen}
-        onClose={() => setNewSemesterModalOpen(false)}
-        onCreated={async (newSem) => {
-          await loadSemesters();
-          if (newSem?.id) setCurrentSemesterId(newSem.id);
         }}
       />
 

@@ -119,6 +119,7 @@ export default function AdminPage() {
   const [newSemDeadline, setNewSemDeadline] = useState("");
   const [newSemIsSystem, setNewSemIsSystem] = useState(true);
   const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [semesterActionMsg, setSemesterActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Evidence state
   const [evidenceList, setEvidenceList] = useState<AdminEvidenceRecord[]>([]);
@@ -135,6 +136,13 @@ export default function AdminPage() {
 
   // Initial Auth & Access Check
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const tabParam = new URLSearchParams(window.location.search).get("tab");
+      if (tabParam && ["overview", "users", "semesters", "evidence"].includes(tabParam)) {
+        setActiveTab(tabParam as any);
+      }
+    }
+
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -279,51 +287,55 @@ export default function AdminPage() {
     if (!newSemName.trim()) return;
 
     setCreateSubmitting(true);
+    setSemesterActionMsg(null);
     try {
       const res = await fetch("/api/admin/semesters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newSemName,
+          name: newSemName.trim(),
           targetScore: Number(newSemTarget),
           submissionDeadline: newSemDeadline || null,
-          isSystem: newSemIsSystem,
+          isSystem: true,
         }),
       });
+      const data = await res.json();
       if (res.ok) {
         setCreateModalOpen(false);
         setNewSemName("");
+        setSemesterActionMsg({ type: "success", text: `Đã tạo thành công học kỳ hệ thống "${newSemName}"!` });
         fetchSemesters();
         fetchStats();
         loadHeaderSemesters();
       } else {
-        const data = await res.json();
-        alert(data.error || "Tạo học kỳ thất bại");
+        setSemesterActionMsg({ type: "error", text: data.error || "Tạo học kỳ thất bại" });
       }
     } catch {
-      alert("Lỗi kết nối khi tạo học kỳ");
+      setSemesterActionMsg({ type: "error", text: "Lỗi kết nối khi tạo học kỳ" });
     } finally {
       setCreateSubmitting(false);
     }
   };
 
   const handleDeleteSemester = async (sem: AdminSemester) => {
-    if (!window.confirm(`XÁC NHẬN XÓA HỌC KỲ: "${sem.name}"?\nThao tác này sẽ xóa tất cả các bảng điểm liên kết thuộc học kỳ này.`)) {
+    if (!window.confirm(`XÁC NHẬN XÓA HỌC KỲ: "${sem.name}"?\nThao tác này sẽ xóa vĩnh viễn học kỳ và tất cả dữ liệu rèn luyện liên kết của sinh viên.`)) {
       return;
     }
 
+    setSemesterActionMsg(null);
     try {
       const res = await fetch(`/api/admin/semesters?id=${sem.id}`, { method: "DELETE" });
+      const data = await res.json();
       if (res.ok) {
+        setSemesterActionMsg({ type: "success", text: data.message || `Đã xóa học kỳ "${sem.name}" thành công!` });
         fetchSemesters();
         fetchStats();
         loadHeaderSemesters();
       } else {
-        const data = await res.json();
-        alert(data.error || "Không thể xóa học kỳ");
+        setSemesterActionMsg({ type: "error", text: data.error || "Không thể xóa học kỳ" });
       }
     } catch {
-      alert("Lỗi kết nối khi xóa");
+      setSemesterActionMsg({ type: "error", text: "Lỗi kết nối khi xóa" });
     }
   };
 
@@ -773,6 +785,24 @@ export default function AdminPage() {
                 <span>Tạo học kỳ hệ thống</span>
               </button>
             </div>
+
+            {semesterActionMsg && (
+              <div
+                className={`p-3.5 rounded-2xl text-xs flex items-center justify-between shadow-2xs ${
+                  semesterActionMsg.type === "success"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800"
+                    : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800"
+                }`}
+              >
+                <span>{semesterActionMsg.text}</span>
+                <button
+                  onClick={() => setSemesterActionMsg(null)}
+                  className="cursor-pointer text-xs font-bold ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">

@@ -13,7 +13,6 @@ import { CumulativeStatsCard } from "@/components/dashboard/CumulativeStatsCard"
 import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
-import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { SmartRecommendationsCard } from "@/components/dashboard/SmartRecommendationsCard";
 import { CumulativeTranscriptSheet } from "@/components/dashboard/CumulativeTranscriptSheet";
@@ -47,7 +46,6 @@ export default function DashboardPage() {
   const [modalInitialCategory, setModalInitialCategory] = useState<number | undefined>(undefined);
   const [selectedPresetToAdd, setSelectedPresetToAdd] = useState<DrlCriteriaPreset | null>(null);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
-  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
@@ -212,13 +210,6 @@ export default function DashboardPage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => {
-          if (user?.role === "admin") {
-            setAdminHubOpen(true);
-          } else {
-            setNewSemesterModalOpen(true);
-          }
-        }}
       />
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-4">
@@ -466,16 +457,6 @@ export default function DashboardPage() {
           setSelectedPresetToAdd(null);
         }}
         onSuccess={loadRecords}
-      />
-
-      {/* Reusable New Semester Modal */}
-      <NewSemesterModal
-        isOpen={newSemesterModalOpen}
-        onClose={() => setNewSemesterModalOpen(false)}
-        onCreated={async (newSem) => {
-          await loadSemesters();
-          if (newSem?.id) setCurrentSemesterId(newSem.id);
-        }}
       />
 
       <CsvExchangeModal

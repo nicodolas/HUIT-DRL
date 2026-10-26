@@ -121,3 +121,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Lỗi khi xóa học kỳ" }, { status: 500 });
   }
 }
+

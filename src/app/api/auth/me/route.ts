@@ -11,18 +11,74 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
-  return NextResponse.json({
-    authenticated: true,
-    user: {
-      id: session.id,
-      username: session.username,
-      fullName: session.fullName,
-      studentId: session.studentId || null,
-      faculty: session.faculty,
-      className: session.className,
-      role: session.role,
-    },
-  });
+
+  try {
+    // Query latest live profile from database to ensure fresh role and metadata
+    const [liveUser] = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        fullName: users.fullName,
+        studentId: users.studentId,
+        faculty: users.faculty,
+        className: users.className,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, session.id))
+      .limit(1);
+
+    if (!liveUser) {
+      return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    }
+
+    const currentRole = (liveUser.role as "user" | "admin") || "user";
+
+    // If role or profile changed directly in database, seamlessly sync the JWT session cookie
+    if (
+      currentRole !== session.role ||
+      liveUser.fullName !== session.fullName ||
+      liveUser.studentId !== session.studentId
+    ) {
+      await createSession({
+        id: liveUser.id,
+        username: liveUser.username,
+        fullName: liveUser.fullName,
+        studentId: liveUser.studentId || null,
+        faculty: liveUser.faculty || null,
+        className: liveUser.className || null,
+        role: currentRole,
+      });
+    }
+
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        id: liveUser.id,
+        username: liveUser.username,
+        fullName: liveUser.fullName,
+        studentId: liveUser.studentId || null,
+        faculty: liveUser.faculty,
+        className: liveUser.className,
+        role: currentRole,
+      },
+    });
+  } catch (error) {
+    console.error("GET /api/auth/me live sync error:", error);
+    // Fallback to existing session payload
+    return NextResponse.json({
+      authenticated: true,
+      user: {
+        id: session.id,
+        username: session.username,
+        fullName: session.fullName,
+        studentId: session.studentId || null,
+        faculty: session.faculty,
+        className: session.className,
+        role: session.role,
+      },
+    });
+  }
 }
 
 export async function PATCH(req: Request) {

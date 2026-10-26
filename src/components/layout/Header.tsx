@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
+                className={`h-8 px-3 inline-flex items-center justify-center rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
                   isActive
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-bold"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }
                 }}
                 title={semesters.find((s) => s.id === currentSemesterId)?.name || "Chọn học kỳ"}
-                className="appearance-none w-full truncate bg-slate-100/90 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl pl-2.5 pr-7 py-1.5 sm:py-2 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 cursor-pointer transition-colors shadow-2xs"
+                className="appearance-none h-8 w-full truncate bg-slate-100/90 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl pl-2.5 pr-7 py-0 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 cursor-pointer transition-colors shadow-2xs"
                 aria-label="Chọn học kỳ rèn luyện"
               >
                 {semesters.map((s) => (
@@ -135,13 +135,13 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-1.5 sm:space-x-2 pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0">
               <Link
                 href="/profile"
-                title="Xem & chỉnh sửa trang cá nhân"
-                className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
+                title={`Hồ sơ: ${user.fullName} (@${user.username})`}
+                className="flex items-center space-x-2 p-0.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
               >
                 <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 group-hover:ring-2 group-hover:ring-indigo-400 transition-all shadow-2xs">
                   {getInitials(user?.fullName)}
                 </div>
-                <div className="text-left hidden md:block max-w-[120px] lg:max-w-[150px]">
+                <div className="text-left hidden xl:block max-w-[130px] 2xl:max-w-[160px]">
                   <div className="flex items-center space-x-1.5">
                     <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {user.fullName}
@@ -167,7 +167,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={handleLogout}
                 title="Đăng xuất"
-                className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
                 aria-label="Đăng xuất"
               >
                 <LogOut className="w-4 h-4" />

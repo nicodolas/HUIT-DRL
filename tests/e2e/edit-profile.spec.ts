@@ -240,5 +240,35 @@ test.describe.serial("Security Hardening & Profile Editing Suite (CWE-915 Anti-P
     // Verify updated MSSV on /report
     await expect(page.getByText("2001210888", { exact: true })).toBeVisible();
   });
+
+  test("8. RBAC UI Isolation: Regular student does NOT see '+ Thêm học kỳ' or semester delete buttons on /profile", async ({
+    page,
+  }) => {
+    // 1. Login as regular test user
+    await page.goto("/login");
+    await page.fill('input[placeholder*="tên đăng nhập"]', testUsername);
+    await page.fill('input[type="password"]', testPassword);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("/", { timeout: 15000 });
+
+    // 2. Go to /profile
+    await page.goto("/profile");
+    await expect(page.locator("h1", { hasText: "Tài khoản cá nhân" })).toBeVisible();
+
+    // 3. Verify '+ Thêm học kỳ' is strictly NOT present
+    await expect(page.getByRole("button", { name: /\+ Thêm học kỳ/i })).not.toBeVisible();
+
+    // 4. Verify semester delete buttons (trash icons) are strictly NOT present
+    await expect(page.locator('button[title*="Xóa học kỳ"]')).toHaveCount(0);
+
+    // 5. Verify the active semester has 'Đang áp dụng' badge without colliding text
+    await expect(page.getByText("Đang áp dụng")).toBeVisible();
+
+    // 6. Screenshot for visual verification
+    await page.screenshot({
+      path: "C:/Users/Admin/.gemini/antigravity/brain/f50425b0-0e04-4b9c-9d96-16e1f38ec306/profile_desktop_redesign.png",
+      fullPage: true,
+    });
+  });
 });
 

@@ -60,6 +60,40 @@ const CATEGORY_METAS: Record<number, { code: string; shortName: string; maxPoint
   5: { code: "TC5", shortName: "Cán bộ & NCKH", maxPoints: 20 },
 };
 
+// Precomputed trigonometry tables for regular pentagon (0ms compute)
+const PENTAGON_ANGLES = [
+  -Math.PI / 2,
+  -Math.PI / 2 + (2 * Math.PI) / 5,
+  -Math.PI / 2 + (4 * Math.PI) / 5,
+  -Math.PI / 2 + (6 * Math.PI) / 5,
+  -Math.PI / 2 + (8 * Math.PI) / 5,
+];
+const PENTAGON_COS = PENTAGON_ANGLES.map(Math.cos);
+const PENTAGON_SIN = PENTAGON_ANGLES.map(Math.sin);
+
+// Static memoized grid cache by svgSize
+const GRID_CACHE = new Map<number, RadarGridLevel[]>();
+
+function getMemoizedGridLevels(svgSize: number, cx: number, cy: number, radius: number): RadarGridLevel[] {
+  const cached = GRID_CACHE.get(svgSize);
+  if (cached) return cached;
+
+  const levels: RadarGridLevel[] = [25, 50, 75, 100].map((lvl) => {
+    const r = (radius * lvl) / 100;
+    const pts = [0, 1, 2, 3, 4]
+      .map((i) => {
+        const px = Math.round((cx + r * PENTAGON_COS[i]) * 10) / 10;
+        const py = Math.round((cy + r * PENTAGON_SIN[i]) * 10) / 10;
+        return `${px},${py}`;
+      })
+      .join(" ");
+    return { level: lvl, polygonPoints: pts };
+  });
+
+  GRID_CACHE.set(svgSize, levels);
+  return levels;
+}
+
 export function calculateRadarAnalysis(
   categoryScores: Record<number, CategoryScoreInput>,
   svgSize = 320
@@ -92,11 +126,15 @@ export function calculateRadarAnalysis(
     normalizedList.push(normalized);
     totalNormalized += normalized;
 
-    // Angle: -pi/2 points straight up for TC1
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+    const cosVal = PENTAGON_COS[i];
+    const sinVal = PENTAGON_SIN[i];
+    const angle = PENTAGON_ANGLES[i];
 
-    const x = cx + radius * normalized * Math.cos(angle);
-    const y = cy + radius * normalized * Math.sin(angle);
+    const x = cx + radius * normalized * cosVal;
+    const y = cy + radius * normalized * sinVal;
+
+    const rx = Math.round(x * 10) / 10;
+    const ry = Math.round(y * 10) / 10;
 
     points.push({
       category: cat,
@@ -106,39 +144,28 @@ export function calculateRadarAnalysis(
       maxScore: max,
       percent,
       normalizedValue: normalized,
-      x: Math.round(x * 10) / 10,
-      y: Math.round(y * 10) / 10,
+      x: rx,
+      y: ry,
       angle,
     });
 
-    currentCoords.push(`${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`);
+    currentCoords.push(`${rx},${ry}`);
 
-    // Baseline coord
+    // Baseline coord with precomputed cos/sin
     const baseNorm = BASELINE_SCORES[cat] / max;
-    const bx = cx + radius * baseNorm * Math.cos(angle);
-    const by = cy + radius * baseNorm * Math.sin(angle);
+    const bx = cx + radius * baseNorm * cosVal;
+    const by = cy + radius * baseNorm * sinVal;
     baselineCoords.push(`${Math.round(bx * 10) / 10},${Math.round(by * 10) / 10}`);
 
-    // Target coord
+    // Target coord with precomputed cos/sin
     const targetNorm = TARGET_SCORES[cat] / max;
-    const tx = cx + radius * targetNorm * Math.cos(angle);
-    const ty = cy + radius * targetNorm * Math.sin(angle);
+    const tx = cx + radius * targetNorm * cosVal;
+    const ty = cy + radius * targetNorm * sinVal;
     targetCoords.push(`${Math.round(tx * 10) / 10},${Math.round(ty * 10) / 10}`);
   }
 
-  // Pre-calculate grid levels (25%, 50%, 75%, 100%)
-  const gridLevels: RadarGridLevel[] = [25, 50, 75, 100].map((lvl) => {
-    const r = (radius * lvl) / 100;
-    const pts = Array.from({ length: 5 })
-      .map((_, i) => {
-        const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-        const px = Math.round((cx + r * Math.cos(ang)) * 10) / 10;
-        const py = Math.round((cy + r * Math.sin(ang)) * 10) / 10;
-        return `${px},${py}`;
-      })
-      .join(" ");
-    return { level: lvl, polygonPoints: pts };
-  });
+  // Pre-calculated memoized grid levels (25%, 50%, 75%, 100%)
+  const gridLevels = getMemoizedGridLevels(svgSize, cx, cy, radius);
 
   // Balance Index Calculation (Entropy & Completeness)
   const avgCompleteness = totalNormalized / 5;

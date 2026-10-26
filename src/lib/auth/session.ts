@@ -10,6 +10,7 @@ export interface SessionUser {
   id: string;
   username: string;
   fullName: string;
+  studentId?: string | null;
   faculty?: string | null;
   className?: string | null;
   role: "user" | "admin";
@@ -20,6 +21,7 @@ export async function createSession(user: SessionUser): Promise<string> {
     id: user.id,
     username: user.username,
     fullName: user.fullName,
+    studentId: user.studentId,
     faculty: user.faculty,
     className: user.className,
     role: user.role || "user",
@@ -84,6 +86,7 @@ export async function getSession(req?: Request): Promise<SessionUser | null> {
       id: payload.id as string,
       username: (payload.username as string) || (payload.fullName as string) || "user",
       fullName: (payload.fullName as string) || (payload.username as string) || "Người dùng",
+      studentId: (payload.studentId as string) || null,
       faculty: payload.faculty as string | null,
       className: payload.className as string | null,
       role: (payload.role as "user" | "admin") || "user",

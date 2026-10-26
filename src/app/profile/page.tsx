@@ -41,6 +41,7 @@ export default function ProfilePage() {
   // Edit profile states
   const [isEditing, setIsEditing] = useState(false);
   const [editFullName, setEditFullName] = useState("");
+  const [editStudentId, setEditStudentId] = useState("");
   const [editFaculty, setEditFaculty] = useState("");
   const [editClassName, setEditClassName] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -62,6 +63,7 @@ export default function ProfilePage() {
         if (data && data.user) {
           setUser(data.user);
           setEditFullName(data.user.fullName || "");
+          setEditStudentId(data.user.studentId || "");
           setEditFaculty(data.user.faculty || "Công nghệ Thông tin");
           setEditClassName(data.user.className || "");
           loadSemesters();
@@ -113,6 +115,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: editFullName,
+          studentId: editStudentId,
           faculty: editFaculty,
           className: editClassName,
         }),
@@ -302,7 +305,15 @@ export default function ProfilePage() {
                     {user.role === "admin" ? "Quản trị viên" : "Sinh viên"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 font-mono mt-0.5">@{user.username}</p>
+                <div className="flex items-center space-x-2 text-xs text-slate-500 font-mono mt-0.5">
+                  <span>@{user.username}</span>
+                  {user.studentId && (
+                    <>
+                      <span>•</span>
+                      <span className="text-slate-700 font-medium">MSSV: {user.studentId}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -310,6 +321,7 @@ export default function ProfilePage() {
               onClick={() => {
                 if (!isEditing && user) {
                   setEditFullName(user.fullName || "");
+                  setEditStudentId(user.studentId || "");
                   setEditFaculty(user.faculty || "Công nghệ Thông tin");
                   setEditClassName(user.className || "");
                   setEditMessage(null);
@@ -369,6 +381,27 @@ export default function ProfilePage() {
                   required
                   className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"
                 />
+              </div>
+
+              {/* Student ID (MSSV) field - optional */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700 block">
+                    Mã số sinh viên (MSSV): <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                  </label>
+                  <span className="text-[10px] text-slate-400">Tự điền vào Phiếu Mẫu 01 & Báo cáo</span>
+                </div>
+                <input
+                  type="text"
+                  value={editStudentId}
+                  onChange={(e) => setEditStudentId(e.target.value)}
+                  placeholder="Ví dụ: 2001210123"
+                  maxLength={32}
+                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900 font-mono"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Trường thông tin tùy chọn, có thể chỉnh sửa bất cứ lúc nào. Khi nhập sẽ tự động hiển thị trên Phiếu tự đánh giá Mẫu 01 (QĐ 3385) và kho minh chứng.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -435,7 +468,13 @@ export default function ProfilePage() {
               </div>
             </form>
           ) : (
-            <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="text-slate-500 block mb-0.5 text-[11px]">Mã số sinh viên (MSSV):</span>
+                <span className="font-semibold text-slate-900 font-mono">
+                  {user.studentId || "Chưa cập nhật"}
+                </span>
+              </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <span className="text-slate-500 block mb-0.5 text-[11px]">Khoa đào tạo:</span>
                 <span className="font-semibold text-slate-900">{user.faculty || "Chưa cập nhật"}</span>

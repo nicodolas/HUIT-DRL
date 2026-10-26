@@ -191,5 +191,54 @@ test.describe.serial("Security Hardening & Profile Editing Suite (CWE-915 Anti-P
     await expect(page.locator("h2", { hasText: newDisplayName })).toBeVisible();
     await expect(page.getByText(newClass)).toBeVisible();
   });
+
+  test("7. StudentId / MSSV: Optional field can be updated on /profile and auto-fills into /report with inline edit", async ({
+    page,
+    request,
+  }) => {
+    const authHeader = { Authorization: `Bearer ${authToken}` };
+    const customMssv = "2001210999";
+
+    // 1. Update studentId via API
+    const patchRes = await request.patch("/api/auth/me", {
+      headers: authHeader,
+      data: { studentId: customMssv },
+    });
+    expect(patchRes.status()).toBe(200);
+    const patchData = await patchRes.json();
+    expect(patchData.user.studentId).toBe(customMssv);
+
+    // 2. Login to UI
+    await page.goto("/login");
+    await page.fill('input[placeholder*="tên đăng nhập"]', testUsername);
+    await page.fill('input[type="password"]', testPassword);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("/", { timeout: 15000 });
+
+    // 3. Check /profile reflects custom MSSV
+    await page.goto("/profile");
+    await expect(page.getByText(`MSSV: ${customMssv}`)).toBeVisible();
+    await expect(page.getByText(customMssv, { exact: true })).toBeVisible();
+
+    // 4. Navigate to /report and verify MSSV auto-fills
+    await page.goto("/report");
+    await expect(page.getByText(customMssv, { exact: true })).toBeVisible();
+
+    // 5. Test inline edit on /report directly
+    const editMssvBtn = page.getByRole("button", { name: "Sửa MSSV" });
+    await expect(editMssvBtn).toBeVisible();
+    await editMssvBtn.click();
+
+    const inlineInput = page.locator('input[placeholder="Ví dụ: 2001210123"]');
+    await expect(inlineInput).toBeVisible();
+    await inlineInput.fill("2001210888");
+
+    // Click "Lưu"
+    const saveInlineBtn = page.getByRole("button", { name: "Lưu", exact: true });
+    await saveInlineBtn.click();
+
+    // Verify updated MSSV on /report
+    await expect(page.getByText("2001210888", { exact: true })).toBeVisible();
+  });
 });
 

@@ -5,6 +5,7 @@ export const users = pgTable("users", {
   username: varchar("username", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   fullName: varchar("full_name", { length: 255 }).notNull(),
+  studentId: varchar("student_id", { length: 32 }),
   faculty: varchar("faculty", { length: 255 }),
   className: varchar("class_name", { length: 64 }),
   role: varchar("role", { length: 32 }).default("user").notNull(), // 'user' | 'admin'

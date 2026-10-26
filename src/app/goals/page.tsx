@@ -12,7 +12,6 @@ import { ScholarshipPredictionCard } from "@/components/dashboard/ScholarshipPre
 import { DisciplineChecklistCard } from "@/components/dashboard/DisciplineChecklistCard";
 import { Sv5tAuditorModal } from "@/components/dashboard/Sv5tAuditorModal";
 import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
-import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { Semester, DrlRecord, DrlCriteriaPreset } from "@/lib/db/schema";
 import { GoalAnalysisResult } from "@/lib/drl/calculator";
@@ -26,7 +25,6 @@ export default function GoalsPage() {
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [scoreSummary, setScoreSummary] = useState<any>(null);
   const [goalAnalysis, setGoalAnalysis] = useState<GoalAnalysisResult | null>(null);
-  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [sv5tModalOpen, setSv5tModalOpen] = useState(false);
   const [forecastModalOpen, setForecastModalOpen] = useState(false);
@@ -110,7 +108,6 @@ export default function GoalsPage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
@@ -243,15 +240,6 @@ export default function GoalsPage() {
           </ul>
         </div>
       </main>
-
-      <NewSemesterModal
-        isOpen={newSemesterModalOpen}
-        onClose={() => setNewSemesterModalOpen(false)}
-        onCreated={async (newSem) => {
-          await loadSemesters();
-          if (newSem?.id) setCurrentSemesterId(newSem.id);
-        }}
-      />
 
       <AddRecordModal
         isOpen={addModalOpen}

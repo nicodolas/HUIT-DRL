@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { Semester } from "@/lib/db/schema";
 import { clearAuthToken } from "@/lib/api/client";
 import {
@@ -40,7 +39,6 @@ export default function ProfilePage() {
   const [currentSemesterId, setCurrentSemesterId] = useState<string>("");
   const [discipline, setDiscipline] = useState<string>("none");
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
 
   // Backup & Restore states
   const [backupLoading, setBackupLoading] = useState(false);
@@ -188,24 +186,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteSemester = async (semId: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa học kỳ này? Mọi bản ghi điểm trong học kỳ sẽ bị xóa vĩnh viễn.")) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/semesters?id=${semId}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Lỗi xóa học kỳ");
-        return;
-      }
-      await loadSemesters();
-    } catch (e: any) {
-      alert("Lỗi kết nối: " + e.message);
-    }
-  };
-
   const handleExportBackup = async () => {
     try {
       setBackupLoading(true);
@@ -272,7 +252,6 @@ export default function ProfilePage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
       <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6">
@@ -640,14 +619,13 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* ONLY show + Thêm học kỳ button if user is Admin */}
                 {user.role === "admin" && (
-                  <button
-                    onClick={() => setNewSemesterModalOpen(true)}
+                  <Link
+                    href="/admin"
                     className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors cursor-pointer shadow-2xs flex items-center space-x-1"
                   >
-                    <span>+ Thêm học kỳ (Admin)</span>
-                  </button>
+                    <span>Quản lý học kỳ (Admin) &rarr;</span>
+                  </Link>
                 )}
               </div>
 
@@ -691,16 +669,6 @@ export default function ProfilePage() {
                             className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
                           >
                             Chọn
-                          </button>
-                        )}
-                        {/* ONLY show Trash button if user is Admin */}
-                        {user.role === "admin" && semesters.length > 1 && (
-                          <button
-                            onClick={() => handleDeleteSemester(s.id)}
-                            title="Xóa học kỳ này (Quyền Quản trị viên)"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -818,15 +786,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-
-      <NewSemesterModal
-        isOpen={newSemesterModalOpen}
-        onClose={() => setNewSemesterModalOpen(false)}
-        onCreated={async (newSem) => {
-          await loadSemesters();
-          if (newSem?.id) setCurrentSemesterId(newSem.id);
-        }}
-      />
 
       <BottomNav />
     </div>

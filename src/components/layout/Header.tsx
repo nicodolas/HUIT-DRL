@@ -18,7 +18,6 @@ interface HeaderProps {
   semesters: Array<{ id: string; name: string; isCurrent: boolean }>;
   currentSemesterId: string;
   onSelectSemester: (id: string) => void;
-  onOpenNewSemesterModal?: () => void;
 }
 
 function getInitials(name?: string | null): string {
@@ -34,7 +33,6 @@ export const Header: React.FC<HeaderProps> = ({
   semesters,
   currentSemesterId,
   onSelectSemester,
-  onOpenNewSemesterModal,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,13 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative w-auto max-w-[140px] xs:max-w-[160px] sm:max-w-[185px] lg:max-w-[200px] shrink-0">
               <select
                 value={currentSemesterId}
-                onChange={(e) => {
-                  if (e.target.value === "__NEW__" && onOpenNewSemesterModal) {
-                    onOpenNewSemesterModal();
-                  } else {
-                    onSelectSemester(e.target.value);
-                  }
-                }}
+                onChange={(e) => onSelectSemester(e.target.value)}
                 title={semesters.find((s) => s.id === currentSemesterId)?.name || "Chọn học kỳ"}
                 className="appearance-none h-8 w-full truncate bg-slate-100/90 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl pl-2.5 pr-7 py-0 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 cursor-pointer transition-colors shadow-2xs"
                 aria-label="Chọn học kỳ rèn luyện"
@@ -122,9 +114,6 @@ export const Header: React.FC<HeaderProps> = ({
                     {s.name}
                   </option>
                 ))}
-                {isAdmin && onOpenNewSemesterModal && (
-                  <option value="__NEW__">+ Tạo học kỳ mới (Admin)...</option>
-                )}
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

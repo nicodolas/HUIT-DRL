@@ -9,7 +9,6 @@ import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { CloneActivitiesModal } from "@/components/modals/CloneActivitiesModal";
-import { NewSemesterModal } from "@/components/modals/NewSemesterModal";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
 import { ExtracurricularDossierModal } from "@/components/dashboard/ExtracurricularDossierModal";
@@ -27,7 +26,6 @@ export default function RecordsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DrlRecord | null>(null);
-  const [newSemesterModalOpen, setNewSemesterModalOpen] = useState(false);
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
@@ -131,7 +129,6 @@ export default function RecordsPage() {
         semesters={semesters}
         currentSemesterId={currentSemesterId}
         onSelectSemester={setCurrentSemesterId}
-        onOpenNewSemesterModal={() => setNewSemesterModalOpen(true)}
       />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
@@ -288,15 +285,6 @@ export default function RecordsPage() {
           setEditingRecord(null);
         }}
         onSuccess={loadRecords}
-      />
-
-      <NewSemesterModal
-        isOpen={newSemesterModalOpen}
-        onClose={() => setNewSemesterModalOpen(false)}
-        onCreated={async (newSem) => {
-          await loadSemesters();
-          if (newSem?.id) setCurrentSemesterId(newSem.id);
-        }}
       />
 
       <CloneActivitiesModal

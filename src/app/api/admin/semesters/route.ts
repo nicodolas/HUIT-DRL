@@ -103,6 +103,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Mã học kỳ không hợp lệ" }, { status: 400 });
     }
 
+    // 1. Cascade delete DRL records in this semester
+    await db.delete(drlRecords).where(eq(drlRecords.semesterId, semesterId));
+
+    // 2. Delete the semester
     const [deleted] = await db
       .delete(semesters)
       .where(eq(semesters.id, semesterId))

@@ -21,6 +21,14 @@ interface HeaderProps {
   onOpenNewSemesterModal?: () => void;
 }
 
+function getInitials(name?: string | null): string {
+  if (!name || typeof name !== "string") return "SV";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SV";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export const Header: React.FC<HeaderProps> = ({
   user,
   semesters,
@@ -64,33 +72,39 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="hidden md:flex items-center space-x-1">
           <Link
             href="/"
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Tổng quan
           </Link>
           <Link
             href="/records"
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Sổ điểm
           </Link>
           <Link
             href="/goals"
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Mục tiêu & Dự phóng
           </Link>
           <Link
             href="/handbook"
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Sổ tay quy chế
           </Link>
           <Link
             href="/report"
-            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Phiếu ĐRL
+          </Link>
+          <Link
+            href="/profile"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center space-x-1"
+          >
+            <span>Hồ sơ</span>
           </Link>
         </nav>
 
@@ -125,25 +139,34 @@ export const Header: React.FC<HeaderProps> = ({
 
           {user && (
             <div className="flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-              <div className="text-right hidden sm:block">
-                <div className="flex items-center justify-end space-x-1.5">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate max-w-[140px]">
-                    {user.fullName}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                      isAdmin
-                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
-                  >
-                    {isAdmin ? "Quản trị / CVHT" : "Sinh viên"}
-                  </span>
+              <Link
+                href="/profile"
+                title="Xem & chỉnh sửa trang cá nhân"
+                className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 group-hover:ring-2 group-hover:ring-indigo-400 transition-all">
+                  {getInitials(user?.fullName)}
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
-                  @{user.username}
+                <div className="text-left hidden sm:block">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate max-w-[160px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      {user.fullName}
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                        isAdmin
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                      }`}
+                    >
+                      {isAdmin ? "Admin" : "Sinh viên"}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono">
+                    @{user.username} • Trang cá nhân
+                  </div>
                 </div>
-              </div>
+              </Link>
               <ThemeToggle />
               <button
                 onClick={handleLogout}

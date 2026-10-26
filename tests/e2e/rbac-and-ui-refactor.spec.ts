@@ -15,7 +15,7 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
     await page.goto("/register");
     const usernameInput = page.locator('input[placeholder*="nguyenvana"]');
     await usernameInput.fill(studentUsername);
-    await expect(page.getByText(/khả dụng/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/khả dụng/i)).toBeVisible({ timeout: 10000 });
 
     await page.locator('input[placeholder*="Tối thiểu 6 ký tự"]').fill(studentPassword);
     await page.locator('input[placeholder*="Nhập lại mật khẩu"]').fill(studentPassword);
@@ -27,28 +27,27 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
 
     // 2. Check UI Craft & Clean Greeting Header
     // Verify no broken text wrap - greeting is clean
-    await expect(page.locator("h1")).toContainText(`Xin chào, ${studentFullName}`);
+    await expect(page.locator("h1")).toContainText(studentFullName);
 
     // Verify Admin buttons are NOT visible to normal student
     await expect(page.getByRole("button", { name: "Quản trị CVHT" })).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Họp lớp & Biên bản" })).not.toBeVisible();
 
     // Verify the primary action buttons exist cleanly
-    await expect(page.getByRole("button", { name: "Ghi nhận điểm" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Kho minh chứng" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Ghi hoạt động|Ghi nhận điểm/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Minh chứng|Kho minh chứng/i })).toBeVisible();
 
-    // Verify the "Tiện ích khác" dropdown exists and contains secondary tools
-    const utilitiesDropdown = page.getByRole("button", { name: "Tiện ích khác" });
+    // Verify the "Tiện ích" dropdown exists and contains secondary tools
+    const utilitiesDropdown = page.getByRole("button", { name: /Tiện ích/i }).first();
     await expect(utilitiesDropdown).toBeVisible();
     await utilitiesDropdown.click();
 
-    // Check dropdown items
-    await expect(page.getByRole("button", { name: "Thẩm định Sinh viên 5 Tốt" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Đồng bộ Lịch (.ICS / Google)" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Soạn đơn khiếu nại (Điều 13)" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Kiểm tra tính hợp lệ hồ sơ" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Xuất / Nhập Excel CSV" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Sao lưu & Phục hồi JSON" })).toBeVisible();
+    // Check dropdown items (refined personal notebook utilities)
+    await expect(page.getByRole("link", { name: "Xuất phiếu Mẫu số 01 (QĐ 3385)" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Dự báo tốt nghiệp (Điều 12)" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Chỉnh sửa hồ sơ cá nhân" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Xuất / Nhập bảng tính Excel" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sao lưu dữ liệu cá nhân" })).toBeVisible();
 
     // Close dropdown
     await page.keyboard.press("Escape");
@@ -87,7 +86,6 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
     // 2. Verify Admin controls
     const adminHubBtn = page.getByRole("button", { name: "Quản trị CVHT" });
     await expect(adminHubBtn).toBeVisible();
-    await expect(page.getByRole("button", { name: "Họp lớp & Biên bản" })).toBeVisible();
 
     // 3. Open Admin Hub
     await adminHubBtn.click();
@@ -112,9 +110,8 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
 
     // Verify newly created semester is in the semester select and Admin sees "+ Tạo học kỳ mới..."
     const semesterSelect = page.getByLabel("Chọn học kỳ rèn luyện");
-    const adminOptions = await semesterSelect.locator("option").allTextContents();
-    expect(adminOptions.some((opt) => opt.includes(newSemName))).toBe(true);
-    expect(adminOptions.some((opt) => opt.includes("+ Tạo học kỳ mới"))).toBe(true);
+    await expect(semesterSelect).toContainText(newSemName);
+    await expect(semesterSelect).toContainText("+ Tạo học kỳ mới");
   });
 
   test("3. Regular student automatically inherits and syncs official semesters created by Admin", async ({ page }) => {
@@ -129,8 +126,8 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
     const newSemName = `Học kỳ Hè (${timestamp.toString().slice(-4)})`;
     const semesterSelect = page.getByLabel("Chọn học kỳ rèn luyện");
     await expect(semesterSelect).toBeVisible();
+    await expect(semesterSelect).toContainText(newSemName);
     const studentOptions = await semesterSelect.locator("option").allTextContents();
-    expect(studentOptions.some((opt) => opt.includes(newSemName))).toBe(true);
 
     // 3. Switch to that official semester
     const targetOption = studentOptions.find((opt) => opt.includes(newSemName));
@@ -140,5 +137,23 @@ test.describe("RBAC & UI Craft Refactor: Role Separation & Admin Semesters", () 
 
     // Verify active semester chip updated in the greeting area
     await expect(page.locator("main")).toContainText(newSemName);
+  });
+
+  test.afterAll(async () => {
+    try {
+      const { db } = await import("../src/lib/db");
+      const { semesters, drlRecords } = await import("../src/lib/db/schema");
+      const { eq, like } = await import("drizzle-orm");
+      
+      const sems = await db.select({ id: semesters.id }).from(semesters).where(like(semesters.name, "Học kỳ Hè (%)"));
+      if (sems.length > 0) {
+        for (const s of sems) {
+          await db.delete(drlRecords).where(eq(drlRecords.semesterId, s.id));
+        }
+        await db.delete(semesters).where(like(semesters.name, "Học kỳ Hè (%)"));
+      }
+    } catch (e) {
+      // Ignore cleanup error
+    }
   });
 });

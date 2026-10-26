@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Settings,
   GraduationCap,
+  User,
 } from "lucide-react";
 import { triggerHaptic } from "@/lib/native/platform";
 
@@ -120,6 +121,15 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
 
             <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 
+            <Link
+              href="/profile"
+              onClick={() => setDropdownOpen(false)}
+              className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Chỉnh sửa hồ sơ cá nhân</span>
+            </Link>
+
             <button
               onClick={() => {
                 setDropdownOpen(false);
@@ -153,10 +163,11 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
             onOpenAdminHub();
           }}
           className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200 font-bold text-xs transition-colors cursor-pointer"
-          title="Quản trị học kỳ chính thức"
+          title="Quản trị CVHT"
+          aria-label="Quản trị CVHT"
         >
           <Settings className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          <span className="hidden sm:inline">Quản trị</span>
+          <span className="hidden sm:inline">Quản trị CVHT</span>
         </button>
       )}
 

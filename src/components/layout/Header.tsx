@@ -47,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
     { href: "/handbook", label: "Sổ tay quy chế" },
     { href: "/report", label: "Phiếu ĐRL" },
     { href: "/profile", label: "Hồ sơ" },
+    ...(isAdmin ? [{ href: "/admin", label: "Quản trị" }] : []),
   ];
 
   const handleLogout = async () => {

@@ -248,7 +248,7 @@ export async function DELETE(req: Request) {
   // RBAC: Only Admin can delete semesters
   if (session.role !== "admin") {
     return NextResponse.json(
-      { error: "Chức năng xóa học kỳ chỉ dành cho Quản trị viên (Admin / CVHT)." },
+      { error: "Chức năng xóa học kỳ chỉ dành cho Quản trị viên." },
       { status: 403 }
     );
   }

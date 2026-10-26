@@ -14,7 +14,13 @@ export async function GET() {
 
   try {
     const userSemesters = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        targetScore: semesters.targetScore,
+        disciplineLevel: semesters.disciplineLevel,
+      })
       .from(semesters)
       .where(eq(semesters.userId, session.id))
       .orderBy(desc(semesters.createdAt));
@@ -30,7 +36,14 @@ export async function GET() {
     }
 
     const allRecords = await db
-      .select()
+      .select({
+        id: drlRecords.id,
+        semesterId: drlRecords.semesterId,
+        category: drlRecords.category,
+        type: drlRecords.type,
+        points: drlRecords.points,
+        quantity: drlRecords.quantity,
+      })
       .from(drlRecords)
       .where(eq(drlRecords.userId, session.id));
 
@@ -38,7 +51,7 @@ export async function GET() {
     const semesterBreakdown = userSemesters.map((sem) => {
       const recordsForSem = allRecords.filter((r) => r.semesterId === sem.id);
       const summary = calculateSemesterScore(
-        recordsForSem,
+        recordsForSem as any,
         (sem.disciplineLevel as DisciplineLevel) || "none"
       );
       sumScores += summary.totalScore;
@@ -103,7 +116,9 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error("Analytics GET error:", error);
-    return NextResponse.json({ error: "Lỗi tải thống kê: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi tải dữ liệu thống kê. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
-

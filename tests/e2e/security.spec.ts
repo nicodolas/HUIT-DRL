@@ -92,13 +92,121 @@ test.describe("Security & OWASP Hardening Suite", () => {
     expect(blocked).toBe(true);
   });
 
-  test("HTTP Security Headers are properly set", async ({ request }) => {
+  test("HTTP Security Headers & Fingerprint Removal (Anti-Reverse Engineering)", async ({ request }) => {
     const res = await request.get("/");
     const headers = res.headers();
 
+    // Verification: Anti-fingerprinting - X-Powered-By header is removed
+    expect(headers["x-powered-by"]).toBeUndefined();
+
+    // Standard OWASP headers
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers["x-frame-options"]).toBe("SAMEORIGIN");
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(headers["strict-transport-security"]).toContain("max-age=");
+    expect(headers["content-security-policy"]).toContain("default-src 'self'");
+  });
+
+  test("Data Minimization: Responses never leak password hashes or internal DB errors", async ({ request }) => {
+    const testUser = `min_${Date.now()}`;
+    const regRes = await request.post("/api/auth/register", {
+      data: {
+        username: testUser,
+        password: "ValidPassword123!",
+        fullName: "Minimization Tester",
+      },
+    });
+    expect(regRes.status()).toBe(200);
+    const regData = await regRes.json();
+
+    // Verify passwordHash is never returned to client
+    expect(regData.user.passwordHash).toBeUndefined();
+    expect(regData.user.role).toBe("user");
+
+    // Login and check /api/auth/me
+    await request.post("/api/auth/login", {
+      data: {
+        username: testUser,
+        password: "ValidPassword123!",
+      },
+    });
+
+    const meRes = await request.get("/api/auth/me");
+    expect(meRes.status()).toBe(200);
+    const meData = await meRes.json();
+    expect(meData.user.passwordHash).toBeUndefined();
+    expect(meData.user.username).toBe(testUser);
+
+    // Health endpoint check: never leaks stack traces or db connection strings
+    const healthRes = await request.get("/api/health");
+    const healthData = await healthRes.json();
+    expect(healthData.database?.error).toBeUndefined();
+  });
+
+  test("Anti-IDOR: Users cannot view, modify, or delete other users' records", async ({ browser }) => {
+    // Create Context for User A
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    const userA = `user_a_${Date.now()}`;
+
+    await pageA.request.post("/api/auth/register", {
+      data: { username: userA, password: "Password123!", fullName: "Student A" },
+    });
+    await pageA.request.post("/api/auth/login", {
+      data: { username: userA, password: "Password123!" },
+    });
+
+    // User A fetches their semester and creates a record
+    const semsResA = await pageA.request.get("/api/semesters");
+    const semsDataA = await semsResA.json();
+    const semIdA = semsDataA.semesters[0].id;
+
+    const createRecRes = await pageA.request.post("/api/records", {
+      data: {
+        semesterId: semIdA,
+        category: 1,
+        title: "User A Confidential Activity",
+        type: "add",
+        points: 10,
+      },
+    });
+    expect(createRecRes.status()).toBe(200);
+    const { recordId: recordIdA } = await createRecRes.json();
+
+    // Create Context for User B
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    const userB = `user_b_${Date.now()}`;
+
+    await pageB.request.post("/api/auth/register", {
+      data: { username: userB, password: "Password123!", fullName: "Student B" },
+    });
+    await pageB.request.post("/api/auth/login", {
+      data: { username: userB, password: "Password123!" },
+    });
+
+    // 1. User B tries to view User A's records via GET /api/records?semesterId=...
+    const idorGetRes = await pageB.request.get(`/api/records?semesterId=${semIdA}`);
+    expect(idorGetRes.status()).toBe(404);
+
+    // 2. User B tries to modify User A's record via PUT /api/records/[id]
+    const idorPutRes = await pageB.request.put(`/api/records/${recordIdA}`, {
+      data: { title: "Hacked by User B", points: 50 },
+    });
+    expect(idorPutRes.status()).toBe(404);
+
+    // 3. User B tries to delete User A's record via DELETE /api/records/[id]
+    const idorDelRes = await pageB.request.delete(`/api/records/${recordIdA}`);
+    expect(idorDelRes.status()).toBe(404);
+
+    // Verify User A's record is intact
+    const verifyRes = await pageA.request.get(`/api/records?semesterId=${semIdA}`);
+    const verifyData = await verifyRes.json();
+    const existingRec = verifyData.records.find((r: any) => r.id === recordIdA);
+    expect(existingRec).toBeDefined();
+    expect(existingRec.title).toBe("User A Confidential Activity");
+
+    await contextA.close();
+    await contextB.close();
   });
 });
-

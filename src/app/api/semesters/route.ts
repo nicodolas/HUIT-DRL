@@ -4,6 +4,7 @@ import { semesters } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
+import { sanitizeText } from "@/lib/security/sanitizer";
 
 export async function GET() {
   const session = await getSession();
@@ -14,13 +15,29 @@ export async function GET() {
   try {
     // 1. Fetch official system semesters created by admin
     const sysSemesters = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        submissionDeadline: semesters.submissionDeadline,
+        status: semesters.status,
+      })
       .from(semesters)
       .where(eq(semesters.isSystem, true));
 
     // 2. Fetch user's existing semester records
     let userSemesters = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        targetScore: semesters.targetScore,
+        disciplineLevel: semesters.disciplineLevel,
+        submissionDeadline: semesters.submissionDeadline,
+        status: semesters.status,
+        isSystem: semesters.isSystem,
+        createdAt: semesters.createdAt,
+      })
       .from(semesters)
       .where(eq(semesters.userId, session.id))
       .orderBy(desc(semesters.createdAt));
@@ -50,7 +67,17 @@ export async function GET() {
 
       if (newlyAdded) {
         userSemesters = await db
-          .select()
+          .select({
+            id: semesters.id,
+            name: semesters.name,
+            isCurrent: semesters.isCurrent,
+            targetScore: semesters.targetScore,
+            disciplineLevel: semesters.disciplineLevel,
+            submissionDeadline: semesters.submissionDeadline,
+            status: semesters.status,
+            isSystem: semesters.isSystem,
+            createdAt: semesters.createdAt,
+          })
           .from(semesters)
           .where(eq(semesters.userId, session.id))
           .orderBy(desc(semesters.createdAt));
@@ -63,7 +90,10 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error("Semesters GET error:", error);
-    return NextResponse.json({ error: "Lỗi tải học kỳ: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi tải danh sách học kỳ. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
 
@@ -85,7 +115,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, targetScore, disciplineLevel, submissionDeadline, isCurrent } = body;
 
-    if (!name || !name.trim()) {
+    const cleanName = sanitizeText(name, 100);
+    if (!cleanName) {
       return NextResponse.json({ error: "Tên học kỳ không được để trống" }, { status: 400 });
     }
 
@@ -101,17 +132,25 @@ export async function POST(req: Request) {
     await db.insert(semesters).values({
       id: newId,
       userId: session.id,
-      name: name.trim(),
+      name: cleanName,
       isCurrent: isCurrent !== undefined ? Boolean(isCurrent) : true,
-      targetScore: targetScore ? Number(targetScore) : 90,
+      targetScore: targetScore ? Math.min(100, Math.max(0, Number(targetScore))) : 90,
       disciplineLevel: disciplineLevel || "none",
-      submissionDeadline: submissionDeadline ? String(submissionDeadline).trim() : null,
+      submissionDeadline: submissionDeadline ? sanitizeText(String(submissionDeadline), 32) : null,
       status: "active",
       isSystem: true,
     });
 
     const [created] = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+        targetScore: semesters.targetScore,
+        disciplineLevel: semesters.disciplineLevel,
+        submissionDeadline: semesters.submissionDeadline,
+        status: semesters.status,
+      })
       .from(semesters)
       .where(eq(semesters.id, newId))
       .limit(1);
@@ -122,7 +161,10 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("Semesters POST error:", error);
-    return NextResponse.json({ error: "Lỗi tạo học kỳ: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi tạo học kỳ. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
 
@@ -140,7 +182,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Thiếu ID học kỳ" }, { status: 400 });
     }
 
-    // Verify ownership and existence
+    // Verify ownership and existence (Row-level authorization)
     const [existing] = await db
       .select({ id: semesters.id })
       .from(semesters)
@@ -154,14 +196,18 @@ export async function PUT(req: Request) {
       );
     }
 
-    const updateData: any = { updatedAt: new Date() };
-    if (targetScore !== undefined) updateData.targetScore = Number(targetScore);
-    if (disciplineLevel !== undefined) updateData.disciplineLevel = disciplineLevel;
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (targetScore !== undefined) {
+      updateData.targetScore = Math.min(100, Math.max(0, Number(targetScore)));
+    }
+    if (disciplineLevel !== undefined) {
+      updateData.disciplineLevel = sanitizeText(String(disciplineLevel), 32);
+    }
     if (submissionDeadline !== undefined) {
-      updateData.submissionDeadline = submissionDeadline ? String(submissionDeadline).trim() : null;
+      updateData.submissionDeadline = submissionDeadline ? sanitizeText(String(submissionDeadline), 32) : null;
     }
     if (status !== undefined) {
-      updateData.status = String(status).trim();
+      updateData.status = sanitizeText(String(status), 32);
     }
     if (isCurrent !== undefined) {
       if (isCurrent) {
@@ -173,6 +219,11 @@ export async function PUT(req: Request) {
       updateData.isCurrent = Boolean(isCurrent);
     }
 
+    // SECURITY: Disallow regular students from escalating isSystem status
+    if (session.role !== "admin") {
+      updateData.isSystem = false;
+    }
+
     await db
       .update(semesters)
       .set(updateData)
@@ -181,7 +232,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Semesters PUT error:", error);
-    return NextResponse.json({ error: "Lỗi cập nhật học kỳ: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi cập nhật học kỳ. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
 
@@ -223,7 +277,7 @@ export async function DELETE(req: Request) {
     const deleted = await db
       .delete(semesters)
       .where(and(eq(semesters.id, id), eq(semesters.userId, session.id)))
-      .returning();
+      .returning({ id: semesters.id, isCurrent: semesters.isCurrent });
 
     if (deleted.length === 0) {
       return NextResponse.json(
@@ -253,6 +307,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true, message: "Đã xóa học kỳ thành công!" });
   } catch (error: any) {
     console.error("Semesters DELETE error:", error);
-    return NextResponse.json({ error: "Lỗi xóa học kỳ: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Lỗi khi xóa học kỳ. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }

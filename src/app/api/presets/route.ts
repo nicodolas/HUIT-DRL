@@ -6,7 +6,17 @@ import { asc } from "drizzle-orm";
 export async function GET() {
   try {
     const list = await db
-      .select()
+      .select({
+        id: drlCriteriaPresets.id,
+        category: drlCriteriaPresets.category,
+        code: drlCriteriaPresets.code,
+        title: drlCriteriaPresets.title,
+        type: drlCriteriaPresets.type,
+        points: drlCriteriaPresets.points,
+        maxPointsCategory: drlCriteriaPresets.maxPointsCategory,
+        unit: drlCriteriaPresets.unit,
+        description: drlCriteriaPresets.description,
+      })
       .from(drlCriteriaPresets)
       .orderBy(asc(drlCriteriaPresets.category), asc(drlCriteriaPresets.code));
 
@@ -14,9 +24,8 @@ export async function GET() {
   } catch (error: any) {
     console.error("Presets error:", error);
     return NextResponse.json(
-      { error: "Lỗi tải danh mục tiêu chí: " + (error?.message || "Lỗi máy chủ") },
+      { error: "Lỗi tải danh mục tiêu chí. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }
 }
-

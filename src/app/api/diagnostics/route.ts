@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { users, semesters, drlRecords } from "@/lib/db/schema";
+import { semesters, drlRecords } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function GET() {
@@ -19,12 +19,20 @@ export async function GET() {
 
     // 2. Fetch User Semesters and Records Stats
     const userSemesters = await db
-      .select()
+      .select({
+        id: semesters.id,
+        name: semesters.name,
+        isCurrent: semesters.isCurrent,
+      })
       .from(semesters)
       .where(eq(semesters.userId, user.id));
 
     const userRecords = await db
-      .select()
+      .select({
+        id: drlRecords.id,
+        semesterId: drlRecords.semesterId,
+        category: drlRecords.category,
+      })
       .from(drlRecords)
       .where(eq(drlRecords.userId, user.id));
 
@@ -93,7 +101,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: "unhealthy",
-        error: error.message || "Lỗi chuẩn đoán hệ thống",
+        error: "Lỗi chuẩn đoán hệ thống. Vui lòng thử lại sau.",
       },
       { status: 500 }
     );

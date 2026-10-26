@@ -12,6 +12,7 @@ import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { AnnualReportModal } from "@/components/dashboard/AnnualReportModal";
 import { DrlAppealModal } from "@/components/modals/DrlAppealModal";
 import { shareTrainingSummary } from "@/lib/mobile/share";
+import { APP_CONFIG } from "@/lib/config/env";
 
 function ReportContent() {
   const router = useRouter();
@@ -324,10 +325,10 @@ function ReportContent() {
             <p className="text-[11px] text-slate-600 leading-relaxed">
               Mã QR liên kết trực tiếp tới thư mục lưu trữ ảnh chứng chỉ / minh chứng (Google Drive / OneDrive) để Ban cán sự và Thư ký lớp quét đối soát nhanh chóng khi họp xét.
             </p>
-            <div className="no-print pt-1">
+            <div className="no-print pt-1 flex items-center space-x-2">
               <input
                 type="url"
-                placeholder="Dán link thư mục Google Drive chứa minh chứng của bạn..."
+                placeholder={`Dán link Google Drive hoặc dùng mẫu: ${APP_CONFIG.sampleEvidenceDriveUrl}`}
                 value={evidenceFolderUrl}
                 onChange={(e) => {
                   setEvidenceFolderUrl(e.target.value);
@@ -335,8 +336,23 @@ function ReportContent() {
                     localStorage.setItem("huit_evidence_url", e.target.value);
                   }
                 }}
-                className="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 placeholder:text-slate-400"
+                className="flex-1 text-xs p-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 placeholder:text-slate-400"
               />
+              {!evidenceFolderUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sampleUrl = APP_CONFIG.sampleEvidenceDriveUrl;
+                    setEvidenceFolderUrl(sampleUrl);
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("huit_evidence_url", sampleUrl);
+                    }
+                  }}
+                  className="px-2.5 py-2 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer shrink-0 border border-slate-200"
+                >
+                  Dùng link mẫu
+                </button>
+              )}
             </div>
             {evidenceFolderUrl && (
               <div className="text-[10px] text-blue-800 font-mono truncate max-w-lg mt-0.5">

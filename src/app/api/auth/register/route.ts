@@ -151,12 +151,13 @@ export async function POST(req: Request) {
       role: userRole,
     };
 
-    await createSession(sessionUser);
+    const token = await createSession(sessionUser);
 
     return NextResponse.json({
       message: "Đăng ký thành công!",
       user: sessionUser,
       semesterId: activeSemesterId,
+      token,
     });
   } catch (error: any) {
     // Log complete error internally on the server, never leak stack traces to client

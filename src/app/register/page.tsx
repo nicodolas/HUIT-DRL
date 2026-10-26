@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap, ArrowRight, Lock, User, AlertCircle, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { saveAuthToken } from "@/lib/api/client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -138,6 +139,10 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Đăng ký thất bại");
+      }
+
+      if (data.token) {
+        saveAuthToken(data.token);
       }
 
       router.push("/");

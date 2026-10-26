@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { env } from "@/lib/env";
 
 const SECRET_KEY = new TextEncoder().encode(env.AUTH_SECRET);
@@ -29,21 +29,53 @@ export async function createSession(user: SessionUser): Promise<string> {
     .setExpirationTime("30d")
     .sign(SECRET_KEY);
 
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+  } catch {
+    // If called in contexts where cookies cannot be written, token is still returned
+  }
 
   return token;
 }
 
-export async function getSession(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
+export async function getSession(req?: Request): Promise<SessionUser | null> {
+  let token: string | undefined;
+
+  // 1. Try reading from Next.js cookie store
+  try {
+    const cookieStore = await cookies();
+    token = cookieStore.get(COOKIE_NAME)?.value;
+  } catch {
+    // Ignore cookieStore errors
+  }
+
+  // 2. If no cookie (e.g. Android WebView / Cross-origin mobile API call), check Authorization header
+  if (!token) {
+    if (req) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+    } else {
+      try {
+        const headerStore = await headers();
+        const authHeader = headerStore.get("authorization");
+        if (authHeader?.startsWith("Bearer ")) {
+          token = authHeader.substring(7).trim();
+        }
+      } catch {
+        // Ignore headerStore errors
+      }
+    }
+  }
+
   if (!token) return null;
 
   try {
@@ -62,7 +94,10 @@ export async function getSession(): Promise<SessionUser | null> {
 }
 
 export async function clearSession(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(COOKIE_NAME);
+  } catch {
+    // Ignore
+  }
 }
-

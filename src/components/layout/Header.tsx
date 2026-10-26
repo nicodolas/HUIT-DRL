@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GraduationCap, LogOut, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { clearAuthToken } from "@/lib/api/client";
 
 interface HeaderProps {
   user: {
@@ -32,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleLogout = async () => {
     try {
+      clearAuthToken();
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
       router.refresh();

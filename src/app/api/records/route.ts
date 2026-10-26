@@ -52,6 +52,7 @@ export async function GET(req: Request) {
     const records = await db
       .select({
         id: drlRecords.id,
+        userId: drlRecords.userId,
         semesterId: drlRecords.semesterId,
         presetId: drlRecords.presetId,
         category: drlRecords.category,
@@ -63,6 +64,7 @@ export async function GET(req: Request) {
         note: drlRecords.note,
         evidenceUrl: drlRecords.evidenceUrl,
         createdAt: drlRecords.createdAt,
+        updatedAt: drlRecords.updatedAt,
       })
       .from(drlRecords)
       .where(and(eq(drlRecords.semesterId, semesterId), eq(drlRecords.userId, session.id)))
@@ -70,7 +72,7 @@ export async function GET(req: Request) {
 
     // 3. Compute score and goal progress
     const scoreSummary = calculateSemesterScore(
-      records,
+      records as any,
       (semester.disciplineLevel as DisciplineLevel) || "none"
     );
 

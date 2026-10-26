@@ -12,8 +12,10 @@ import {
   AlertTriangle,
   Lock,
   Layers,
+  ExternalLink,
 } from "lucide-react";
 import { triggerHaptic } from "@/lib/native/platform";
+import { APP_CONFIG } from "@/lib/config/env";
 
 interface AdminHubModalProps {
   isOpen: boolean;
@@ -313,6 +315,35 @@ export const AdminHubModal: React.FC<AdminHubModalProps> = ({
               ))}
             </div>
           )}
+        </div>
+
+        {/* Official Resources & Sample Links */}
+        <div className="px-5 py-2.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <div className="flex items-center space-x-2 text-slate-500">
+            <span>Liên kết chính thức:</span>
+            <a
+              href={APP_CONFIG.huitPortalUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-amber-600 hover:text-amber-700 font-medium inline-flex items-center space-x-0.5 underline"
+            >
+              <span>Cổng SV HUIT</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+            <span>•</span>
+            <a
+              href={APP_CONFIG.huitQd3385Url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-amber-600 hover:text-amber-700 font-medium inline-flex items-center space-x-0.5 underline"
+            >
+              <span>QĐ 3385/QĐ-DCT</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          </div>
+          <div className="text-slate-400 font-mono text-[10px]">
+            Hỗ trợ: {APP_CONFIG.supportEmail}
+          </div>
         </div>
 
         {/* Footer */}

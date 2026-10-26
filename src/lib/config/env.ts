@@ -29,3 +29,4 @@ export const APP_CONFIG = {
   maxTitleLength: 255,
   maxNoteLength: 1000,
 };
+

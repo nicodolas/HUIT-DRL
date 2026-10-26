@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { DrlRecord, Semester } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
+import { APP_CONFIG } from "@/lib/config/env";
 
 interface CsvExchangeModalProps {
   isOpen: boolean;
@@ -378,7 +379,7 @@ export const CsvExchangeModal: React.FC<CsvExchangeModalProps> = ({
                       rows={4}
                       value={csvText}
                       onChange={(e) => handleParseCsv(e.target.value)}
-                      placeholder={`Ví dụ định dạng dán từ Excel hoặc CSV:\nTC1, Nghiên cứu khoa học sinh viên, 5, 2026-10-15, https://drive.google.com/..., Đạt giải nhì\nTC3, Tham gia ngày hội việc làm, 3, 2026-10-20, https://drive.google.com/..., Nhận giấy chứng nhận`}
+                      placeholder={`Ví dụ định dạng dán từ Excel hoặc CSV:\nTC1, Nghiên cứu khoa học sinh viên, 5, 2026-10-15, ${APP_CONFIG.sampleEvidenceDriveUrl}, Đạt giải nhì\nTC3, Tham gia ngày hội việc làm, 3, 2026-10-20, ${APP_CONFIG.sampleEvidenceDriveUrl}, Nhận giấy chứng nhận`}
                       className="w-full text-xs font-mono p-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
                     />
                   </div>

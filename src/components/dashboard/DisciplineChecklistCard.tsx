@@ -196,3 +196,4 @@ export const DisciplineChecklistCard: React.FC<DisciplineChecklistCardProps> = (
     </div>
   );
 };
+

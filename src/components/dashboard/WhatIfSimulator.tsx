@@ -106,7 +106,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({
             points: item.points,
             quantity: 1,
             occurredAt: new Date().toISOString().split("T")[0],
-            note: "Thêm từ kế hoạch mô phỏng điểm rèn luyện",
+            note: "Thêm từ kế hoạch mô phỏng What-If",
           }),
         });
       }

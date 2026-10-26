@@ -209,4 +209,90 @@ test.describe("Security & OWASP Hardening Suite", () => {
     await contextA.close();
     await contextB.close();
   });
+
+  test("SQL Injection Prevention: Parameterized queries and strict ID validation defend against injection attacks", async ({ request }) => {
+    // 1. Attempt SQL injection in registration username
+    const sqlInjectionUsernames = [
+      "' OR '1'='1' --",
+      "admin'--",
+      "'; DROP TABLE users; --",
+      "user' UNION SELECT 1, 'admin', 'hash' --",
+    ];
+
+    for (const badUser of sqlInjectionUsernames) {
+      const regRes = await request.post("/api/auth/register", {
+        data: {
+          username: badUser,
+          password: "ValidPassword123!",
+          fullName: "Hacker Attempt",
+        },
+      });
+      // Should reject invalid characters before hitting SQL
+      expect(regRes.status()).toBe(400);
+      const data = await regRes.json();
+      expect(data.error).toContain("chỉ bao gồm chữ cái");
+    }
+
+    // 2. Attempt SQL injection in login
+    const loginRes = await request.post("/api/auth/login", {
+      data: {
+        username: "admin' OR '1'='1",
+        password: "any",
+      },
+    });
+    // Parameterized lookup safely finds 0 matching rows
+    expect(loginRes.status()).toBe(401);
+
+    // 3. Register a legitimate user to test record payload and ID boundaries
+    const safeUser = `sqlsec_${Date.now()}`;
+    await request.post("/api/auth/register", {
+      data: { username: safeUser, password: "ValidPassword123!", fullName: "Safe Tester" },
+    });
+    await request.post("/api/auth/login", {
+      data: { username: safeUser, password: "ValidPassword123!" },
+    });
+
+    const semsRes = await request.get("/api/semesters");
+    const semsData = await semsRes.json();
+    const semId = semsData.semesters[0].id;
+
+    // 4. Test SQL Injection string in Record content: Should be parameterized and treated strictly as literal string
+    const maliciousTitle = "Normal Activity'); DROP TABLE drl_records; --";
+    const maliciousNote = "' UNION SELECT * FROM users; --";
+
+    const addRecRes = await request.post("/api/records", {
+      data: {
+        semesterId: semId,
+        category: 2,
+        title: maliciousTitle,
+        type: "add",
+        points: 5,
+        note: maliciousNote,
+      },
+    });
+    expect(addRecRes.status()).toBe(200);
+    const { recordId } = await addRecRes.json();
+
+    // Verify record exists as literal string and table was NOT dropped
+    const fetchRecRes = await request.get(`/api/records?semesterId=${semId}`);
+    expect(fetchRecRes.status()).toBe(200);
+    const fetchRecData = await fetchRecRes.json();
+    const savedRec = fetchRecData.records.find((r: any) => r.id === recordId);
+    expect(savedRec).toBeDefined();
+    expect(savedRec.title).toBe(maliciousTitle);
+    expect(savedRec.note).toBe(maliciousNote);
+
+    // 5. Test SQL Injection in semesterId parameter: Should be rejected by boundary validator
+    const badSemIdRes = await request.get(`/api/records?semesterId=${encodeURIComponent("1' OR '1'='1")}`);
+    expect(badSemIdRes.status()).toBe(400);
+
+    // 6. Test SQL Injection in record ID param: Should be rejected by boundary validator
+    const badRecPutRes = await request.put(`/api/records/${encodeURIComponent("1'; DROP TABLE drl_records; --")}`, {
+      data: { title: "Attempt Update" },
+    });
+    expect(badRecPutRes.status()).toBe(400);
+
+    const badRecDelRes = await request.delete(`/api/records/${encodeURIComponent("1' OR '1'='1")}`);
+    expect(badRecDelRes.status()).toBe(400);
+  });
 });

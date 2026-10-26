@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import {
   isValidEvidenceUrl,
+  isValidId,
   sanitizeTitle,
   sanitizeNote,
   validateCategory,
@@ -22,8 +23,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  if (!id) {
-    return NextResponse.json({ error: "Thiếu ID bản ghi" }, { status: 400 });
+  if (!id || !isValidId(id)) {
+    return NextResponse.json({ error: "Mã bản ghi không hợp lệ" }, { status: 400 });
   }
 
   try {
@@ -60,8 +61,8 @@ export async function PUT(
   }
 
   const { id } = await params;
-  if (!id) {
-    return NextResponse.json({ error: "Thiếu ID bản ghi" }, { status: 400 });
+  if (!id || !isValidId(id)) {
+    return NextResponse.json({ error: "Mã bản ghi không hợp lệ" }, { status: 400 });
   }
 
   try {

@@ -8,6 +8,7 @@ import { DisciplineLevel } from "@/lib/drl/rules";
 import { randomUUID } from "crypto";
 import {
   isValidEvidenceUrl,
+  isValidId,
   sanitizeTitle,
   sanitizeNote,
   validateCategory,
@@ -24,8 +25,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const semesterId = searchParams.get("semesterId");
 
-  if (!semesterId) {
-    return NextResponse.json({ error: "Vui lòng chọn học kỳ" }, { status: 400 });
+  if (!semesterId || !isValidId(semesterId)) {
+    return NextResponse.json({ error: "Vui lòng chọn học kỳ hợp lệ" }, { status: 400 });
   }
 
   try {
@@ -106,6 +107,14 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { semesterId, presetId, category, title, type, points, quantity, occurredAt, note, evidenceUrl } = body;
+
+    if (!semesterId || !isValidId(semesterId)) {
+      return NextResponse.json({ error: "Mã học kỳ không hợp lệ." }, { status: 400 });
+    }
+
+    if (presetId && !isValidId(presetId)) {
+      return NextResponse.json({ error: "Mã tiêu chí không hợp lệ." }, { status: 400 });
+    }
 
     const cleanTitle = sanitizeTitle(title);
     if (!cleanTitle) {

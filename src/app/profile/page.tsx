@@ -292,41 +292,90 @@ export default function ProfilePage() {
                 {user.fullName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">{user.fullName}</h2>
-                <p className="text-xs text-slate-500 font-mono">@{user.username}</p>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-base font-bold text-slate-900">{user.fullName}</h2>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    user.role === "admin"
+                      ? "bg-amber-100 text-amber-800 border border-amber-300"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
+                  }`}>
+                    {user.role === "admin" ? "Quản trị viên" : "Sinh viên"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-mono mt-0.5">@{user.username}</p>
               </div>
             </div>
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (!isEditing && user) {
+                  setEditFullName(user.fullName || "");
+                  setEditFaculty(user.faculty || "Công nghệ Thông tin");
+                  setEditClassName(user.className || "");
+                  setEditMessage(null);
+                }
+                setIsEditing(!isEditing);
+              }}
               className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditing ? "Đóng" : "Sửa thông tin"}</span>
+              <span>{isEditing ? "Đóng" : "Chỉnh sửa hồ sơ"}</span>
             </button>
           </div>
 
+          {savedSuccess && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center space-x-2 animate-in fade-in duration-150">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-medium">Cập nhật thông tin hồ sơ thành công!</span>
+            </div>
+          )}
+
           {isEditing ? (
-            <form onSubmit={handleSaveProfile} className="pt-2 border-t border-slate-100 space-y-3">
+            <form onSubmit={handleSaveProfile} className="pt-3 border-t border-slate-100 space-y-3.5">
               {editMessage && (
-                <div className="p-2.5 text-xs bg-red-50 text-red-700 rounded-lg">
+                <div className="p-2.5 text-xs bg-red-50 border border-red-200 text-red-700 rounded-lg">
                   {editMessage}
                 </div>
               )}
+
+              {/* Immutable Username field */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Tên đăng nhập (Cố định, không thể đổi):</span>
+                  </label>
+                  <span className="text-[10px] text-slate-400">Định danh bất biến</span>
+                </div>
+                <input
+                  type="text"
+                  value={`@${user.username}`}
+                  disabled
+                  readOnly
+                  className="w-full text-xs p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 font-mono cursor-not-allowed select-none"
+                />
+                <p className="text-[11px] text-slate-400 mt-1 italic">
+                  Tên đăng nhập là định danh duy nhất của tài khoản trên hệ thống và không thể thay đổi.
+                </p>
+              </div>
+
+              {/* Full Name field */}
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Họ và tên hiển thị:
+                  Họ và tên sinh viên: <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Ví dụ: Nguyễn Văn An"
                   required
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Faculty field */}
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Khoa đào tạo:
@@ -334,20 +383,24 @@ export default function ProfilePage() {
                   <select
                     value={editFaculty}
                     onChange={(e) => setEditFaculty(e.target.value)}
-                    className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                    className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900 cursor-pointer"
                   >
-                    <option value="Công nghệ Thông tin">Công nghệ Thông tin</option>
-                    <option value="Công nghệ Thực phẩm">Công nghệ Thực phẩm</option>
-                    <option value="Quản trị Kinh doanh">Quản trị Kinh doanh</option>
-                    <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
-                    <option value="Điện - Điện tử">Điện - Điện tử</option>
-                    <option value="Công nghệ Cơ khí">Công nghệ Cơ khí</option>
-                    <option value="Ngoại ngữ">Ngoại ngữ</option>
-                    <option value="Luật">Luật</option>
-                    <option value="Khoa học Ứng dụng">Khoa học Ứng dụng</option>
+                    <option value="Công nghệ Thông tin">Khoa Công nghệ Thông tin</option>
+                    <option value="Công nghệ Thực phẩm">Khoa Công nghệ Thực phẩm</option>
+                    <option value="Quản trị Kinh doanh">Khoa Quản trị Kinh doanh</option>
+                    <option value="Tài chính - Ngân hàng">Khoa Tài chính - Ngân hàng</option>
+                    <option value="Điện - Điện tử">Khoa Điện - Điện tử</option>
+                    <option value="Công nghệ Cơ khí">Khoa Công nghệ Cơ khí</option>
+                    <option value="Ngoại ngữ">Khoa Ngoại ngữ</option>
+                    <option value="Luật">Khoa Luật</option>
+                    <option value="Khoa học Ứng dụng">Khoa Khoa học Ứng dụng</option>
+                    <option value="Công nghệ May & Thời trang">Khoa Công nghệ May & Thời trang</option>
+                    <option value="Thương mại Điện tử">Bộ môn Thương mại Điện tử</option>
                     <option value="Khác">Khoa khác</option>
                   </select>
                 </div>
+
+                {/* Class field */}
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
                     Lớp sinh hoạt:
@@ -356,10 +409,16 @@ export default function ProfilePage() {
                     type="text"
                     value={editClassName}
                     onChange={(e) => setEditClassName(e.target.value)}
-                    placeholder="Ví dụ: 12DHTH01"
-                    className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                    placeholder="Ví dụ: 13DHTH03"
+                    className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900 uppercase"
                   />
                 </div>
+              </div>
+
+              {/* Security notice regarding role */}
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 flex items-center justify-between">
+                <span>Vai trò hiện tại: <strong className="text-slate-700">{user.role === "admin" ? "Quản trị viên" : "Sinh viên"}</strong></span>
+                <span className="text-[10px] text-slate-400">Phân quyền do hệ thống quản lý</span>
               </div>
 
               <div className="flex items-center justify-end space-x-2 pt-1">
@@ -382,7 +441,7 @@ export default function ProfilePage() {
           ) : (
             <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <span className="text-slate-500 block mb-0.5 text-[11px]">Khoa:</span>
+                <span className="text-slate-500 block mb-0.5 text-[11px]">Khoa đào tạo:</span>
                 <span className="font-semibold text-slate-900">{user.faculty || "Chưa cập nhật"}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">

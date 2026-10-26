@@ -44,36 +44,43 @@ export function calculateSemesterScore(
   let totalDeducted = 0;
   let totalEarned = 0;
 
-  for (let cat = 1; cat <= 5; cat++) {
-    const meta = CATEGORIES[cat];
-    let sum = meta.defaultPoints;
-    let count = 0;
+  // Single-pass O(N) accumulator arrays for categories 1..5
+  const sums = [0, CATEGORIES[1].defaultPoints, CATEGORIES[2].defaultPoints, CATEGORIES[3].defaultPoints, CATEGORIES[4].defaultPoints, CATEGORIES[5].defaultPoints];
+  const counts = [0, 0, 0, 0, 0, 0];
 
-    for (const r of records) {
-      if (r.category === cat) {
-        count++;
-        const pts = Number(r.points) * (r.quantity || 1);
-        if (r.type !== "default") {
-          sum += pts;
-          if (pts > 0) totalEarned += pts;
-          else totalDeducted += Math.abs(pts);
-        }
+  const n = records.length;
+  for (let i = 0; i < n; i++) {
+    const r = records[i];
+    const cat = r.category;
+    if (cat >= 1 && cat <= 5) {
+      counts[cat]++;
+      if (r.type !== "default") {
+        const pts = (parseFloat(r.points) || 0) * (r.quantity || 1);
+        sums[cat] += pts;
+        if (pts > 0) totalEarned += pts;
+        else totalDeducted -= pts;
       }
     }
+  }
 
-    const capped = Math.max(0, Math.min(meta.maxPoints, Math.round(sum * 10) / 10));
+  let rawTotal = 0;
+  for (let cat = 1; cat <= 5; cat++) {
+    const meta = CATEGORIES[cat];
+    const raw = Math.round(sums[cat] * 10) / 10;
+    const capped = Math.max(0, Math.min(meta.maxPoints, raw));
+    rawTotal += capped;
+
     categoryResults[cat] = {
       category: cat,
-      rawScore: Math.round(sum * 10) / 10,
+      rawScore: raw,
       cappedScore: capped,
       maxPoints: meta.maxPoints,
       defaultPoints: meta.defaultPoints,
       remainingCapacity: Math.max(0, meta.maxPoints - capped),
-      recordsCount: count,
+      recordsCount: counts[cat],
     };
   }
 
-  const rawTotal = Object.values(categoryResults).reduce((acc, c) => acc + c.cappedScore, 0);
   const totalScore = Math.min(100, Math.max(0, Math.round(rawTotal * 10) / 10));
   const rating = determineRating(totalScore, disciplineLevel);
 
@@ -82,8 +89,8 @@ export function calculateSemesterScore(
     rating,
     categories: categoryResults,
     totalDefaultPoints: 60,
-    totalEarnedPoints: totalEarned,
-    totalDeductedPoints: totalDeducted,
+    totalEarnedPoints: Math.round(totalEarned * 10) / 10,
+    totalDeductedPoints: Math.round(totalDeducted * 10) / 10,
   };
 }
 

@@ -278,6 +278,14 @@ const CATEGORY_NAMES: Record<number, string> = {
   5: "TC5: Cán bộ, NCKH & Khen thưởng",
 };
 
+// Fast LRU Memoization Cache for sub-millisecond typing lookups
+const CLASSIFIER_CACHE = new Map<string, ActivityClassificationResult | null>();
+const MAX_CACHE_SIZE = 512;
+
+export function clearClassifierCache(): void {
+  CLASSIFIER_CACHE.clear();
+}
+
 /**
  * Classifies an activity string into an official HUIT Decision 3385 criterion
  */
@@ -287,6 +295,11 @@ export function classifyHuitActivity(
   if (!input || input.trim().length < 3) return null;
 
   const normalized = input.toLowerCase().trim();
+
+  // Instant O(1) Cache hit
+  if (CLASSIFIER_CACHE.has(normalized)) {
+    return CLASSIFIER_CACHE.get(normalized)!;
+  }
 
   let bestRule: ClassifierRule | null = null;
   let highestScore = 0;
@@ -310,13 +323,18 @@ export function classifyHuitActivity(
   }
 
   if (!bestRule || highestScore < 4) {
+    if (CLASSIFIER_CACHE.size >= MAX_CACHE_SIZE) {
+      const firstKey = CLASSIFIER_CACHE.keys().next().value;
+      if (firstKey) CLASSIFIER_CACHE.delete(firstKey);
+    }
+    CLASSIFIER_CACHE.set(normalized, null);
     return null;
   }
 
   const confidence: ActivityClassificationResult["confidence"] =
     highestScore >= 16 ? "high" : highestScore >= 8 ? "medium" : "low";
 
-  return {
+  const result: ActivityClassificationResult = {
     matchedCategory: bestRule.category,
     suggestedPoints: bestRule.points,
     confidence,
@@ -326,5 +344,13 @@ export function classifyHuitActivity(
     requiredProofGuide: bestRule.proofGuide,
     explanation: bestRule.explanation,
   };
+
+  if (CLASSIFIER_CACHE.size >= MAX_CACHE_SIZE) {
+    const firstKey = CLASSIFIER_CACHE.keys().next().value;
+    if (firstKey) CLASSIFIER_CACHE.delete(firstKey);
+  }
+  CLASSIFIER_CACHE.set(normalized, result);
+
+  return result;
 }
 

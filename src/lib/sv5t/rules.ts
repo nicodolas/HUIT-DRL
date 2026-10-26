@@ -58,48 +58,65 @@ export function evaluateSv5t(inputs: Sv5tInputs): Sv5tEvaluationResult {
 
   const hasDiscipline = disciplineLevel && disciplineLevel !== "none";
 
-  // Check keywords in logged activities
-  const activityNames = records.map((r) => ((r.title || "") + " " + (r.note || "")).toLowerCase());
+  // Fast single-pass activity inspection (O(N) with early flags)
+  let hasVolunteerActivity = false;
+  let hasAcademicContest = false;
+  let hasSportsActivity = Boolean(hasFitnessCertificate);
+  let hasIntegrationActivity = Boolean(hasForeignLangCert);
+  let tc3RecordsCount = 0;
 
-  const hasVolunteerActivity = activityNames.some((name) =>
-    name.includes("mùa hè xanh") ||
-    name.includes("xuân tình nguyện") ||
-    name.includes("tiếp sức mùa thi") ||
-    name.includes("hiến máu") ||
-    name.includes("tình nguyện") ||
-    name.includes("chủ nhật xanh")
-  );
+  for (let i = 0; i < records.length; i++) {
+    const r = records[i];
+    if (r.category === 3) tc3RecordsCount++;
 
-  const tc3RecordsCount = records.filter((r) => r.category === 3).length;
+    const text = ((r.title || "") + " " + (r.note || "")).toLowerCase();
 
-  const hasAcademicContest = activityNames.some((name) =>
-    name.includes("nckh") ||
-    name.includes("nghiên cứu khoa học") ||
-    name.includes("olympic") ||
-    name.includes("học thuật") ||
-    name.includes("seminar") ||
-    name.includes("ý tưởng sáng tạo")
-  );
+    if (!hasVolunteerActivity && (
+      text.includes("mùa hè xanh") ||
+      text.includes("xuân tình nguyện") ||
+      text.includes("tiếp sức mùa thi") ||
+      text.includes("hiến máu") ||
+      text.includes("tình nguyện") ||
+      text.includes("chủ nhật xanh")
+    )) {
+      hasVolunteerActivity = true;
+    }
 
-  const hasSportsActivity = activityNames.some((name) =>
-    name.includes("hội thao") ||
-    name.includes("giải bóng") ||
-    name.includes("chạy bộ") ||
-    name.includes("marathon") ||
-    name.includes("cầu lông") ||
-    name.includes("thể dục") ||
-    name.includes("thanh niên khỏe")
-  ) || hasFitnessCertificate;
+    if (!hasAcademicContest && (
+      text.includes("nckh") ||
+      text.includes("nghiên cứu khoa học") ||
+      text.includes("olympic") ||
+      text.includes("học thuật") ||
+      text.includes("seminar") ||
+      text.includes("ý tưởng sáng tạo")
+    )) {
+      hasAcademicContest = true;
+    }
 
-  const hasIntegrationActivity = activityNames.some((name) =>
-    name.includes("tiếng anh") ||
-    name.includes("toeic") ||
-    name.includes("ielts") ||
-    name.includes("kỹ năng") ||
-    name.includes("hội nhập") ||
-    name.includes("giao lưu quốc tế") ||
-    name.includes("workshop")
-  ) || hasForeignLangCert;
+    if (!hasSportsActivity && (
+      text.includes("hội thao") ||
+      text.includes("giải bóng") ||
+      text.includes("chạy bộ") ||
+      text.includes("marathon") ||
+      text.includes("cầu lông") ||
+      text.includes("thể dục") ||
+      text.includes("thanh niên khỏe")
+    )) {
+      hasSportsActivity = true;
+    }
+
+    if (!hasIntegrationActivity && (
+      text.includes("tiếng anh") ||
+      text.includes("toeic") ||
+      text.includes("ielts") ||
+      text.includes("kỹ năng") ||
+      text.includes("hội nhập") ||
+      text.includes("giao lưu quốc tế") ||
+      text.includes("workshop")
+    )) {
+      hasIntegrationActivity = true;
+    }
+  }
 
   // 1. ĐẠO ĐỨC TỐT
   const daoDucItems: Sv5tCriterionItem[] = [

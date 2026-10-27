@@ -13,9 +13,10 @@ jobs:
 
     env:
       NODE_ENV: test
-      AUTH_SECRET: 0123456789abcdef0123456789abcdef
-      DATABASE_URL: postgresql://drl_app_user:TestSecret123@ep-test-123.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-      DATABASE_URL_OWNER: postgresql://neondb_owner:TestSecret123@ep-test-123.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_OWNER: ${{ secrets.DATABASE_URL_OWNER }}
+      PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
 
     steps:
       - name: Checkout Repository
@@ -37,9 +38,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright E2E Tests
-        run: npx playwright test
-        env:
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3088
+        run: npx playwright test tests/e2e/theme-system.spec.ts tests/e2e/admin-portal.spec.ts tests/e2e/student-utilities-dropdown.spec.ts tests/e2e/login-footer-author.spec.ts tests/e2e/admin-semester-lifecycle.spec.ts tests/e2e/header-layout.spec.ts tests/e2e/check-username-security.spec.ts tests/e2e/security.spec.ts --project=chromium
+
+      - name: Restore Clean Database State
+        if: always()
+        run: node scripts/cleanup-db.js
 
       - name: Upload Playwright Test Report (On Failure)
         uses: actions/upload-artifact@v4

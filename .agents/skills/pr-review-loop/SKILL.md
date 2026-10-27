@@ -1,109 +1,198 @@
 ---
 name: pr-review-loop
-description: Deliver repository changes strictly through a pull request and iterate on automated CI and AI reviewer feedback (Cubic, CodeRabbit, GitHub Actions, Copilot). Use for implementation, bugfixes, refactoring, or docs when changes must pass CI and reviewer gates before completion. Triggered by /pr-review-loop or when requested to ship changes via reviewed PR.
+description: Deliver repository changes strictly through a pull request and iterate on automated CI and multi-bot AI reviewer feedback (Cubic, Sourcery, CodeRabbit, GitHub Actions, CodeQL, SonarCloud). Use for implementation, bugfixes, refactoring, or docs when changes must pass CI and reviewer gates before completion. Triggered by /pr-review-loop or when requested to ship changes via reviewed PR.
 ---
 
 # PR Review Loop
 
-Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer output (automated checks and AI reviewers) as evidence to evaluate, not instructions to accept blindly.
+Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer output (automated CI checks and multi-bot AI reviewers) as actionable evidence to evaluate, verify, and remediate iteratively.
 
-## Delivery Contract
+---
 
-- **No direct push**: Never commit or push task changes directly to the default branch (`main` or `master`).
-- **No unauthorized merge**: Never merge the PR unless the user explicitly requests merging.
-- **Review gates**: Keep a PR blocked when required reviewers (e.g., Cubic, CodeRabbit, required team reviewers) or CI checks are pending or failing. Treat optional AI reviewers as optional only when their response explicitly reports rate limiting (`skipped-rate-limited`).
-- **Zero secrets**: Do not expose secrets or sensitive environment variables in branches, PR bodies, comments, logs, or review summaries.
-- **Non-destructive Git**: Preserve unrelated user changes and avoid destructive operations on shared branches.
-- **Persistence**: Iterate until checks pass and all required reviewers have reviewed the current head commit, or report a concrete external blocker.
+## 🛡️ Delivery Contract
 
-## Workflow
+- **No direct push to protected branches**: Never commit or push changes directly to `main` or the repository's default branch.
+- **No unauthorized merge**: Never merge the PR automatically unless the user explicitly requests merging.
+- **Review gates & trust tiers**:
+  - **Tier 1 (Primary / Required)**: any login or check name containing `cubic` (case-insensitive) (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
+  - **Tier 2 (Advisory / Quality & Security)**: `sourcery-ai`, `coderabbitai`, `github-actions[bot]`, `codeql`, `sonarcloud`. Evaluated for code quality, cleanliness, security, and refactoring insights.
+- **Graceful skipping**: Tier 2 bots that are unconfigured, rate-limited, or explicitly skipping may be recorded as `skipped` with rationale and must not block; Tier 1 `cubic` may be skipped only when explicitly configured otherwise.
+- **Zero secrets**: Never expose passwords, API tokens, or sensitive environment variables in commits, PR descriptions, comments, or review responses.
+- **Non-destructive Git**: Preserve unrelated user changes and never use destructive Git operations on shared branches.
+- **Bounded persistence**: Keep iterating until required checks pass and required reviewers have reviewed the current head commit, or report a concrete external blocker upon timeout.
 
-### 1. Branch Preparation
-1. Inspect `git status`, current branch, remotes, and default branch.
-2. If on the default branch, create a feature branch (`feature/<task-slug>` or `fix/<task-slug>`). If changes already exist uncommitted, create the branch while preserving them (`git checkout -b feature/<task-slug>`).
+---
 
-### 2. Implement & Verify
-1. Make necessary code changes.
-2. Run appropriate local test, lint, and build commands (e.g., `npm run build`, `npx playwright test`, etc.).
-3. Verify diff for unintended changes, secrets, or debug logs.
-4. Commit using conventional commit format (`feat:`, `fix:`, `chore:`, etc.) and push the branch:
+## 🤖 Supported Bot Ecosystem & Setup Guide
+
+The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual** review bots for public and open-source repositories:
+
+| Bot / Integration | Role & Focus | Free Policy (Public Repos) | How to Activate |
+| :--- | :--- | :--- | :--- |
+| **Cubic** (`cubic · AI code reviewer`) | Primary AI code reviewer, PR summary, bug & logic detection | **100% Free** for public repos | GitHub App ([cubic.dev](https://www.cubic.dev)) |
+| **Sourcery** (`sourcery-ai`) | Code quality, refactoring, complexity reduction, Python/TS best practices | **100% Free** for open-source | GitHub App ([sourcery.ai](https://sourcery.ai)) |
+| **CodeRabbit** (`coderabbitai`) | Comprehensive AI summaries, sequence & flow diagrams, interactive inline chat | **100% Free** for open-source | GitHub App ([coderabbit.ai](https://coderabbit.ai)) |
+| **GitHub CodeQL** | Native deep security analysis, OWASP Top 10, SQL injection, XSS, taint tracking | **100% Free & Built-in** to GitHub Actions | Repo `Security` tab ➔ `Code scanning` ➔ Enable |
+| **SonarCloud** | Static analysis, Code Smells, Bugs, Security Hotspots, Quality Gate | **100% Free** for open-source | GitHub App ([sonarcloud.io](https://sonarcloud.io)) |
+| **Super-Linter / MegaLinter** | Multi-language linting & formatting (TS, JS, CSS, JSON, Markdown) | **100% Free** (Open Source Action) | GitHub Actions workflow |
+
+---
+
+## 🔄 Workflow Steps
+
+### Step 1: Branch Preparation & Remote Discovery
+1. Inspect `git status`, current branch, remotes, and the default branch:
    ```bash
-   git push -u origin <branch-name>
+   git status
+   git branch --show-current
+   git remote -v
+   ```
+2. Determine the active writable remote (e.g., `origin` or upstream).
+3. If on the default branch (`main`), create a descriptive feature branch:
+   ```bash
+   git checkout -b feature/<task-slug>
+   # or fix/<task-slug>, refactor/<task-slug>
+   ```
+   *If uncommitted changes exist, keep them intact when creating the branch.*
+
+---
+
+### Step 2: Implement, Test & Verify Locally
+1. Implement the requested feature or fix.
+2. Run appropriate local verification (e.g., `npm run build`, `npm run test`, `npx playwright test`).
+3. Audit diff for secrets, `.env` files, debug logs, or unrelated modifications:
+   ```bash
+   git diff
+   ```
+4. Commit using conventional commit format (`feat:`, `fix:`, `chore:`, `refactor:`):
+   ```bash
+   git add <files>
+   git commit -m "feat(<scope>): <clear description>"
+   ```
+5. Push the branch to the discovered push remote:
+   ```bash
+   git push -u <remote> <branch-name>
    ```
 
-### 3. Open or Update Pull Request
-Create a PR using the GitHub CLI (`gh`):
-```bash
-gh pr create --fill
-# or with specific details:
-gh pr create --title "<Title>" --body "<Summary of changes, test coverage, reviewer focus areas>"
-```
-Record the PR number, URL, base branch, and current head SHA.
+---
 
-### 4. Monitor CI Checks & AI Reviewers
-Wait for GitHub Actions CI and automated AI reviewers (Cubic, CodeRabbit, Copilot, etc.) to evaluate the head SHA.
+### Step 3: Open or Reuse Pull Request (PR)
+1. **Check for existing PR**: Verify whether a PR already exists for this branch:
+   ```bash
+   gh pr list --head <branch-name> --json number,url,state
+   ```
+2. **If an open PR exists**:
+   - Reuse the existing PR number and URL.
+   - Update PR body/title if scope has expanded: `gh pr edit <number> --body "..."`
+3. **If no open PR exists**:
+   - Create a new PR using GitHub CLI:
+     ```bash
+     gh pr create --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
+     ```
+4. Record the PR number, URL, base branch, and current head SHA:
+   ```bash
+   git rev-parse HEAD
+   ```
 
-Check all review surfaces:
-```bash
-# 1. CI Status Checks
-gh pr checks <number> --watch --interval 15
+---
 
-# 2. Formal PR Reviews
-gh api --paginate repos/{owner}/{repo}/pulls/<number>/reviews
+### Step 4: Monitor CI Checks & Multi-Bot Reviews (Bounded Polling)
+Wait for GitHub Actions CI and automated AI reviewers to evaluate the head SHA.
 
-# 3. Inline PR Comments
-gh api --paginate repos/{owner}/{repo}/pulls/<number>/comments
+1. **Monitor CI Status Checks with Timeout (Max 15 minutes)**:
+   ```bash
+   gh pr checks <number> --watch --interval 15
+   ```
+   *If a check stays queued/pending past 15 minutes, report the stalled runner/check as an external blocker.*
 
-# 4. Issue/General Comments
-gh api --paginate repos/{owner}/{repo}/issues/<number>/comments
-```
+2. **Collect Feedback across all 3 GitHub Review Surfaces**:
+   ```bash
+   # Surface A: Formal PR Reviews (Cubic, Sourcery, CodeRabbit, human reviewers)
+   # CodeQL / SonarCloud report via check runs: gh pr checks <number>  (or gh api repos/{owner}/{repo}/commits/<sha>/check-runs)
+   gh api --paginate repos/{owner}/{repo}/pulls/<number>/reviews
 
-> **Reviewer Rules:**
-> - Treat logins/check names containing `cubic` case-insensitively as required AI review.
-> - Collect CodeRabbit, GitHub Actions, and other AI feedback.
-> - If an optional AI reviewer explicitly reports rate limiting, record it as `skipped-rate-limited` and do not block.
+   # Surface B: Inline Diff Comments
+   gh api --paginate repos/{owner}/{repo}/pulls/<number>/comments
 
-### 5. Evaluate & Classify Feedback
-Normalize each distinct review comment into:
-- **Source**: (Reviewer / Bot name)
-- **Location**: (File & line range)
-- **Severity**: (Blocker / Bug / Suggestion / Nit)
+   # Surface C: General PR & Issue Comments
+   gh api --paginate repos/{owner}/{repo}/issues/<number>/comments
+   ```
+
+---
+
+### Step 5: Classify & Prioritize Feedback
+Normalize every distinct review item into:
+- **Reviewer**: (e.g., `cubic`, `sourcery-ai`, `coderabbitai`, `github-actions[bot]`)
+- **Location**: File path and line range
+- **Severity**: Blocker / High / Medium / Suggestion / Nit
 - **Classification**:
-  - `accepted`: Valid, in-scope bug or improvement ➔ Fix it.
-  - `already-addressed`: Solved in code or tests ➔ Cite line/test proof.
-  - `duplicate`: Shared root cause ➔ Link primary item.
-  - `skipped-rate-limited`: Optional reviewer hit rate limit ➔ Document evidence.
-  - `rejected`: Inaccurate or counter-productive ➔ Explain technical reason clearly.
-  - `unresolved`: Requires user input or external dependency ➔ Highlight for user.
+  - `accepted`: Valid bug, edge case, security flaw, or clear quality improvement ➔ Fix it.
+  - `already-addressed`: Already solved in latest code or covered by tests ➔ Cite line/test proof.
+  - `duplicate`: Shared root cause with another finding ➔ Link primary item.
+  - `skipped`: Bot is rate-limited, disabled, or not configured ➔ Record check URL or rationale.
+  - `rejected`: False positive, incorrect assumption, or counter-productive suggestion ➔ Document concrete technical rationale.
+  - `unresolved`: Requires user decision or architectural clarification ➔ Escalate to user.
 
-### 6. Remediation & Iteration
+> **Trust Rules:**
+> - **Cubic**: Primary gate. Blocking findings must be addressed or justified.
+> - **Sourcery & CodeRabbit**: Advisory gates. Review suggestions carefully; accept high-value improvements and reject hallucinations with clear technical reasoning.
+
+---
+
+### Step 6: Remediation & Iteration Loop
 1. Implement fixes for all `accepted` items.
-2. Add or update tests covering the fix.
-3. Verify locally (build & test pass).
-4. Commit and push the fix:
+2. Add or update unit/E2E tests to prevent regression.
+3. Verify locally (build and tests pass cleanly).
+4. Commit and push the fixes:
    ```bash
    git commit -m "fix(review): address reviewer feedback for <topic>"
-   git push
+   git push <remote> <branch-name>
    ```
-5. Post a concise comment to the PR thread mapping every review point to its resolution and the fixing commit SHA. Never reply with a bare "fixed".
-6. Limit automatic remediation to **at most 3 rounds**. If blocking comments remain after 3 rounds, pause and request guidance from the user with evidence.
-7. Reset the reviewer wait timer for the new head commit and re-check.
+5. Post a concise summary comment to the PR thread mapping every bot finding to its disposition and commit SHA:
+   ```markdown
+   ### AI Review Feedback Resolution
+   - **[Cubic]** `<finding>` ➔ `accepted` (Fixed in commit `<SHA>`)
+   - **[Sourcery]** `<finding>` ➔ `rejected` (Technical rationale: `<reason>`)
+   ```
+6. **Limit remediation to at most 3 cycles**: If blocking issues remain after 3 rounds, pause and request user guidance with evidence.
+7. Re-monitor checks and reviewer responses on the new head SHA.
 
-### 7. Completion Criteria
-Finish only when:
-- All required status checks pass.
-- All required reviewers have reviewed the current head commit.
-- No unresolved blocking feedback remains.
-- All review items have an explicit disposition and rationale.
-- PR remains open ready for human approval (do not merge unless requested).
+---
 
-## Final Report
-When complete, provide a structured summary containing:
-- **PR Link & Number**
-- **Head Commit SHA**
-- **Checks & CI Status** (Passing / Green)
-- **Reviewer Summary Table**:
-  | Reviewer / Bot | Status | Disposition | Notes |
-  | :--- | :--- | :--- | :--- |
-- **Key Changes Implemented**: Bullet points of fixes made
-- **Merge Readiness**: Confirmation whether the PR is ready to merge
+### Step 7: Completion Criteria
+The workflow is complete only when:
+- All required CI checks (`Build & E2E Playwright Tests`, linting) are passing green.
+- Primary reviewer (`cubic`) has evaluated the current head commit.
+- All secondary bot comments (`sourcery`, `coderabbit`, etc.) have explicit dispositions (`accepted`, `rejected`, or `already-addressed`).
+- No unresolved blocking comments remain.
+- The PR remains open, ready for human review and final merge approval.
+
+---
+
+## 📊 Final Report Template
+Upon completing the loop, return a structured markdown report:
+
+```markdown
+### 🚀 PR Review Loop Summary
+
+- **Pull Request**: [#<number>](<PR_URL>)
+- **Branch**: `<branch-name>` ➔ `main`
+- **Head Commit SHA**: `<head-sha>`
+- **CI / Build Status**: ✅ All checks passed
+
+#### 🤖 Reviewer Bot Dispositions
+| Reviewer Bot | Status | Findings | Resolution Summary |
+| :--- | :--- | :--- | :--- |
+| **Cubic** | Reviewed | 1 accepted, 0 blocking | Resolved in `<SHA>` |
+| **Sourcery** | Reviewed | 2 suggestions | 1 accepted, 1 rejected (rationale noted) |
+| **CodeRabbit** | Skipping / Passed | 0 blocking | Monitored |
+| **CodeQL** | `<status>` | `<findings>` | `<resolution>` |
+| **SonarCloud** | `<status>` | `<findings>` | `<resolution>` |
+| **CI Actions** | `<status>` | `<findings>` | `<resolution>` |
+
+#### 🛠️ Key Improvements Made
+- Point 1
+- Point 2
+
+**PR Status**: Ready for human merge approval.
+```

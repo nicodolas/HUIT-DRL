@@ -9,7 +9,7 @@
     "test:e2e": "playwright test",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
-    "db:seed": "node -r ts-node/register src/lib/db/seed.ts",
+    "db:seed": "node scripts/seed.js",
     "cap:sync": "cap sync",
     "cap:open:android": "cap open android"
   },

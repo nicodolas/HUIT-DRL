@@ -1,9 +1,17 @@
+import os
 import psycopg2
 
-OWNER_CONN_STR = "postgresql://neondb_owner:[REDACTED_PASSWORD]@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-with open(".env.local") as f:
-    lines = dict(l.strip().split("=", 1) for l in f if "=" in l and not l.startswith("#"))
-APP_CONN_STR = lines["DATABASE_URL"].strip('"')
+lines = {}
+if os.path.exists(".env.local"):
+    with open(".env.local", encoding="utf-8") as f:
+        lines = dict(l.strip().split("=", 1) for l in f if "=" in l and not l.startswith("#"))
+
+OWNER_CONN_STR = lines.get("DATABASE_URL_OWNER", os.getenv("DATABASE_URL_OWNER", "")).strip('"').strip("'")
+APP_CONN_STR = lines.get("DATABASE_URL", os.getenv("DATABASE_URL", "")).strip('"').strip("'")
+
+if not OWNER_CONN_STR or not APP_CONN_STR:
+    print("Vui lòng cấu hình DATABASE_URL_OWNER và DATABASE_URL trong .env.local")
+    exit(1)
 
 # 1. Owner creates a test table
 conn_o = psycopg2.connect(OWNER_CONN_STR)

@@ -3,9 +3,22 @@ import secrets
 import string
 import psycopg2
 from psycopg2 import sql
+from urllib.parse import urlparse
 
-OWNER_CONN_STR = "postgresql://neondb_owner:[REDACTED_PASSWORD]@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-HOST = "ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech"
+# Read from environment variable or .env.local
+OWNER_CONN_STR = os.getenv("DATABASE_URL_OWNER")
+if not OWNER_CONN_STR and os.path.exists(".env.local"):
+    with open(".env.local", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("DATABASE_URL_OWNER="):
+                OWNER_CONN_STR = line.split("=", 1)[1].strip().strip('"').strip("'")
+                break
+
+if not OWNER_CONN_STR:
+    OWNER_CONN_STR = input("Nhập chuỗi kết nối DATABASE_URL_OWNER của Neon: ").strip()
+
+parsed = urlparse(OWNER_CONN_STR)
+HOST = parsed.hostname
 
 def generate_secure_password(length=24):
     alphabet = string.ascii_letters + string.digits
@@ -75,8 +88,8 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
     # Write .env.example
     example_content = """# Neon Database Connection Strings
-DATABASE_URL_OWNER="postgresql://neondb_owner:***@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-DATABASE_URL="postgresql://drl_app_user:***@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL_OWNER="postgresql://neondb_owner:YOUR_OWNER_PASSWORD@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://drl_app_user:YOUR_APP_PASSWORD@ep-sample-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 
 AUTH_SECRET="your-32-byte-hex-secret"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

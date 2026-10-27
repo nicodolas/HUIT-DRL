@@ -157,8 +157,8 @@ test.describe("Many Semesters UI Overflow & Responsiveness Suite", () => {
     const header = page.locator("header");
     await expect(header).toBeVisible();
 
-    // 7. Click on Tab 3: Mục tiêu & Radar to observe CumulativeStatsCard
-    const radarTab = page.locator("button:has-text('Mục tiêu & Radar')");
+    // 7. Click on Tab 3: Mục tiêu to observe CumulativeStatsCard
+    const radarTab = page.locator("button:has-text('Mục tiêu')");
     await radarTab.click();
     await page.waitForTimeout(500);
     await page.screenshot({ path: "test-results/many-semesters-cumulative-stats.png", fullPage: false });

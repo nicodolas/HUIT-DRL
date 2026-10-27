@@ -128,7 +128,7 @@ Normalize every distinct review item into:
   - `accepted`: Valid bug, edge case, security flaw, or clear quality improvement ➔ Fix it.
   - `already-addressed`: Already solved in latest code or covered by tests ➔ Cite line/test proof.
   - `duplicate`: Shared root cause with another finding ➔ Link primary item.
-  - `skipped-rate-limited`: Bot reached rate limit or is disabled ➔ Record check URL.
+  - `skipped`: Bot is rate-limited, disabled, or not configured ➔ Record check URL or rationale.
   - `rejected`: False positive, incorrect assumption, or counter-productive suggestion ➔ Document concrete technical rationale.
   - `unresolved`: Requires user decision or architectural clarification ➔ Escalate to user.
 

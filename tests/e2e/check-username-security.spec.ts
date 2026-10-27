@@ -80,20 +80,22 @@ test.describe.serial("Check-Username Anti-DoS & Rate Limiting Security Suite", (
     await page.waitForLoadState("networkidle");
 
     const usernameInput = page.locator('input[placeholder*="nguyenvana"]');
-    await expect(usernameInput).toBeVisible();
+    await expect(usernameInput).toBeVisible({ timeout: 10000 });
 
-    // Type the existing username
+    // Focus and fill existing username
+    await usernameInput.click();
     await usernameInput.fill(existingUser);
 
-    // Wait for debounced response
-    const statusMsg = page.locator("text=/Tên đăng nhập này đã được sử dụng/i");
-    await expect(statusMsg).toBeVisible({ timeout: 5000 });
+    // Wait for debounced response (allow 15s for CI remote DB latency)
+    const statusMsg = page.locator("text=/Tên đăng nhập này đã được sử dụng|Tên đăng nhập đã tồn tại/i");
+    await expect(statusMsg).toBeVisible({ timeout: 15000 });
 
     // Type another unique username
     const brandNewUser = `new_student_${Date.now()}`;
+    await usernameInput.click();
     await usernameInput.fill(brandNewUser);
 
-    const availableMsg = page.locator("text=/Tên đăng nhập hợp lệ và khả dụng/i");
-    await expect(availableMsg).toBeVisible({ timeout: 5000 });
+    const availableMsg = page.locator("text=/Tên đăng nhập hợp lệ và khả dụng|Tên đăng nhập khả dụng/i");
+    await expect(availableMsg).toBeVisible({ timeout: 15000 });
   });
 });

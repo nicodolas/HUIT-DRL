@@ -1,0 +1,157 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
+const { neon } = require('@neondatabase/serverless');
+const bcrypt = require('bcryptjs');
+const { randomUUID } = require('crypto');
+
+const dbUrl = process.env.DATABASE_URL_OWNER || process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  console.error('Lỗi: Chưa tìm thấy DATABASE_URL hoặc DATABASE_URL_OWNER trong .env.local');
+  process.exit(1);
+}
+
+const sql = neon(dbUrl);
+
+const PRESETS = [
+  // Tiêu chí 1: Tối đa 25 điểm
+  { id: "TC1_DEFAULT", category: 1, code: "TC1_DEFAULT", title: "Điểm mặc định Tiêu chí 1 (Ý thức chấp hành nội quy, quy chế)", type: "default", points: 25, maxPoints: 25, unit: "điểm", description: "Mặc định cho mỗi sinh viên khi bắt đầu kỳ" },
+  { id: "TC1_SHCD", category: 1, code: "TC1_SHCD", title: "Không tham gia Tuần sinh hoạt công dân sinh viên (SHCD)", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm/lần vi phạm" },
+  { id: "TC1_BHYT", category: 1, code: "TC1_BHYT", title: "Không tham gia Bảo hiểm Y tế (BHYT)", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_KHAM_SK", category: 1, code: "TC1_KHAM_SK", title: "Không tham gia khám sức khỏe theo thông báo của Trường", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_HO_SO_SV", category: 1, code: "TC1_HO_SO_SV", title: "Không hoàn thiện hồ sơ sinh viên theo quy định", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_TAI_CHINH", category: 1, code: "TC1_TAI_CHINH", title: "Không hoàn thành nghĩa vụ tài chính (học phí, lệ phí đúng hạn)", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_VE_SINH", category: 1, code: "TC1_VE_SINH", title: "Không giữ vệ sinh trường, lớp học", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_DONG_PHUC", category: 1, code: "TC1_DONG_PHUC", title: "Không đeo thẻ SV hoặc không mặc đồng phục khi đến trường", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_HUT_THUOC", category: 1, code: "TC1_HUT_THUOC", title: "Hút thuốc không đúng nơi quy định", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_NGOAI_TRU", category: 1, code: "TC1_NGOAI_TRU", title: "Không cập nhật thông tin sinh viên / thông tin ngoại trú", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_KHAO_SAT", category: 1, code: "TC1_KHAO_SAT", title: "Không tham gia các khảo sát của Khoa / Trường", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_MAT_TRAT_TU", category: 1, code: "TC1_MAT_TRAT_TU", title: "Gây ồn ào, mất trật tự làm ảnh hưởng đến giờ học", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_DE_XE", category: 1, code: "TC1_DE_XE", title: "Vi phạm để xe không đúng nơi quy định", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_DI_CHUYEN_TS", category: 1, code: "TC1_DI_CHUYEN_TS", title: "Tự ý di chuyển trang thiết bị, tài sản ra khỏi vị trí lắp đặt", type: "deduct", points: -5, maxPoints: 25, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC1_NOI_QUY_KHAC", category: 1, code: "TC1_NOI_QUY_KHAC", title: "Vi phạm nội quy, quy chế khác tại Trường", type: "deduct", points: -10, maxPoints: 25, unit: "lần", description: "Trừ 10 điểm" },
+  { id: "TC1_SAI_QUY_DINH", category: 1, code: "TC1_SAI_QUY_DINH", title: "Không thực hiện đúng quy định của nhà trường", type: "deduct", points: -20, maxPoints: 25, unit: "lần", description: "Trừ 20 điểm" },
+  { id: "TC1_KHIEN_TRACH", category: 1, code: "TC1_KHIEN_TRACH", title: "Vi phạm kỷ luật ở mức khiển trách", type: "deduct", points: -25, maxPoints: 25, unit: "lần", description: "Trừ 25 điểm" },
+
+  // Tiêu chí 2: Tối đa 20 điểm
+  { id: "TC2_DEFAULT", category: 2, code: "TC2_DEFAULT", title: "Điểm mặc định Tiêu chí 2 (Ý thức và thái độ học tập)", type: "default", points: 20, maxPoints: 20, unit: "điểm", description: "Mặc định cho mỗi sinh viên khi bắt đầu kỳ" },
+  { id: "TC2_ROT_1_MON", category: 2, code: "TC2_ROT_1_MON", title: "Thi rớt 1 môn học trong học kỳ", type: "deduct", points: -2, maxPoints: 20, unit: "môn", description: "Trừ 2 điểm" },
+  { id: "TC2_ROT_2_5_MON", category: 2, code: "TC2_ROT_2_5_MON", title: "Thi rớt từ 2 đến 5 môn học trong học kỳ", type: "deduct", points: -5, maxPoints: 20, unit: "lần", description: "Trừ 5 điểm" },
+  { id: "TC2_ROT_TREN_5_MON", category: 2, code: "TC2_ROT_TREN_5_MON", title: "Thi rớt trên 5 môn học trong học kỳ", type: "deduct", points: -20, maxPoints: 20, unit: "lần", description: "Trừ 20 điểm" },
+  { id: "TC2_HV_KHIEN_TRACH", category: 2, code: "TC2_HV_KHIEN_TRACH", title: "Vi phạm quy chế học vụ (Quyết định khiển trách)", type: "deduct", points: -15, maxPoints: 20, unit: "lần", description: "Trừ 15 điểm/lần" },
+  { id: "TC2_HV_CANH_BAO", category: 2, code: "TC2_HV_CANH_BAO", title: "Vi phạm quy chế học vụ (Quyết định cảnh báo học vụ)", type: "deduct", points: -20, maxPoints: 20, unit: "lần", description: "Trừ 20 điểm/lần" },
+
+  // Tiêu chí 3: Tối đa 20 điểm
+  { id: "TC3_TUYEN_TRUYEN", category: 3, code: "TC3_TUYEN_TRUYEN", title: "Tham dự hoạt động tuyên truyền, GD chính trị tư tưởng, phổ biến pháp luật", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_QUANG_BA", category: 3, code: "TC3_QUANG_BA", title: "Tham dự hoạt động, hội thi quảng bá hình ảnh thương hiệu HUIT", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_SU_KIEN_CTXH", category: 3, code: "TC3_SU_KIEN_CTXH", title: "Tham gia sự kiện chính trị - xã hội (hội nghị, đại hội, kỷ niệm...)", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_GIUP_NGUOI", category: 3, code: "TC3_GIUP_NGUOI", title: "Tham gia hoạt động giúp người, cứu người được cơ quan ghi nhận", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_PHONG_CHONG_TP", category: 3, code: "TC3_PHONG_CHONG_TP", title: "Hoạt động phòng chống tội phạm, tệ nạn xã hội do Trường điều động", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_CUOC_THI_TRUONG", category: 3, code: "TC3_CUOC_THI_TRUONG", title: "Tham gia cuộc thi, hoạt động VHVN - TDTT cấp Trường", type: "add", points: 6, maxPoints: 20, unit: "HĐ", description: "+6 điểm/hoạt động" },
+  { id: "TC3_CUOC_THI_KHOA", category: 3, code: "TC3_CUOC_THI_KHOA", title: "Tham gia cuộc thi, hoạt động VHVN - TDTT cấp Khoa", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_CO_VU", category: 3, code: "TC3_CO_VU", title: "Cổ vũ hoạt động cấp Trường / cấp Khoa", type: "add", points: 2, maxPoints: 20, unit: "HĐ", description: "+2 điểm/hoạt động" },
+  { id: "TC3_DAT_GIAI_TRUONG_KHOA", category: 3, code: "TC3_DAT_GIAI_TRUONG_KHOA", title: "Sinh viên tham gia thi và đạt giải (cấp Trường/Khoa)", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_BTC_TRUONG", category: 3, code: "TC3_BTC_TRUONG", title: "Thành viên Ban tổ chức cuộc thi cấp Trường", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_BTC_KHOA", category: 3, code: "TC3_BTC_KHOA", title: "Thành viên Ban tổ chức cuộc thi cấp Khoa", type: "add", points: 3, maxPoints: 20, unit: "HĐ", description: "+3 điểm/hoạt động" },
+  { id: "TC3_DIA_PHUONG", category: 3, code: "TC3_DIA_PHUONG", title: "Tham gia hoạt động tại địa phương có khen thưởng", type: "add", points: 2, maxPoints: 20, unit: "HĐ", description: "+2 điểm/hoạt động" },
+  { id: "TC3_NGOAI_TRUONG_G1", category: 3, code: "TC3_NGOAI_TRUONG_G1", title: "Thi ngoài trường đạt Giải Nhất", type: "add", points: 5, maxPoints: 20, unit: "HĐ", description: "+5 điểm/hoạt động" },
+  { id: "TC3_NGOAI_TRUONG_G2", category: 3, code: "TC3_NGOAI_TRUONG_G2", title: "Thi ngoài trường đạt Giải Nhì", type: "add", points: 4, maxPoints: 20, unit: "HĐ", description: "+4 điểm/hoạt động" },
+  { id: "TC3_NGOAI_TRUONG_G3", category: 3, code: "TC3_NGOAI_TRUONG_G3", title: "Thi ngoài trường đạt Giải Ba", type: "add", points: 3, maxPoints: 20, unit: "HĐ", description: "+3 điểm/hoạt động" },
+  { id: "TC3_VANG_MAT", category: 3, code: "TC3_VANG_MAT", title: "Đăng ký tham gia hoạt động/cuộc thi nhưng không đi", type: "deduct", points: -5, maxPoints: 20, unit: "lần", description: "Trừ 5 điểm/lần" },
+
+  // Tiêu chí 4: Tối đa 15 điểm
+  { id: "TC4_DEFAULT", category: 4, code: "TC4_DEFAULT", title: "Điểm mặc định Tiêu chí 4 (Trách nhiệm công dân trong quan hệ cộng đồng)", type: "default", points: 15, maxPoints: 15, unit: "điểm", description: "Mặc định cho mỗi sinh viên khi bắt đầu kỳ" },
+  { id: "TC4_PHAT_NGON_MXH", category: 4, code: "TC4_PHAT_NGON_MXH", title: "Phát ngôn không chuẩn mực trên mạng xã hội bị xử lý", type: "deduct", points: -15, maxPoints: 15, unit: "lần", description: "Trừ 15 điểm" },
+  { id: "TC4_AN_NINH_TT", category: 4, code: "TC4_AN_NINH_TT", title: "Gây rối mất an ninh trật tự, vi phạm ATGT... có biên bản xử phạt", type: "deduct", points: -15, maxPoints: 15, unit: "lần", description: "Trừ 15 điểm" },
+
+  // Tiêu chí 5: Tối đa 20 điểm
+  { id: "TC5_DOAN_HOI_TRUONG_XS", category: 5, code: "TC5_DOAN_HOI_TRUONG_XS", title: "BCH Đoàn - Hội cấp Trường, Chi ủy chi bộ SV (Hoàn thành xuất sắc)", type: "add", points: 10, maxPoints: 20, unit: "HK", description: "+10 điểm/học kỳ" },
+  { id: "TC5_DOAN_HOI_TRUONG_TOT", category: 5, code: "TC5_DOAN_HOI_TRUONG_TOT", title: "BCH Đoàn - Hội cấp Trường, Chi ủy chi bộ SV (Hoàn thành tốt)", type: "add", points: 7, maxPoints: 20, unit: "HK", description: "+7 điểm/học kỳ" },
+  { id: "TC5_DOAN_HOI_TRUONG_HT", category: 5, code: "TC5_DOAN_HOI_TRUONG_HT", title: "BCH Đoàn - Hội cấp Trường, Chi ủy chi bộ SV (Hoàn thành)", type: "add", points: 5, maxPoints: 20, unit: "HK", description: "+5 điểm/học kỳ" },
+  { id: "TC5_DOAN_HOI_KHOA_LT_XS", category: 5, code: "TC5_DOAN_HOI_KHOA_LT_XS", title: "BCH Đoàn - Hội cấp Khoa, Lớp trưởng (Hoàn thành xuất sắc)", type: "add", points: 8, maxPoints: 20, unit: "HK", description: "+8 điểm/học kỳ" },
+  { id: "TC5_DOAN_HOI_KHOA_LT_TOT", category: 5, code: "TC5_DOAN_HOI_KHOA_LT_TOT", title: "BCH Đoàn - Hội cấp Khoa, Lớp trưởng (Hoàn thành tốt)", type: "add", points: 5, maxPoints: 20, unit: "HK", description: "+5 điểm/học kỳ" },
+  { id: "TC5_DOAN_HOI_KHOA_LT_HT", category: 5, code: "TC5_DOAN_HOI_KHOA_LT_HT", title: "BCH Đoàn - Hội cấp Khoa, Lớp trưởng (Hoàn thành)", type: "add", points: 3, maxPoints: 20, unit: "HK", description: "+3 điểm/học kỳ" },
+  { id: "TC5_CLB_LP_BT_XS", category: 5, code: "TC5_CLB_LP_BT_XS", title: "Chủ nhiệm CLB cấp Trường, Lớp phó kiêm Bí thư (Hoàn thành xuất sắc)", type: "add", points: 7, maxPoints: 20, unit: "HK", description: "+7 điểm/học kỳ" },
+  { id: "TC5_CLB_LP_BT_TOT", category: 5, code: "TC5_CLB_LP_BT_TOT", title: "Chủ nhiệm CLB cấp Trường, Lớp phó kiêm Bí thư (Hoàn thành tốt)", type: "add", points: 4, maxPoints: 20, unit: "HK", description: "+4 điểm/học kỳ" },
+  { id: "TC5_CLB_LP_BT_HT", category: 5, code: "TC5_CLB_LP_BT_HT", title: "Chủ nhiệm CLB cấp Trường, Lớp phó kiêm Bí thư (Hoàn thành)", type: "add", points: 3, maxPoints: 20, unit: "HK", description: "+3 điểm/học kỳ" },
+  { id: "TC5_THANH_VIEN_CLB", category: 5, code: "TC5_THANH_VIEN_CLB", title: "Thành viên CLB, đội nhóm trực thuộc Trường quản lý (HĐ thường xuyên)", type: "add", points: 3, maxPoints: 20, unit: "HK", description: "+3 điểm/học kỳ" },
+  { id: "TC5_NCKH_QG", category: 5, code: "TC5_NCKH_QG", title: "Nghiên cứu khoa học (NCKH) đạt giải Cấp Quốc gia", type: "add", points: 20, maxPoints: 20, unit: "giải", description: "+20 điểm" },
+  { id: "TC5_NCKH_TP", category: 5, code: "TC5_NCKH_TP", title: "Nghiên cứu khoa học (NCKH) đạt giải Cấp Thành phố", type: "add", points: 15, maxPoints: 20, unit: "giải", description: "+15 điểm" },
+  { id: "TC5_NCKH_TRUONG", category: 5, code: "TC5_NCKH_TRUONG", title: "Nghiên cứu khoa học (NCKH) đạt giải Cấp Trường", type: "add", points: 10, maxPoints: 20, unit: "giải", description: "+10 điểm" },
+  { id: "TC5_NCKH_KHOA", category: 5, code: "TC5_NCKH_KHOA", title: "Nghiên cứu khoa học (NCKH) đạt giải Cấp Khoa", type: "add", points: 5, maxPoints: 20, unit: "giải", description: "+5 điểm" },
+  { id: "TC5_NCKH_NGOAI_TRUONG", category: 5, code: "TC5_NCKH_NGOAI_TRUONG", title: "NCKH đạt giải đơn vị ngoài trường", type: "add", points: 4, maxPoints: 20, unit: "giải", description: "+4 điểm" },
+  { id: "TC5_HOI_THAO_TRUONG", category: 5, code: "TC5_HOI_THAO_TRUONG", title: "Tham gia Hội thảo, chuyên đề NCKH cấp Trường", type: "add", points: 5, maxPoints: 20, unit: "CĐ", description: "+5 điểm/chuyên đề" },
+  { id: "TC5_HOI_THAO_KHOA", category: 5, code: "TC5_HOI_THAO_KHOA", title: "Tham gia Hội thảo, chuyên đề NCKH cấp Khoa", type: "add", points: 3, maxPoints: 20, unit: "CĐ", description: "+3 điểm/chuyên đề" },
+  { id: "TC5_HOI_THAO_VANG", category: 5, code: "TC5_HOI_THAO_VANG", title: "Đăng ký Hội thảo NCKH nhưng không tham gia", type: "deduct", points: -5, maxPoints: 20, unit: "lần", description: "Trừ 5 điểm/lần" },
+  { id: "TC5_BINH_CHON_TRUONG", category: 5, code: "TC5_BINH_CHON_TRUONG", title: "Tham gia bình chọn, like các cuộc thi, HĐ cấp Trường", type: "add", points: 2, maxPoints: 20, unit: "HĐ", description: "+2 điểm/hoạt động" },
+  { id: "TC5_BINH_CHON_KHOA", category: 5, code: "TC5_BINH_CHON_KHOA", title: "Tham gia bình chọn, like các cuộc thi, HĐ cấp Khoa", type: "add", points: 1, maxPoints: 20, unit: "HĐ", description: "+1 điểm/hoạt động" },
+  { id: "TC5_SV5T_TRUONG", category: 5, code: "TC5_SV5T_TRUONG", title: "Đạt danh hiệu Sinh viên 5 tốt, Thanh niên tiên tiến cấp Trường", type: "add", points: 5, maxPoints: 20, unit: "lần", description: "+5 điểm/lần" },
+  { id: "TC5_SV5T_TP_TW", category: 5, code: "TC5_SV5T_TP_TW", title: "Đạt danh hiệu Sinh viên 5 tốt cấp Thành phố hoặc Trung ương", type: "add", points: 10, maxPoints: 20, unit: "lần", description: "+10 điểm/lần" },
+  { id: "TC5_CB_KHONG_HT_NV", category: 5, code: "TC5_CB_KHONG_HT_NV", title: "Cán bộ lớp / Đoàn / Hội / CLB không hoàn thành nhiệm vụ", type: "deduct", points: -10, maxPoints: 20, unit: "HK", description: "Trừ 10 điểm/học kỳ" },
+];
+
+async function seed() {
+  console.log('=== KHỞI TẠO DỮ LIỆU BAN ĐẦU (SEED DATABASE) ===');
+
+  // 1. Seed criteria presets
+  console.log(`Đang nạp ${PRESETS.length} mục quy chế QĐ 3385...`);
+  for (const p of PRESETS) {
+    await sql`
+      INSERT INTO drl_criteria_presets (id, category, code, title, type, points, max_points_category, unit, description)
+      VALUES (${p.id}, ${p.category}, ${p.code}, ${p.title}, ${p.type}, ${p.points}, ${p.maxPoints}, ${p.unit}, ${p.description})
+      ON CONFLICT (id) DO UPDATE SET
+        category = EXCLUDED.category,
+        code = EXCLUDED.code,
+        title = EXCLUDED.title,
+        type = EXCLUDED.type,
+        points = EXCLUDED.points,
+        max_points_category = EXCLUDED.max_points_category,
+        unit = EXCLUDED.unit,
+        description = EXCLUDED.description;
+    `;
+  }
+  const presetCount = (await sql`SELECT count(*)::int as c FROM drl_criteria_presets;`)[0].c;
+  console.log(`✓ Đã nạp thành công ${presetCount} tiêu chuẩn quy chế.`);
+
+  // 2. Ensure default admin exists if no admin present
+  const admins = await sql`SELECT id, username FROM users WHERE role = 'admin' LIMIT 1;`;
+  let adminId;
+  if (admins.length === 0) {
+    adminId = randomUUID();
+    const hash = await bcrypt.hash('AdminHuit2026@', 10);
+    await sql`
+      INSERT INTO users (id, username, password_hash, full_name, faculty, class_name, role)
+      VALUES (${adminId}, 'admin', ${hash}, 'Ban Quản Trị HUIT', 'Phòng Công tác Sinh viên', 'ADMIN-HUIT', 'admin');
+    `;
+    console.log('✓ Đã tạo tài khoản quản trị mặc định: username "admin", password "AdminHuit2026@"');
+  } else {
+    adminId = admins[0].id;
+    console.log(`✓ Đã tìm thấy tài khoản quản trị hiện có: "${admins[0].username}"`);
+  }
+
+  // 3. Ensure official system semesters exist
+  const sysSems = await sql`SELECT id, name FROM semesters WHERE is_system = true;`;
+  if (sysSems.length === 0) {
+    const s1Id = randomUUID();
+    await sql`
+      INSERT INTO semesters (id, user_id, name, is_current, target_score, discipline_level, submission_deadline, status, is_system)
+      VALUES (${s1Id}, ${adminId}, 'Học kỳ 1 (2025 - 2026)', true, 90, 'none', '2025-11-30', 'active', true);
+    `;
+    const s2Id = randomUUID();
+    await sql`
+      INSERT INTO semesters (id, user_id, name, is_current, target_score, discipline_level, submission_deadline, status, is_system)
+      VALUES (${s2Id}, ${adminId}, 'Học kỳ 2 (2025 - 2026)', false, 90, 'none', '2026-05-30', 'active', true);
+    `;
+    console.log('✓ Đã khởi tạo 2 học kỳ chính quy chuẩn hệ thống (Học kỳ 1 & 2 năm 2025 - 2026).');
+  } else {
+    console.log(`✓ Đã có ${sysSems.length} học kỳ hệ thống chính quy.`);
+  }
+
+  console.log('=== HOÀN TẤT KHỞI TẠO CƠ SỞ DỮ LIỆU THÀNH CÔNG ===');
+}
+
+seed().catch(err => {
+  console.error('Lỗi khởi tạo dữ liệu:', err);
+  process.exit(1);
+});
+

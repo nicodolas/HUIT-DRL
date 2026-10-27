@@ -57,7 +57,7 @@ test.describe("Phase 22: 5-Pillar Radar Chart & Training Balance Index Suite", (
     await page.goto("/goals");
     const goalsRadarCard = page.locator('[data-testid="drl-radar-card"]');
     await expect(goalsRadarCard).toBeVisible({ timeout: 10000 });
-    await expect(goalsRadarCard.getByText("Biểu Đồ Radar & Mức Độ Cân Bằng (5 Tiêu Chí)")).toBeVisible();
+    await expect(goalsRadarCard.getByText("Biểu Đồ & Mức Độ Cân Bằng (5 Tiêu Chí)")).toBeVisible();
   });
 });
 

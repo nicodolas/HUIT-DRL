@@ -13,10 +13,11 @@ build/
 
 # Environment variables & secrets (CRITICAL: Do NOT commit secrets)
 .env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+*.env
+*.env.*
+*DEPLOY_ENV*
+*deploy_env*
 *.pem
 *.key
 !/.env.example

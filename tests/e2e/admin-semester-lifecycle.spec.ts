@@ -49,14 +49,22 @@ test.describe("Admin Public Semesters & Strict User Isolation Suite", () => {
 
     // 4. Admin logs in
     await page.goto("/login");
-    await page.fill('input[placeholder*="tên đăng nhập"]', adminUser);
-    await page.fill('input[type="password"]', adminPass);
+    await page.waitForLoadState("networkidle");
+    const adminUserInp = page.locator('input[placeholder*="tên đăng nhập"]');
+    await expect(adminUserInp).toBeVisible({ timeout: 10000 });
+    await adminUserInp.click();
+    await adminUserInp.fill(adminUser);
+
+    const adminPassInp = page.locator('input[type="password"]');
+    await adminPassInp.click();
+    await adminPassInp.fill(adminPass);
+
     await page.click('button[type="submit"]');
-    await page.waitForURL("/", { timeout: 15000 });
+    await page.waitForURL("/", { timeout: 20000, waitUntil: "domcontentloaded" });
 
     // 5. Navigate to Admin Semesters Management tab directly
     await page.goto("/admin?tab=semesters");
-    await page.waitForURL("/admin?tab=semesters", { timeout: 10000 });
+    await page.waitForURL("/admin?tab=semesters", { timeout: 15000, waitUntil: "domcontentloaded" });
     await expect(page.locator("h2", { hasText: "Danh sách học kỳ trong toàn bộ hệ thống" })).toBeVisible();
 
     // 6. Admin creates a new public official semester

@@ -160,11 +160,11 @@ Normalize every distinct review item into:
 
 ### Step 7: Completion Criteria
 The workflow is complete only when:
-- [x] All required CI checks (`Build & E2E Playwright Tests`, linting) are passing green.
-- [x] Primary reviewer (`cubic`) has evaluated the current head commit.
-- [ ] Every review item from all three surfaces, including human and bot feedback, has an explicit disposition and rationale.
-- [x] No unresolved blocking comments remain.
-- [x] The PR remains open, ready for human review and final merge approval.
+- All required CI checks (`Build & E2E Playwright Tests`, linting) are passing green.
+- Primary reviewer (`cubic`) has evaluated the current head commit.
+- All secondary bot comments (`sourcery`, `coderabbit`, etc.) have explicit dispositions (`accepted`, `rejected`, or `already-addressed`).
+- No unresolved blocking comments remain.
+- The PR remains open, ready for human review and final merge approval.
 
 ---
 

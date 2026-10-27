@@ -16,7 +16,7 @@ Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer o
 - **Review gates & trust tiers**:
   - **Tier 1 (Primary / Required)**: `cubic` (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
   - **Tier 2 (Advisory / Quality & Security)**: `sourcery-ai`, `coderabbitai`, `github-actions[bot]`, `codeql`, `sonarcloud`. Evaluated for code quality, cleanliness, security, and refactoring insights.
-- **Graceful skipping**: If a reviewer bot is skipping (e.g., markdown-only PRs), unconfigured, or rate-limited, record `skipped` with rationale and do not block the pipeline.
+- **Graceful skipping**: Tier 2 bots that are unconfigured, rate-limited, or explicitly skipping may be recorded as `skipped` with rationale and must not block; Tier 1 `cubic` may be skipped only when explicitly configured otherwise.
 - **Zero secrets**: Never expose passwords, API tokens, or sensitive environment variables in commits, PR descriptions, comments, or review responses.
 - **Non-destructive Git**: Preserve unrelated user changes and never use destructive Git operations on shared branches.
 - **Bounded persistence**: Keep iterating until required checks pass and required reviewers have reviewed the current head commit, or report a concrete external blocker upon timeout.

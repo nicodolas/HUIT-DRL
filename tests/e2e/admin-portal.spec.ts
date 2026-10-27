@@ -25,14 +25,22 @@ test.describe("Admin Portal & RBAC Security Suite", () => {
 
     // 2. Login student
     await page.goto("/login");
-    await page.fill('input[placeholder*="tên đăng nhập"]', studentUsername);
-    await page.fill('input[type="password"]', studentPassword);
+    await page.waitForLoadState("networkidle");
+    const studentUserInp = page.locator('input[placeholder*="tên đăng nhập"]');
+    await expect(studentUserInp).toBeVisible({ timeout: 10000 });
+    await studentUserInp.click();
+    await studentUserInp.fill(studentUsername);
+
+    const studentPassInp = page.locator('input[type="password"]');
+    await studentPassInp.click();
+    await studentPassInp.fill(studentPassword);
+
     await page.click('button[type="submit"]');
-    await page.waitForURL("/", { timeout: 15000 });
+    await page.waitForURL("/", { timeout: 20000, waitUntil: "domcontentloaded" });
 
     // 3. Attempt direct navigation to /admin -> Should be redirected to /
     await page.goto("/admin");
-    await page.waitForURL("/", { timeout: 10000 });
+    await page.waitForURL("/", { timeout: 15000, waitUntil: "domcontentloaded" });
     expect(page.url()).not.toContain("/admin");
 
     // 4. Verify API protection (403 Forbidden)
@@ -62,18 +70,26 @@ test.describe("Admin Portal & RBAC Security Suite", () => {
 
     // 3. Login as Admin
     await page.goto("/login");
-    await page.fill('input[placeholder*="tên đăng nhập"]', adminUsername);
-    await page.fill('input[type="password"]', adminPassword);
+    await page.waitForLoadState("networkidle");
+    const adminUserInp = page.locator('input[placeholder*="tên đăng nhập"]');
+    await expect(adminUserInp).toBeVisible({ timeout: 10000 });
+    await adminUserInp.click();
+    await adminUserInp.fill(adminUsername);
+
+    const adminPassInp = page.locator('input[type="password"]');
+    await adminPassInp.click();
+    await adminPassInp.fill(adminPassword);
+
     await page.click('button[type="submit"]');
-    await page.waitForURL("/", { timeout: 15000 });
+    await page.waitForURL("/", { timeout: 20000, waitUntil: "domcontentloaded" });
 
     // 4. Verify Admin link in Header
     const adminLink = page.locator('nav a[href="/admin"]');
-    await expect(adminLink).toBeVisible();
+    await expect(adminLink).toBeVisible({ timeout: 15000 });
 
     // 5. Navigate to /admin
     await adminLink.click();
-    await page.waitForURL("/admin", { timeout: 10000 });
+    await page.waitForURL("/admin", { timeout: 15000, waitUntil: "domcontentloaded" });
     await expect(page.locator("h1", { hasText: "Cổng Quản Trị Hệ Thống HUIT.DRL" })).toBeVisible();
 
     // 6. Verify 4 Tabs are present

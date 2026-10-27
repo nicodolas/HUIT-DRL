@@ -186,7 +186,9 @@ Upon completing the loop, return a structured markdown report:
 | **Cubic** | Reviewed | 1 accepted, 0 blocking | Resolved in `<SHA>` |
 | **Sourcery** | Reviewed | 2 suggestions | 1 accepted, 1 rejected (rationale noted) |
 | **CodeRabbit** | Skipping / Passed | 0 blocking | Monitored |
-| **CI Actions** | Passed | Green (Playwright + Build) | 100% Passing |
+| **CodeQL** | `<status>` | `<findings>` | `<resolution>` |
+| **SonarCloud** | `<status>` | `<findings>` | `<resolution>` |
+| **CI Actions** | `<status>` | `<findings>` | `<resolution>` |
 
 #### 🛠️ Key Improvements Made
 - Point 1

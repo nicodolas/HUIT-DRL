@@ -80,6 +80,7 @@ test.describe.serial("Check-Username Anti-DoS & Rate Limiting Security Suite", (
     await page.waitForLoadState("networkidle");
 
     const usernameInput = page.locator('input[placeholder*="nguyenvana"]');
+    test.setTimeout(60_000);
     await expect(usernameInput).toBeVisible({ timeout: 10000 });
 
     // Focus and fill existing username

@@ -14,7 +14,7 @@ Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer o
 - **No direct push to protected branches**: Never commit or push changes directly to `main` or the repository's default branch.
 - **No unauthorized merge**: Never merge the PR automatically unless the user explicitly requests merging.
 - **Review gates & trust tiers**:
-  - **Tier 1 (Primary / Required)**: `cubic` (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
+  - **Tier 1 (Primary / Required)**: any login or check name containing `cubic` (case-insensitive) (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
   - **Tier 2 (Advisory / Quality & Security)**: `sourcery-ai`, `coderabbitai`, `github-actions[bot]`, `codeql`, `sonarcloud`. Evaluated for code quality, cleanliness, security, and refactoring insights.
 - **Graceful skipping**: Tier 2 bots that are unconfigured, rate-limited, or explicitly skipping may be recorded as `skipped` with rationale and must not block; Tier 1 `cubic` may be skipped only when explicitly configured otherwise.
 - **Zero secrets**: Never expose passwords, API tokens, or sensitive environment variables in commits, PR descriptions, comments, or review responses.

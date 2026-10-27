@@ -108,6 +108,7 @@ Wait for GitHub Actions CI and automated AI reviewers to evaluate the head SHA.
 2. **Collect Feedback across all 3 GitHub Review Surfaces**:
    ```bash
    # Surface A: Formal PR Reviews (Cubic, Sourcery, CodeRabbit, human reviewers)
+   # CodeQL / SonarCloud report via check runs: gh pr checks <number>  (or gh api repos/{owner}/{repo}/commits/<sha>/check-runs)
    gh api --paginate repos/{owner}/{repo}/pulls/<number>/reviews
 
    # Surface B: Inline Diff Comments

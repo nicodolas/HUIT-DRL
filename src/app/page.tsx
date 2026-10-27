@@ -214,9 +214,9 @@ export default function DashboardPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-4">
         {/* Personal Student Header Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all relative z-20">
           {/* Subtle Accent Stripe representing HUIT identity */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-900 via-indigo-600 to-amber-500" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-900 via-indigo-600 to-amber-500 rounded-t-2xl" />
 
           <div className="flex items-center space-x-3.5 min-w-0">
             <Link
@@ -349,7 +349,7 @@ export default function DashboardPage() {
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Mục tiêu & Radar</span>
+            <span>Mục tiêu</span>
           </button>
         </div>
 

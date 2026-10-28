@@ -31,8 +31,8 @@ function formatLocalDate(d: Date): string {
 }
 
 function formatPointsLabel(pts: string | number): string {
-  const num = typeof pts === "string" ? parseFloat(pts) : pts;
-  if (isNaN(num)) return "+0đ";
+  const num = typeof pts === "string" ? Number.parseFloat(pts) : pts;
+  if (Number.isNaN(num)) return "+0đ";
   return num > 0 ? `+${num}đ` : `${num}đ`;
 }
 
@@ -117,7 +117,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (currentSemesterId) {
-      loadRecords(currentSemesterId);
+      void loadRecords(currentSemesterId);
     }
   }, [currentSemesterId]);
 
@@ -731,7 +731,9 @@ export default function CalendarPage() {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
           setIsAddModalOpen(false);
-          if (currentSemesterId) loadRecords(currentSemesterId);
+          if (currentSemesterId) {
+            void loadRecords(currentSemesterId);
+          }
         }}
       />
 

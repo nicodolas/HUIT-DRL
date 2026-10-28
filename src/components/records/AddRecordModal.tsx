@@ -675,10 +675,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-quantity" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Số lần / Số lượng:
                 </label>
                 <input
+                  id="modal-quantity"
                   type="number"
                   min="1"
                   max="20"
@@ -689,10 +690,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-occurred-date" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Ngày diễn ra:
                 </label>
                 <input
+                  id="modal-occurred-date"
                   type="date"
                   value={occurredAt}
                   onChange={(e) => setOccurredAt(e.target.value)}
@@ -703,10 +705,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-occurred-time" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Giờ diễn ra (tùy chọn):
                 </label>
                 <input
+                  id="modal-occurred-time"
                   type="time"
                   value={occurredTime}
                   onChange={(e) => setOccurredTime(e.target.value)}
@@ -714,10 +717,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-activity-location" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Địa điểm tổ chức (tùy chọn):
                 </label>
                 <input
+                  id="modal-activity-location"
                   type="text"
                   placeholder="Ví dụ: Hội trường A, Sân D..."
                   value={location}

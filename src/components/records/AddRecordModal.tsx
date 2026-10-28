@@ -5,11 +5,12 @@ import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
 import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
-import { getPresetsCache, savePresetsCache } from "@/lib/offline/cache";
+import { getPresetsCache, savePresetsCache, getUserSemestersCache } from "@/lib/offline/cache";
 import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass } from "lucide-react";
 import { compressImage, formatBytes } from "@/lib/media/compressor";
 import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
 import { triggerHaptic } from "@/lib/native/platform";
+import { splitLocationNote } from "@/lib/calendar/utils";
 
 const POPULAR_SHORTCUTS = [
   { label: "Cổ vũ văn nghệ/TT", code: "TC3_CO_VU", badge: "+2đ" },
@@ -27,6 +28,7 @@ interface AddRecordModalProps {
   semesterId: string;
   initialCategory?: number;
   initialPreset?: DrlCriteriaPreset | null;
+  initialDate?: string;
   recordToEdit?: DrlRecord | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -37,6 +39,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   semesterId,
   initialCategory,
   initialPreset,
+  initialDate,
   recordToEdit,
   onClose,
   onSuccess,
@@ -73,6 +76,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   // Form states
   const [quantity, setQuantity] = useState(1);
   const [occurredAt, setOccurredAt] = useState(new Date().toISOString().split("T")[0]);
+  const [occurredTime, setOccurredTime] = useState("");
+  const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,32 +130,59 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setCustomPoints(Number(recordToEdit.points));
       setCustomCategory(recordToEdit.category);
       setQuantity(recordToEdit.quantity || 1);
-      setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
-      setNote(recordToEdit.note || "");
+      if (recordToEdit.occurredAt?.includes("T")) {
+        const [d, t] = recordToEdit.occurredAt.split("T");
+        setOccurredAt(d);
+        setOccurredTime(t.slice(0, 5));
+      } else {
+        setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
+        setOccurredTime("");
+      }
+      const { location: initialLocation, cleanNote: initialNote } = splitLocationNote(recordToEdit.note);
+      setLocation(initialLocation || "");
+      setNote(initialNote || "");
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else if (initialPreset) {
       setTab("preset");
+      const defaultDate = initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
+        ? initialDate
+        : (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          })();
+
       setSelectedPreset(initialPreset);
       setSelectedCategory(initialPreset.category);
       setCustomCategory(initialPreset.category);
       setQuantity(1);
+      setLocation("");
       setNote("");
       setEvidenceUrl("");
-      setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredAt(defaultDate);
+      setOccurredTime("");
     } else {
+      const defaultDate = initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
+        ? initialDate
+        : (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          })();
+
       setSelectedPreset(null);
       setCustomTitle("");
       setCustomPoints("");
       setQuantity(1);
+      setLocation("");
       setNote("");
       setEvidenceUrl("");
-      setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredAt(defaultDate);
+      setOccurredTime("");
       if (initialCategory) {
         setSelectedCategory(initialCategory);
         setCustomCategory(initialCategory);
       }
     }
-  }, [recordToEdit, initialCategory, initialPreset, isOpen]);
+  }, [recordToEdit, initialCategory, initialPreset, initialDate, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -190,9 +222,43 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
     setError(null);
     setLoading(true);
 
-    const activeSemesterId = effectiveSemesterId || semesterId;
+    let activeSemesterId = effectiveSemesterId || semesterId;
+    if (!activeSemesterId || !activeSemesterId.trim()) {
+      const cached = getUserSemestersCache();
+      if (cached && cached.length > 0) {
+        const cur = cached.find((s) => s.isCurrent) || cached[0];
+        if (cur?.id) activeSemesterId = cur.id;
+      }
+    }
+
+    const trimmedDate = occurredAt.trim();
+    const finalOccurredAt = trimmedDate && occurredTime.trim()
+      ? `${trimmedDate}T${occurredTime.trim()}`
+      : trimmedDate;
+    let finalNote = note.trim();
+    if (location.trim() && !finalNote.includes(location.trim())) {
+      finalNote = finalNote ? `[${location.trim()}] ${finalNote}` : `[${location.trim()}]`;
+    }
 
     try {
+      if (!activeSemesterId || !activeSemesterId.trim()) {
+        try {
+          const sRes = await fetch("/api/semesters");
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData.semesters && sData.semesters.length > 0) {
+              const cur = sData.semesters.find((s: any) => s.isCurrent) || sData.semesters[0];
+              if (cur?.id) {
+                activeSemesterId = cur.id;
+                setEffectiveSemesterId(cur.id);
+              }
+            }
+          }
+        } catch {
+          // ignore network failure
+        }
+      }
+
       if (!activeSemesterId || !activeSemesterId.trim()) {
         setError("Chưa chọn học kỳ hợp lệ. Vui lòng thử lại sau giây lát.");
         setLoading(false);
@@ -201,8 +267,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
       let payload: any = {
         semesterId: activeSemesterId,
-        occurredAt,
-        note: note.trim() || undefined,
+        occurredAt: finalOccurredAt,
+        note: finalNote || undefined,
         evidenceUrl: evidenceUrl.trim() || undefined,
         quantity,
       };
@@ -288,8 +354,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         // Fallback to offline draft on mobile network drop / timeout
         addOfflineDraft({
           semesterId: activeSemesterId,
-          occurredAt,
-          note: note.trim() || undefined,
+          occurredAt: finalOccurredAt,
+          note: finalNote || undefined,
           evidenceUrl: evidenceUrl.trim() || undefined,
           quantity,
           category: tab === "preset" ? selectedPreset!.category : customCategory,
@@ -614,10 +680,11 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-quantity" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Số lần / Số lượng:
                 </label>
                 <input
+                  id="modal-quantity"
                   type="number"
                   min="1"
                   max="20"
@@ -628,14 +695,43 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="modal-occurred-date" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Ngày diễn ra:
                 </label>
                 <input
+                  id="modal-occurred-date"
                   type="date"
                   value={occurredAt}
                   onChange={(e) => setOccurredAt(e.target.value)}
                   className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="modal-occurred-time" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Giờ diễn ra (tùy chọn):
+                </label>
+                <input
+                  id="modal-occurred-time"
+                  type="time"
+                  value={occurredTime}
+                  onChange={(e) => setOccurredTime(e.target.value)}
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="modal-activity-location" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Địa điểm tổ chức (tùy chọn):
+                </label>
+                <input
+                  id="modal-activity-location"
+                  type="text"
+                  placeholder="Ví dụ: Hội trường A, Sân D..."
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -646,7 +742,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="Ví dụ: Có giấy xác nhận, Hội trường A..."
+                placeholder="Ví dụ: Có giấy xác nhận tham gia..."
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"

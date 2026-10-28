@@ -18,6 +18,26 @@ export interface ScoreCalculationResult {
   totalDefaultPoints: number;
   totalEarnedPoints: number;
   totalDeductedPoints: number;
+  totalPlannedPoints?: number;
+}
+
+export function isFutureRecord(occurredAt?: string | null): boolean {
+  if (!occurredAt) return false;
+  const parts = occurredAt.split("T");
+  const dateStr = parts[0];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const now = new Date();
+  const targetDate = new Date(y, m - 1, d);
+  if (parts[1]) {
+    const [hh, mm] = parts[1].slice(0, 5).split(":").map(Number);
+    targetDate.setHours(hh || 0, mm || 0, 0, 0);
+    return targetDate.getTime() > now.getTime();
+  } else {
+    // If only date is specified, future means after today
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return targetDate.getTime() > todayEnd.getTime();
+  }
 }
 
 export interface GoalSuggestion {
@@ -43,6 +63,7 @@ export function calculateSemesterScore(
   const categoryResults: Record<number, CategoryScoreResult> = {};
   let totalDeducted = 0;
   let totalEarned = 0;
+  let totalPlannedPoints = 0;
 
   // Single-pass O(N) accumulator arrays for categories 1..5
   const sums = [0, CATEGORIES[1].defaultPoints, CATEGORIES[2].defaultPoints, CATEGORIES[3].defaultPoints, CATEGORIES[4].defaultPoints, CATEGORIES[5].defaultPoints];
@@ -56,9 +77,14 @@ export function calculateSemesterScore(
       counts[cat]++;
       if (r.type !== "default") {
         const pts = (parseFloat(r.points) || 0) * (r.quantity || 1);
-        sums[cat] += pts;
-        if (pts > 0) totalEarned += pts;
-        else totalDeducted -= pts;
+        if (isFutureRecord(r.occurredAt)) {
+          // Future activity: not added to current score until occurredAt arrives
+          totalPlannedPoints += pts;
+        } else {
+          sums[cat] += pts;
+          if (pts > 0) totalEarned += pts;
+          else totalDeducted -= pts;
+        }
       }
     }
   }
@@ -91,6 +117,7 @@ export function calculateSemesterScore(
     totalDefaultPoints: 60,
     totalEarnedPoints: Math.round(totalEarned * 10) / 10,
     totalDeductedPoints: Math.round(totalDeducted * 10) / 10,
+    totalPlannedPoints: Math.round(totalPlannedPoints * 10) / 10,
   };
 }
 

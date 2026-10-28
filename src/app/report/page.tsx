@@ -927,9 +927,15 @@ function ReportContent() {
                           </span>
                         )}
                         {r.evidenceUrl && (
-                          <span className="text-[10px] text-blue-700 block mt-0.5 font-mono truncate max-w-sm">
-                            Link minh chứng: {r.evidenceUrl}
-                          </span>
+                          r.evidenceUrl.startsWith("data:image") ? (
+                            <span className="text-[10px] text-emerald-700 block mt-0.5 font-medium">
+                              📷 Đã đính kèm ảnh minh chứng
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-blue-700 block mt-0.5 font-mono truncate max-w-sm">
+                              Link minh chứng: {r.evidenceUrl}
+                            </span>
+                          )
                         )}
                         {r.auditComment && (
                           <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-0.5 border border-amber-200">

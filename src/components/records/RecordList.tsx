@@ -422,7 +422,7 @@ export const RecordList: React.FC<RecordListProps> = ({
                             : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                         }`}
                       >
-                        {isFuture ? `Dự kiến +${totalPts}đ` : isAdd ? `+${totalPts}đ` : `${totalPts}đ`}
+                        {isFuture ? `Dự kiến ${totalPts > 0 ? "+" : ""}${totalPts}đ` : isAdd ? `+${totalPts}đ` : `${totalPts}đ`}
                       </span>
                     </div>
                   </div>

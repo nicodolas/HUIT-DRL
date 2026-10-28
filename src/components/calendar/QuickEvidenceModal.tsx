@@ -29,6 +29,8 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
     reduction: number;
   } | null>(null);
 
+  const modalContainerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +41,48 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
       setCompressedStats(null);
     }
   }, [record, isOpen]);
+
+  // Focus trap & restoration
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current = (typeof document !== "undefined" ? document.activeElement : null) as HTMLElement | null;
+
+    const timer = setTimeout(() => {
+      const inputEl = document.getElementById("quick-evidence-url");
+      inputEl?.focus();
+    }, 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && modalContainerRef.current) {
+        const focusable = modalContainerRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !record) return null;
 
@@ -51,7 +95,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
     setCompressing(true);
     setError(null);
     try {
-      const result = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.75 });
+      const result = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.78 });
       setEvidenceUrl(result.dataUrl);
       setCompressedStats({
         originalSize: result.originalSize,
@@ -118,6 +162,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
 
   return (
     <div
+      ref={modalContainerRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-evidence-title"
@@ -287,8 +332,8 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
                   setCompressedStats(null);
                 }}
                 className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
-                title="Gỡ ảnh này"
-                aria-label="Gỡ minh chứng"
+                title="Gỡ minh chứng này"
+                aria-label="Gỡ minh chứng này"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

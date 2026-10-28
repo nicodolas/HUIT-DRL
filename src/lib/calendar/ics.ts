@@ -156,18 +156,39 @@ export function recordToCalendarEvent(record: DrlRecord): CalendarEventItem {
   };
 }
 
-export function downloadSingleEventIcs(event: CalendarEventItem): void {
+export async function downloadSingleEventIcs(event: CalendarEventItem): Promise<void> {
   const safeTitle = (event.title || "Sự kiện")
     .replace(/[\r\n]+/g, " ")
     .replace(/[:;\\]/g, "")
     .trim();
   const icsContent = generateIcsCalendar([event], safeTitle);
+  const safeFilename = safeTitle.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 30);
+  const filename = `huit_${safeFilename || "event"}.ics`;
+
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+
+  // Native Web Share API support (for Capacitor Android / mobile WebViews to directly open or save)
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof File !== "undefined") {
+    try {
+      const file = new File([blob], filename, { type: "text/calendar" });
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: safeTitle,
+          text: event.description || "Lịch rèn luyện HUIT",
+        });
+        return;
+      }
+    } catch (e: unknown) {
+      if ((e as Error)?.name === "AbortError") return;
+    }
+  }
+
+  // Fallback to standard web anchor download
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  const safeFilename = safeTitle.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 30);
-  a.download = `huit_${safeFilename || "event"}.ics`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

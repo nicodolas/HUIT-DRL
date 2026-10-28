@@ -39,16 +39,27 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
   const color = getCriteriaColor(record.category);
   const hasProof = Boolean(record.evidenceUrl);
 
+  // Extract bracket convention [Location] note
+  let locationStr: string | null = null;
+  let noteStr: string | null = record.note || null;
+  if (noteStr?.startsWith("[")) {
+    const closeIdx = noteStr.indexOf("]");
+    if (closeIdx > 1) {
+      locationStr = noteStr.slice(1, closeIdx).trim() || null;
+      noteStr = noteStr.slice(closeIdx + 1).trim() || null;
+    }
+  }
+
   const handleGoogleCalendar = () => {
     triggerHaptic("light");
     const ev = recordToCalendarEvent(record);
     window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
   };
 
-  const handleDownloadIcs = () => {
+  const handleDownloadIcs = async () => {
     triggerHaptic("light");
     const ev = recordToCalendarEvent(record);
-    downloadSingleEventIcs(ev);
+    await downloadSingleEventIcs(ev);
   };
 
   const handleEvidenceClick = () => {
@@ -57,30 +68,33 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
   };
 
   // Reusable action bar for sync & proof submission
-  const renderActionButtons = (isPastVariant: boolean = false) => (
+  const renderActionButtons = (isPastVariant: boolean = false, showStatusText: boolean = true) => (
     <div className="flex items-center space-x-1.5 shrink-0">
-      {!hasProof ? (
-        <div className="flex items-center space-x-1.5">
+      {showStatusText && (
+        !hasProof ? (
           <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
             <AlertTriangle className="w-3 h-3" />
             <span>Chưa có minh chứng</span>
           </span>
-          <button
-            type="button"
-            onClick={handleEvidenceClick}
-            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
-            title="Nộp ảnh/URL minh chứng nhanh"
-            aria-label={`Nộp minh chứng cho ${record.title}`}
-          >
-            <UploadCloud className="w-3 h-3" />
-            <span>Nộp minh chứng</span>
-          </button>
-        </div>
-      ) : (
-        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
-          <CheckCircle2 className="w-3 h-3" />
-          <span>Có minh chứng</span>
-        </span>
+        ) : (
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
+            <CheckCircle2 className="w-3 h-3" />
+            <span>Có minh chứng</span>
+          </span>
+        )
+      )}
+
+      {!hasProof && (
+        <button
+          type="button"
+          onClick={handleEvidenceClick}
+          className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
+          title="Nộp ảnh/URL minh chứng nhanh"
+          aria-label={`Nộp minh chứng cho ${record.title}`}
+        >
+          <UploadCloud className="w-3 h-3" />
+          <span>Nộp minh chứng</span>
+        </button>
       )}
 
       <button
@@ -93,15 +107,17 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
         <CalendarPlus className="w-3.5 h-3.5" />
       </button>
 
-      <button
-        type="button"
-        onClick={handleDownloadIcs}
-        title="Tải file .ICS"
-        aria-label="Tải file .ICS vào máy"
-        className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-      >
-        <Download className="w-3.5 h-3.5" />
-      </button>
+      {!isPastVariant && (
+        <button
+          type="button"
+          onClick={handleDownloadIcs}
+          title="Tải file .ICS hoặc mở trong ứng dụng lịch"
+          aria-label="Tải file .ICS vào máy"
+          className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+        >
+          <Download className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 
@@ -117,12 +133,14 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
           </span>
           <span
             className={`text-xs font-mono font-bold shrink-0 ${
-              Number(record.points) < 0
+              parsed.isFuture
+                ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full"
+                : Number(record.points) < 0
                 ? "text-rose-600 dark:text-rose-400"
                 : "text-emerald-600 dark:text-emerald-400"
             }`}
           >
-            {formatPointsLabel(record.points)}
+            {parsed.isFuture ? `Dự kiến ${formatPointsLabel(record.points)}` : formatPointsLabel(record.points)}
           </span>
         </div>
 
@@ -133,14 +151,19 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
           {parsed.timeStr && (
             <span className="flex items-center space-x-1 font-mono">
-              <Clock className="w-3 h-3 text-amber-500" />
+              <Clock className="w-3 h-3 text-amber-500 shrink-0" />
               <span>{parsed.timeStr}</span>
             </span>
           )}
-          {record.note && (
-            <span className="flex items-center space-x-1 truncate max-w-[180px]">
-              <MapPin className="w-3 h-3" />
-              <span className="truncate">{record.note}</span>
+          {locationStr && (
+            <span className="flex items-center space-x-1 truncate max-w-[160px]">
+              <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
+              <span className="truncate">{locationStr}</span>
+            </span>
+          )}
+          {noteStr && (
+            <span className="text-slate-400 dark:text-slate-500 truncate max-w-[160px] italic">
+              {noteStr}
             </span>
           )}
         </div>
@@ -164,7 +187,7 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
               </span>
             )}
           </div>
-          {renderActionButtons(false)}
+          {renderActionButtons(false, false)}
         </div>
       </div>
     );
@@ -213,12 +236,19 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
             <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
               {record.title}
             </h3>
-            {record.note && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 flex items-center space-x-1">
-                <MapPin className="w-3 h-3 shrink-0" />
-                <span>{record.note}</span>
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {locationStr && (
+                <span className="flex items-center space-x-1 truncate max-w-[200px]">
+                  <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
+                  <span className="truncate">{locationStr}</span>
+                </span>
+              )}
+              {noteStr && (
+                <span className="text-slate-400 dark:text-slate-500 truncate max-w-[200px] italic">
+                  {noteStr}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -240,7 +270,7 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
             )}
           </div>
 
-          {renderActionButtons(false)}
+          {renderActionButtons(false, true)}
         </div>
       </div>
     );
@@ -261,10 +291,16 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
         <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
           {record.title}
         </span>
+        {locationStr && (
+          <span className="hidden md:inline-flex items-center space-x-1 text-[11px] text-slate-400 truncate max-w-[140px]">
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span className="truncate">{locationStr}</span>
+          </span>
+        )}
       </div>
 
       <div className="flex items-center space-x-2 shrink-0">
-        {renderActionButtons(true)}
+        {renderActionButtons(true, true)}
         <span
           className={`font-mono font-bold ${
             Number(record.points) < 0
@@ -278,4 +314,3 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
     </div>
   );
 };
-

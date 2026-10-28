@@ -139,10 +139,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       }
       let initialLocation = "";
       let initialNote = recordToEdit.note || "";
-      const locMatch = initialNote.match(/^\[([^\]]+)\]\s*(.*)$/);
-      if (locMatch) {
-        initialLocation = locMatch[1];
-        initialNote = locMatch[2];
+      const closeBracketIdx = initialNote.indexOf("]");
+      if (initialNote.startsWith("[") && closeBracketIdx > 1) {
+        initialLocation = initialNote.slice(1, closeBracketIdx).trim();
+        initialNote = initialNote.slice(closeBracketIdx + 1).trim();
       }
       setLocation(initialLocation);
       setNote(initialNote);

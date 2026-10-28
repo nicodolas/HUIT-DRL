@@ -744,7 +744,7 @@ export default function CalendarPage() {
       <AddRecordModal
         isOpen={isAddModalOpen}
         semesterId={currentSemesterId}
-        initialDate={modalInitialDate || selectedDateStr}
+        initialDate={modalInitialDate}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
           setIsAddModalOpen(false);

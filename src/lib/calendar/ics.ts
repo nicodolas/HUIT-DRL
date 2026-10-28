@@ -107,15 +107,17 @@ export function buildGoogleCalendarUrl(event: CalendarEventItem): string {
       const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // 1 hour duration
       datesParam = `${formatIcsDateTime(startDt)}/${formatIcsDateTime(endDt)}`;
     } else {
-      const d = formatIcsDate(event.date);
-      const nextDay = new Date(event.date || Date.now());
+      const d = formatIcsDate(dPart);
+      const baseDate = new Date(dPart);
+      const nextDay = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
       nextDay.setDate(nextDay.getDate() + 1);
       const endD = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
       datesParam = `${d}/${endD}`;
     }
   } else {
     const d = formatIcsDate(event.date);
-    const nextDay = new Date(event.date || Date.now());
+    const baseDate = new Date(event.date);
+    const nextDay = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
     nextDay.setDate(nextDay.getDate() + 1);
     const endD = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
     datesParam = `${d}/${endD}`;
@@ -153,7 +155,7 @@ export function buildSemesterCalendarEvents(
     if (r.occurredAt && /^\d{4}-\d{2}-\d{2}/.test(r.occurredAt)) {
       let loc = "Trường Đại học Công Thương TP.HCM";
       let cleanNote = r.note || "Đã nộp minh chứng";
-      const locMatch = cleanNote.match(/^\[(.*?)\]\s*(.*)$/);
+      const locMatch = cleanNote.match(/^\[([^\]]+)\]\s*(.*)$/);
       if (locMatch) {
         loc = locMatch[1];
         cleanNote = locMatch[2] || "Hoạt động rèn luyện";

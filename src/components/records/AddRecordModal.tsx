@@ -139,7 +139,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       }
       let initialLocation = "";
       let initialNote = recordToEdit.note || "";
-      const locMatch = initialNote.match(/^\[(.*?)\]\s*(.*)$/s);
+      const locMatch = initialNote.match(/^\[([^\]]+)\]\s*(.*)$/);
       if (locMatch) {
         initialLocation = locMatch[1];
         initialNote = locMatch[2];

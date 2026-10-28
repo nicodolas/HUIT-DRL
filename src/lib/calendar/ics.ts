@@ -213,7 +213,7 @@ export function buildSemesterCalendarEvents(
     if (r.occurredAt && /^\d{4}-\d{2}-\d{2}/.test(r.occurredAt)) {
       const { location, cleanNote } = splitLocationNote(r.note);
       const loc = location || "Trường Đại học Công Thương TP.HCM";
-      const desc = cleanNote || "Hoạt động rèn luyện";
+      const desc = cleanNote || (r.note ? "Hoạt động rèn luyện" : "Đã nộp minh chứng");
 
       events.push({
         id: `rec-${r.id}`,

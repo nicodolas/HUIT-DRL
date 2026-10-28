@@ -460,7 +460,7 @@ export default function CalendarPage() {
                     location: "Khoa đào tạo / Văn phòng Đoàn Trường HUIT",
                     isDeadline: true,
                   };
-                  downloadSingleEventIcs(ev);
+                  void downloadSingleEventIcs(ev);
                 }}
                 className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow-2xs cursor-pointer"
               >

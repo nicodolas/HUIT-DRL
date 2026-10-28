@@ -193,3 +193,23 @@ export function formatPointsLabel(pts: string | number): string {
   if (Number.isNaN(num)) return "+0đ";
   return num > 0 ? `+${num}đ` : `${num}đ`;
 }
+
+/**
+ * Splits raw note into optional location (from [Location] prefix) and remaining clean note text.
+ */
+export function splitLocationNote(rawNote?: string | null): {
+  location: string | null;
+  cleanNote: string | null;
+} {
+  if (!rawNote) return { location: null, cleanNote: null };
+  const trimmed = rawNote.trim();
+  if (trimmed.startsWith("[")) {
+    const closeIdx = trimmed.indexOf("]");
+    if (closeIdx > 1) {
+      const loc = trimmed.slice(1, closeIdx).trim() || null;
+      const note = trimmed.slice(closeIdx + 1).trim() || null;
+      return { location: loc, cleanNote: note };
+    }
+  }
+  return { location: null, cleanNote: trimmed || null };
+}

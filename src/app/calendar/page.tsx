@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { QuickEvidenceModal } from "@/components/calendar/QuickEvidenceModal";
 import { DrlRecord, Semester, User } from "@/lib/db/schema";
 import {
   parseEventDateTime,
@@ -12,7 +13,14 @@ import {
   getPastRecords,
   ParsedEventDateTime,
 } from "@/lib/calendar/utils";
+import {
+  recordToCalendarEvent,
+  downloadSingleEventIcs,
+  buildGoogleCalendarUrl,
+  CalendarEventItem,
+} from "@/lib/calendar/ics";
 import { getUserSemestersCache, saveUserSemestersCache } from "@/lib/offline/cache";
+import { triggerHaptic } from "@/lib/native/platform";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -26,7 +34,12 @@ import {
   AlertTriangle,
   CalendarCheck,
   Sparkles,
-  Info,
+  Search,
+  CalendarPlus,
+  Download,
+  UploadCloud,
+  Bell,
+  X,
 } from "lucide-react";
 
 function formatLocalDate(d: Date): string {
@@ -59,6 +72,15 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [modalInitialDate, setModalInitialDate] = useState<string>("");
+
+  // Search & Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<number>(0); // 0 = all
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<"all" | "upcoming" | "missing_evidence" | "completed">("all");
+
+  // Quick Evidence Modal states
+  const [evidenceModalRecord, setEvidenceModalRecord] = useState<DrlRecord | null>(null);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
 
   // Calendar View states
   const [viewMode, setViewMode] = useState<"grid" | "agenda">("grid");
@@ -142,23 +164,76 @@ export default function CalendarPage() {
   const currentMonth = currentDate.getMonth(); // 0 - 11
 
   const handlePrevMonth = () => {
+    triggerHaptic("light");
     setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   };
 
   const handleNextMonth = () => {
+    triggerHaptic("light");
     setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
   };
 
   const handleToday = () => {
+    triggerHaptic("light");
     const today = new Date();
     setCurrentDate(today);
     setSelectedDateStr(formatLocalDate(today));
   };
 
-  // Group records by Date YYYY-MM-DD
+  // Active semester & submission deadline
+  const activeSemester = useMemo(() => {
+    return semesters.find((s) => s.id === currentSemesterId) || null;
+  }, [semesters, currentSemesterId]);
+
+  const deadlineParsed = useMemo(() => {
+    if (!activeSemester?.submissionDeadline) return null;
+    return parseEventDateTime(activeSemester.submissionDeadline);
+  }, [activeSemester]);
+
+  // Filtered records based on search query, category, and status
+  const filteredRecords = useMemo(() => {
+    return records.filter((r) => {
+      // 1. Category filter
+      if (selectedCategoryFilter > 0 && r.category !== selectedCategoryFilter) {
+        return false;
+      }
+
+      const parsed = parseEventDateTime(r.occurredAt);
+
+      // 2. Status filter
+      if (selectedStatusFilter === "upcoming") {
+        if (!parsed || parsed.daysDiff < 0) return false;
+      } else if (selectedStatusFilter === "missing_evidence") {
+        if (Boolean(r.evidenceUrl)) return false;
+      } else if (selectedStatusFilter === "completed") {
+        if (!parsed || parsed.daysDiff >= 0 || !r.evidenceUrl) return false;
+      }
+
+      // 3. Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = r.title.toLowerCase().includes(q);
+        const matchNote = r.note ? r.note.toLowerCase().includes(q) : false;
+        if (!matchTitle && !matchNote) return false;
+      }
+
+      return true;
+    });
+  }, [records, selectedCategoryFilter, selectedStatusFilter, searchQuery]);
+
+  const isFilterActive = searchQuery.trim() !== "" || selectedCategoryFilter !== 0 || selectedStatusFilter !== "all";
+
+  const handleClearFilters = () => {
+    triggerHaptic("light");
+    setSearchQuery("");
+    setSelectedCategoryFilter(0);
+    setSelectedStatusFilter("all");
+  };
+
+  // Group filtered records by Date YYYY-MM-DD
   const eventsByDate = useMemo(() => {
     const map = new Map<string, Array<{ record: DrlRecord; parsed: ParsedEventDateTime }>>();
-    for (const r of records) {
+    for (const r of filteredRecords) {
       const parsed = parseEventDateTime(r.occurredAt);
       if (parsed) {
         const list = map.get(parsed.dateStr) || [];
@@ -167,7 +242,7 @@ export default function CalendarPage() {
       }
     }
     return map;
-  }, [records]);
+  }, [filteredRecords]);
 
   // Grid Days Calculation: Monday to Sunday layout
   const gridDays = useMemo(() => {
@@ -240,12 +315,12 @@ export default function CalendarPage() {
 
   // Upcoming & Past events for Agenda View using centralized calendar utils
   const upcomingEvents = useMemo(() => {
-    return getUpcomingRecords(records);
-  }, [records]);
+    return getUpcomingRecords(filteredRecords);
+  }, [filteredRecords]);
 
   const pastEvents = useMemo(() => {
-    return getPastRecords(records);
-  }, [records]);
+    return getPastRecords(filteredRecords);
+  }, [filteredRecords]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-24 sm:pb-12">
@@ -258,7 +333,7 @@ export default function CalendarPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Top Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
           <div>
             <div className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
@@ -279,8 +354,12 @@ export default function CalendarPage() {
             {/* View Mode Toggle */}
             <div className="inline-flex items-center p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
               <button
-                onClick={() => setViewMode("grid")}
-                className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all ${
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setViewMode("grid");
+                }}
+                className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   viewMode === "grid"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -290,8 +369,12 @@ export default function CalendarPage() {
                 <span>Lịch tháng</span>
               </button>
               <button
-                onClick={() => setViewMode("agenda")}
-                className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all ${
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setViewMode("agenda");
+                }}
+                className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   viewMode === "agenda"
                     ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -304,7 +387,9 @@ export default function CalendarPage() {
 
             {/* Add Record button */}
             <button
+              type="button"
               onClick={() => {
+                triggerHaptic("light");
                 setModalInitialDate("");
                 setIsAddModalOpen(true);
               }}
@@ -315,6 +400,249 @@ export default function CalendarPage() {
             </button>
           </div>
         </div>
+
+        {/* Milestone Card: Semester Submission Deadline */}
+        {deadlineParsed && (
+          <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-950/20 border border-amber-300 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start sm:items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                <Bell className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                    Hạn Chót Nộp Hồ Sơ ĐRL: {activeSemester?.name}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      deadlineParsed.isToday
+                        ? "bg-rose-500 text-white"
+                        : deadlineParsed.isTomorrow
+                        ? "bg-amber-500 text-slate-950 font-bold"
+                        : deadlineParsed.daysDiff > 0
+                        ? "bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    {deadlineParsed.isToday
+                      ? "HÔM NAY HẾT HẠN!"
+                      : deadlineParsed.isTomorrow
+                      ? "NGÀY MAI HẾT HẠN"
+                      : deadlineParsed.daysDiff > 0
+                      ? `Còn ${deadlineParsed.daysDiff} ngày`
+                      : "Đã qua hạn nộp"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                  Hạn cuối: <strong className="text-slate-900 dark:text-white font-mono">{activeSemester?.submissionDeadline}</strong> • Nộp Form 01 và minh chứng cho BCS lớp/Khoa.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  const ev: CalendarEventItem = {
+                    id: `deadline-${activeSemester?.id}`,
+                    title: `[HẠN CHÓT ĐRL] Nộp hồ sơ ${activeSemester?.name}`,
+                    date: activeSemester!.submissionDeadline!,
+                    description: `Hạn chót nộp phiếu điểm rèn luyện ${activeSemester?.name}`,
+                    location: "Khoa đào tạo / Văn phòng Đoàn Trường HUIT",
+                    isDeadline: true,
+                  };
+                  window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
+                }}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-800 text-xs font-semibold transition shadow-2xs cursor-pointer"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+                <span>Google Calendar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  const ev: CalendarEventItem = {
+                    id: `deadline-${activeSemester?.id}`,
+                    title: `[HẠN CHÓT ĐRL] Nộp hồ sơ ${activeSemester?.name}`,
+                    date: activeSemester!.submissionDeadline!,
+                    description: `Hạn chót nộp phiếu điểm rèn luyện ${activeSemester?.name}`,
+                    location: "Khoa đào tạo / Văn phòng Đoàn Trường HUIT",
+                    isDeadline: true,
+                  };
+                  downloadSingleEventIcs(ev);
+                }}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow-2xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Tải .ICS</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Search & Filter Toolbar */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 mb-6 shadow-xs space-y-3">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                placeholder="Tìm hoạt động theo tên hoặc địa điểm..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-amber-500 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter Chips */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 overflow-x-auto scrollbar-none">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setSelectedStatusFilter("all");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  selectedStatusFilter === "all"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Tất cả ({records.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setSelectedStatusFilter("upcoming");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  selectedStatusFilter === "upcoming"
+                    ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Sắp tới
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setSelectedStatusFilter("missing_evidence");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  selectedStatusFilter === "missing_evidence"
+                    ? "bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Thiếu minh chứng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setSelectedStatusFilter("completed");
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  selectedStatusFilter === "completed"
+                    ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Đã hoàn thành
+              </button>
+            </div>
+          </div>
+
+          {/* Criteria Filter Chips TC1 - TC5 */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">
+              Lọc theo tiêu chí:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setSelectedCategoryFilter(0);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                selectedCategoryFilter === 0
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 border-transparent font-bold"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              Tất cả TC
+            </button>
+            {[1, 2, 3, 4, 5].map((cat) => {
+              const col = getCriteriaColor(cat);
+              const isSelected = selectedCategoryFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setSelectedCategoryFilter(cat === selectedCategoryFilter ? 0 : cat);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                    isSelected
+                      ? `${col.bg} text-white border-transparent shadow-2xs`
+                      : `${col.lightBg} ${col.text} ${col.border}`
+                  }`}
+                >
+                  TC{cat}
+                </button>
+              );
+            })}
+
+            {isFilterActive && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="ml-auto inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                <span>Xóa lọc</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Empty Banner if records exist but filter matched zero */}
+        {records.length > 0 && filteredRecords.length === 0 && !loading && (
+          <div className="text-center py-12 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 mb-6 shadow-xs">
+            <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Không tìm thấy hoạt động nào phù hợp với bộ lọc hiện tại
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+              Hãy thử tìm kiếm với từ khóa khác hoặc nhấn &quot;Xóa bộ lọc&quot; để hiển thị toàn bộ hoạt động.
+            </p>
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="mt-4 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold transition cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Xem lại tất cả hoạt động</span>
+            </button>
+          </div>
+        )}
 
         {/* Calendar Grid View */}
         {viewMode === "grid" ? (
@@ -328,8 +656,9 @@ export default function CalendarPage() {
                     Tháng {currentMonth + 1}, {currentYear}
                   </h2>
                   <button
+                    type="button"
                     onClick={handleToday}
-                    className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
                   >
                     Hôm nay
                   </button>
@@ -337,16 +666,18 @@ export default function CalendarPage() {
 
                 <div className="flex items-center space-x-1">
                   <button
+                    type="button"
                     onClick={handlePrevMonth}
                     aria-label="Tháng trước"
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <button
+                    type="button"
                     onClick={handleNextMonth}
                     aria-label="Tháng sau"
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -376,8 +707,12 @@ export default function CalendarPage() {
                   return (
                     <button
                       key={cell.dateStr}
-                      onClick={() => setSelectedDateStr(cell.dateStr)}
-                      className={`min-h-[64px] sm:min-h-[82px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all border ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setSelectedDateStr(cell.dateStr);
+                      }}
+                      className={`min-h-[64px] sm:min-h-[82px] p-1.5 sm:p-2 rounded-xl flex flex-col justify-between text-left transition-all border cursor-pointer ${
                         isSelected
                           ? "ring-2 ring-slate-900 dark:ring-amber-500 border-transparent bg-amber-50/50 dark:bg-amber-950/20"
                           : cell.isCurrentMonth
@@ -458,7 +793,9 @@ export default function CalendarPage() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
+                      triggerHaptic("light");
                       setModalInitialDate(selectedDateStr);
                       setIsAddModalOpen(true);
                     }}
@@ -484,7 +821,9 @@ export default function CalendarPage() {
                       Hãy lên lịch hoạt động để theo dõi điểm rèn luyện chủ động hơn.
                     </p>
                     <button
+                      type="button"
                       onClick={() => {
+                        triggerHaptic("light");
                         setModalInitialDate(selectedDateStr);
                         setIsAddModalOpen(true);
                       }}
@@ -509,11 +848,13 @@ export default function CalendarPage() {
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}>
                               TC{record.category}
                             </span>
-                            <span className={`text-xs font-mono font-bold shrink-0 ${
-                              Number(record.points) < 0
-                                ? "text-rose-600 dark:text-rose-400"
-                                : "text-emerald-600 dark:text-emerald-400"
-                            }`}>
+                            <span
+                              className={`text-xs font-mono font-bold shrink-0 ${
+                                Number(record.points) < 0
+                                  ? "text-rose-600 dark:text-rose-400"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                              }`}
+                            >
                               {formatPointsLabel(record.points)}
                             </span>
                           </div>
@@ -537,24 +878,70 @@ export default function CalendarPage() {
                             )}
                           </div>
 
-                          {/* Status Badge */}
-                          <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
-                            {parsed.isFuture ? (
-                              <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Sắp diễn ra</span>
-                              </span>
-                            ) : hasProof ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Đã nộp minh chứng</span>
-                              </span>
-                            ) : (
-                              <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1">
-                                <AlertTriangle className="w-3 h-3" />
-                                <span>Chưa có minh chứng</span>
-                              </span>
-                            )}
+                          {/* Status & 1-Click Action Bar */}
+                          <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <div>
+                              {parsed.isFuture ? (
+                                <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center space-x-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Sắp diễn ra</span>
+                                </span>
+                              ) : hasProof ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Đã có minh chứng</span>
+                                </span>
+                              ) : (
+                                <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  <span>Chưa có minh chứng</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center space-x-1">
+                              {!hasProof && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    triggerHaptic("light");
+                                    setEvidenceModalRecord(record);
+                                    setIsEvidenceModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
+                                  title="Nộp ảnh/URL minh chứng nhanh"
+                                >
+                                  <UploadCloud className="w-3 h-3" />
+                                  <span>Nộp minh chứng</span>
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic("light");
+                                  const ev = recordToCalendarEvent(record);
+                                  window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
+                                }}
+                                title="Thêm vào Google Calendar"
+                                className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                              >
+                                <CalendarPlus className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic("light");
+                                  const ev = recordToCalendarEvent(record);
+                                  downloadSingleEventIcs(ev);
+                                }}
+                                title="Tải file .ICS"
+                                className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -564,7 +951,7 @@ export default function CalendarPage() {
               </div>
 
               <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-                💡 <span className="font-medium">Mẹo:</span> Khi hoạt động qua thời gian diễn ra, điểm rèn luyện sẽ tự động được cộng vào tổng kết quả của học kỳ.
+                💡 <span className="font-medium">Mẹo:</span> Bạn có thể bấm nút Google Calendar hoặc .ICS để đồng bộ lịch trình nhắc nhở vào điện thoại cá nhân.
               </div>
             </div>
           </div>
@@ -587,25 +974,29 @@ export default function CalendarPage() {
                 </div>
               ) : upcomingEvents.length === 0 ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
-                  Không có lịch trình sắp tới. Hãy bấm "+ Lên lịch hoạt động" để thêm hoạt động mới.
+                  Không có lịch trình sắp tới. Hãy bấm &quot;+ Lên lịch hoạt động&quot; để thêm hoạt động mới.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {upcomingEvents.map(({ record, parsed }) => {
                     const color = getCriteriaColor(record.category);
+                    const hasProof = Boolean(record.evidenceUrl);
+
                     return (
                       <div
                         key={record.id}
                         className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="flex items-start space-x-3 min-w-0 flex-1">
-                          <div className={`px-2.5 py-1.5 rounded-xl text-center shrink-0 border ${
-                            parsed.isToday
-                              ? "bg-rose-500 text-white font-bold"
-                              : parsed.isTomorrow
-                              ? "bg-amber-500 text-slate-950 font-bold"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}>
+                          <div
+                            className={`px-2.5 py-1.5 rounded-xl text-center shrink-0 border ${
+                              parsed.isToday
+                                ? "bg-rose-500 text-white font-bold"
+                                : parsed.isTomorrow
+                                ? "bg-amber-500 text-slate-950 font-bold"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            }`}
+                          >
                             <span className="block text-xs font-black">
                               {parsed.isToday ? "HÔM NAY" : parsed.isTomorrow ? "NGÀY MAI" : `+${parsed.daysDiff}d`}
                             </span>
@@ -638,13 +1029,15 @@ export default function CalendarPage() {
                           </div>
                         </div>
 
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5">
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-2">
                           <div className="flex items-center space-x-2">
-                            <span className={`text-sm font-mono font-bold ${
-                              Number(record.points) < 0
-                                ? "text-rose-600 dark:text-rose-400"
-                                : "text-emerald-600 dark:text-emerald-400"
-                            }`}>
+                            <span
+                              className={`text-sm font-mono font-bold ${
+                                Number(record.points) < 0
+                                  ? "text-rose-600 dark:text-rose-400"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                              }`}
+                            >
                               {formatPointsLabel(record.points)}
                             </span>
                             {parsed.isFuture && (
@@ -653,17 +1046,61 @@ export default function CalendarPage() {
                               </span>
                             )}
                           </div>
-                          {!record.evidenceUrl ? (
-                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
-                              <AlertTriangle className="w-3 h-3" />
-                              <span>Chưa có minh chứng</span>
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Có minh chứng</span>
-                            </span>
-                          )}
+
+                          <div className="flex items-center space-x-1.5">
+                            {!hasProof ? (
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  <span>Chưa có minh chứng</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    triggerHaptic("light");
+                                    setEvidenceModalRecord(record);
+                                    setIsEvidenceModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold transition cursor-pointer"
+                                  title="Nộp ảnh/URL minh chứng"
+                                >
+                                  <UploadCloud className="w-3 h-3" />
+                                  <span>Nộp minh chứng</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Có minh chứng</span>
+                              </span>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic("light");
+                                const ev = recordToCalendarEvent(record);
+                                window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
+                              }}
+                              title="Thêm vào Google Calendar"
+                              className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic("light");
+                                const ev = recordToCalendarEvent(record);
+                                downloadSingleEventIcs(ev);
+                              }}
+                              title="Tải file .ICS"
+                              className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -689,14 +1126,14 @@ export default function CalendarPage() {
                 </p>
               ) : (
                 <div className="space-y-2.5">
-                  {pastEvents.slice(0, 10).map(({ record, parsed }) => {
+                  {pastEvents.slice(0, 15).map(({ record, parsed }) => {
                     const color = getCriteriaColor(record.category);
                     const hasProof = Boolean(record.evidenceUrl);
 
                     return (
                       <div
                         key={record.id}
-                        className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                        className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                       >
                         <div className="min-w-0 flex-1 flex items-center space-x-3">
                           <span className="font-mono text-slate-400 dark:text-slate-500 shrink-0 w-20 text-[11px]">
@@ -710,23 +1147,67 @@ export default function CalendarPage() {
                           </span>
                         </div>
 
-                        <div className="flex items-center space-x-3 shrink-0">
-                          {hasProof ? (
+                        <div className="flex items-center space-x-2 shrink-0">
+                          {!hasProof ? (
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
+                                <AlertTriangle className="w-3 h-3" />
+                                <span>Chưa có minh chứng</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic("light");
+                                  setEvidenceModalRecord(record);
+                                  setIsEvidenceModalOpen(true);
+                                }}
+                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
+                                title="Nộp ảnh/URL minh chứng"
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                <span>Nộp minh chứng</span>
+                              </button>
+                            </div>
+                          ) : (
                             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
                               <CheckCircle2 className="w-3 h-3" />
                               <span>Có minh chứng</span>
                             </span>
-                          ) : (
-                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
-                              <AlertTriangle className="w-3 h-3" />
-                              <span>Chưa có minh chứng</span>
-                            </span>
                           )}
-                          <span className={`font-mono font-bold ${
-                            Number(record.points) < 0
-                              ? "text-rose-600 dark:text-rose-400"
-                              : "text-emerald-600 dark:text-emerald-400"
-                          }`}>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("light");
+                              const ev = recordToCalendarEvent(record);
+                              window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
+                            }}
+                            title="Thêm vào Google Calendar"
+                            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                          >
+                            <CalendarPlus className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("light");
+                              const ev = recordToCalendarEvent(record);
+                              downloadSingleEventIcs(ev);
+                            }}
+                            title="Tải file .ICS"
+                            className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+
+                          <span
+                            className={`font-mono font-bold ${
+                              Number(record.points) < 0
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
                             {formatPointsLabel(record.points)}
                           </span>
                         </div>
@@ -751,6 +1232,19 @@ export default function CalendarPage() {
           if (currentSemesterId) {
             void loadRecords(currentSemesterId);
           }
+        }}
+      />
+
+      {/* Quick Evidence Modal */}
+      <QuickEvidenceModal
+        isOpen={isEvidenceModalOpen}
+        record={evidenceModalRecord}
+        onClose={() => {
+          setIsEvidenceModalOpen(false);
+          setEvidenceModalRecord(null);
+        }}
+        onSuccess={(updated) => {
+          setRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
         }}
       />
 

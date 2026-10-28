@@ -134,6 +134,38 @@ export function buildGoogleCalendarUrl(event: CalendarEventItem): string {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
+export function recordToCalendarEvent(record: DrlRecord): CalendarEventItem {
+  let loc = "Trường Đại học Công Thương TP.HCM";
+  let cleanNote = record.note || "Ghi nhận trong sổ điểm rèn luyện HUIT";
+  const closeBracketIdx = cleanNote.indexOf("]");
+  if (cleanNote.startsWith("[") && closeBracketIdx > 1) {
+    loc = cleanNote.slice(1, closeBracketIdx).trim() || loc;
+    cleanNote = cleanNote.slice(closeBracketIdx + 1).trim() || "Ghi nhận trong sổ điểm rèn luyện HUIT";
+  }
+
+  return {
+    id: `rec-${record.id}`,
+    title: `[TC${record.category}] ${record.title}`,
+    date: record.occurredAt || new Date().toISOString().slice(0, 10),
+    description: `Điểm: ${Number(record.points) > 0 ? "+" : ""}${record.points}đ | Ghi chú: ${cleanNote}`,
+    location: loc,
+  };
+}
+
+export function downloadSingleEventIcs(event: CalendarEventItem): void {
+  const icsContent = generateIcsCalendar([event], event.title);
+  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeTitle = event.title.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 30);
+  a.download = `huit_${safeTitle || "event"}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export function buildSemesterCalendarEvents(
   semester: Semester | null,
   records: DrlRecord[]

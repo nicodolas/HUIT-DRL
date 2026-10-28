@@ -13,7 +13,7 @@ test.describe("Personal Training Calendar & Upcoming Reminders Suite", () => {
   futureDate.setDate(futureDate.getDate() + 5);
   const futureDateStr = futureDate.toISOString().split("T")[0];
 
-  test("1. Full lifecycle: Schedule future activity, view in calendar grid & agenda, and verify dashboard reminders", async ({ page, request }) => {
+  test("1. Full lifecycle: Schedule future activity, filter/search, quick proof submission, 1-click sync, and dashboard reminders", async ({ page, request }) => {
     test.setTimeout(60_000);
 
     // 1. Register test student
@@ -86,13 +86,56 @@ test.describe("Personal Training Calendar & Upcoming Reminders Suite", () => {
     // Wait for modal to close
     await expect(modalHeader).not.toBeVisible({ timeout: 10000 });
 
-    // 6. Switch to Agenda View to verify event listing
+    // 6. Switch to Agenda View to verify event listing & 1-click sync buttons
     await agendaBtn.click();
     await expect(page.locator("text=Hội thảo Khởi nghiệp Công nghệ 2026")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("text=Hội trường C")).toBeVisible();
-    await expect(page.locator("text=Chưa có minh chứng")).toBeVisible();
+    await expect(page.locator("text=Chưa có minh chứng").first()).toBeVisible();
 
-    // 7. Return to Dashboard and verify UpcomingScheduleCard
+    // Verify 1-click Google Calendar & .ICS sync buttons exist
+    const gCalBtn = page.locator('button[title*="Google Calendar"]').first();
+    const icsBtn = page.locator('button[title*=".ICS"]').first();
+    await expect(gCalBtn).toBeVisible();
+    await expect(icsBtn).toBeVisible();
+
+    // 7. Test Quick Evidence Modal: Submit proof directly from calendar
+    const quickProofBtn = page.locator('button:has-text("Nộp minh chứng")').first();
+    await expect(quickProofBtn).toBeVisible();
+    await quickProofBtn.click();
+
+    // Quick evidence modal appears
+    const evidenceModalTitle = page.locator("h3:has-text('Nộp minh chứng hoạt động')");
+    await expect(evidenceModalTitle).toBeVisible();
+
+    // Fill proof URL and submit
+    await page.fill('#quick-evidence-url', "https://drive.google.com/file/d/test-huit-proof-2026/view");
+    await page.click('button:has-text("Xác nhận nộp")');
+    await expect(evidenceModalTitle).not.toBeVisible({ timeout: 10000 });
+
+    // Verify proof status updated to "Có minh chứng"
+    await expect(page.locator("text=Có minh chứng").first()).toBeVisible();
+
+    // 8. Test Search & Filter Toolbar
+    const searchInput = page.locator('input[placeholder*="Tìm hoạt động"]');
+    await expect(searchInput).toBeVisible();
+
+    // Search matching activity
+    await searchInput.fill("Khởi nghiệp");
+    await expect(page.locator("text=Hội thảo Khởi nghiệp Công nghệ 2026")).toBeVisible();
+
+    // Filter by TC1 (should hide TC3 activity and show filter empty state)
+    await page.click('button:has-text("TC1")');
+    await expect(page.locator("text=Không tìm thấy hoạt động nào phù hợp")).toBeVisible();
+
+    // Filter by TC3 (should display the activity again)
+    await page.click('button:has-text("TC3")');
+    await expect(page.locator("text=Hội thảo Khởi nghiệp Công nghệ 2026")).toBeVisible();
+
+    // Clear filters
+    await page.click('button:has-text("Xóa lọc")');
+    await expect(page.locator("text=Hội thảo Khởi nghiệp Công nghệ 2026")).toBeVisible();
+
+    // 9. Return to Dashboard and verify UpcomingScheduleCard & Score
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
 
@@ -106,4 +149,3 @@ test.describe("Personal Training Calendar & Upcoming Reminders Suite", () => {
     await expect(plannedScoreBadge).toBeVisible();
   });
 });
-

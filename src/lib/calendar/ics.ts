@@ -10,13 +10,24 @@ export interface CalendarEventItem {
 }
 
 export function formatIcsDate(dateStr: string): string {
-  // Accepts YYYY-MM-DD and turns into YYYYMMDD
-  const clean = dateStr.replace(/[^0-9]/g, "");
+  // Accepts YYYY-MM-DD (or YYYY-MM-DDTHH:mm) and turns into YYYYMMDD
+  const dateOnly = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+  const clean = dateOnly.replace(/[^0-9]/g, "");
   if (clean.length >= 8) {
     return clean.slice(0, 8);
   }
   const now = new Date();
   return now.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+export function formatIcsDateTime(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const dStr = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  const s = String(date.getSeconds()).padStart(2, "0");
+  return `${y}${m}${dStr}T${h}${min}${s}`;
 }
 
 export function generateIcsCalendar(
@@ -25,7 +36,7 @@ export function generateIcsCalendar(
 ): string {
   const nowIcs = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
 
-  let ics = [
+  const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//HUIT DRL//Sinh Vien Ren Luyen//VI",
@@ -35,12 +46,36 @@ export function generateIcsCalendar(
   ];
 
   for (const ev of events) {
-    const formattedDate = formatIcsDate(ev.date);
+    const hasTime = ev.date.includes("T");
+    let dtStartLine = "";
+    let dtEndLine: string | null = null;
+
+    if (hasTime) {
+      const [dPart, tPart] = ev.date.split("T");
+      const startDt = new Date(`${dPart}T${tPart.slice(0, 5)}:00`);
+      if (!Number.isNaN(startDt.getTime())) {
+        const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // 1 hour duration
+        dtStartLine = `DTSTART:${formatIcsDateTime(startDt)}`;
+        dtEndLine = `DTEND:${formatIcsDateTime(endDt)}`;
+      } else {
+        dtStartLine = `DTSTART;VALUE=DATE:${formatIcsDate(ev.date)}`;
+      }
+    } else {
+      dtStartLine = `DTSTART;VALUE=DATE:${formatIcsDate(ev.date)}`;
+    }
+
     ics.push(
       "BEGIN:VEVENT",
       `UID:${ev.id}@huit.drl`,
       `DTSTAMP:${nowIcs}`,
-      `DTSTART;VALUE=DATE:${formattedDate}`,
+      dtStartLine
+    );
+
+    if (dtEndLine) {
+      ics.push(dtEndLine);
+    }
+
+    ics.push(
       `SUMMARY:${ev.title.replace(/[\n\r]/g, " ")}`,
       `DESCRIPTION:${(ev.description || "Ghi nhận trong sổ điểm rèn luyện HUIT.").replace(/[\n\r]/g, "\\n")}`,
       `LOCATION:${(ev.location || "Trường Đại học Công Thương TP.HCM (HUIT)").replace(/[\n\r]/g, " ")}`
@@ -64,15 +99,32 @@ export function generateIcsCalendar(
 }
 
 export function buildGoogleCalendarUrl(event: CalendarEventItem): string {
-  const d = formatIcsDate(event.date);
-  const nextDay = new Date(event.date || Date.now());
-  nextDay.setDate(nextDay.getDate() + 1);
-  const endD = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
+  let datesParam: string;
+  if (event.date.includes("T")) {
+    const [dPart, tPart] = event.date.split("T");
+    const startDt = new Date(`${dPart}T${tPart.slice(0, 5)}:00`);
+    if (!Number.isNaN(startDt.getTime())) {
+      const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // 1 hour duration
+      datesParam = `${formatIcsDateTime(startDt)}/${formatIcsDateTime(endDt)}`;
+    } else {
+      const d = formatIcsDate(event.date);
+      const nextDay = new Date(event.date || Date.now());
+      nextDay.setDate(nextDay.getDate() + 1);
+      const endD = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
+      datesParam = `${d}/${endD}`;
+    }
+  } else {
+    const d = formatIcsDate(event.date);
+    const nextDay = new Date(event.date || Date.now());
+    nextDay.setDate(nextDay.getDate() + 1);
+    const endD = nextDay.toISOString().slice(0, 10).replace(/-/g, "");
+    datesParam = `${d}/${endD}`;
+  }
 
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: event.title,
-    dates: `${d}/${endD}`,
+    dates: datesParam,
     details: event.description || "Ghi nhận trong sổ điểm rèn luyện HUIT QĐ 3385",
     location: event.location || "Trường ĐH Công Thương TP.HCM",
   });
@@ -98,13 +150,21 @@ export function buildSemesterCalendarEvents(
   }
 
   for (const r of records) {
-    if (r.occurredAt && /^\d{4}-\d{2}-\d{2}$/.test(r.occurredAt)) {
+    if (r.occurredAt && /^\d{4}-\d{2}-\d{2}/.test(r.occurredAt)) {
+      let loc = "Trường Đại học Công Thương TP.HCM";
+      let cleanNote = r.note || "Đã nộp minh chứng";
+      const locMatch = cleanNote.match(/^\[(.*?)\]\s*(.*)$/);
+      if (locMatch) {
+        loc = locMatch[1];
+        cleanNote = locMatch[2] || "Hoạt động rèn luyện";
+      }
+
       events.push({
         id: `rec-${r.id}`,
         title: `[ĐRL TC${r.category}] ${r.title}`,
         date: r.occurredAt,
-        description: `Điểm: ${Number(r.points) > 0 ? "+" : ""}${r.points}đ | Ghi chú: ${r.note || "Đã nộp minh chứng"}`,
-        location: "Trường Đại học Công Thương TP.HCM",
+        description: `Điểm: ${Number(r.points) > 0 ? "+" : ""}${r.points}đ | Ghi chú: ${cleanNote}`,
+        location: loc,
       });
     }
   }

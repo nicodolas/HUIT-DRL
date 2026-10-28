@@ -78,15 +78,19 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
 ---
 
 ### Step 3: Open or Reuse Pull Request (PR)
-1. **Check for existing PR**: Verify whether a PR already exists for this branch:
+1. **Check for existing PR**: Search by branch head across all base branches to detect existing open PRs:
    ```bash
-   gh pr list --head <branch-name> --base dev --json number,url,state
+   gh pr list --head <branch-name> --state open --json number,url,state,baseRefName
    ```
 2. **If an open PR exists**:
+   - Inspect `baseRefName`. If it does NOT target `dev`, retarget it immediately to `dev`:
+     ```bash
+     gh pr edit <number> --base dev
+     ```
    - Reuse the existing PR number and URL.
    - Update PR body/title if scope has expanded: `gh pr edit <number> --body "..."`
 3. **If no open PR exists**:
-   - Create a new PR using GitHub CLI:
+   - Create a new PR strictly targeting `dev` using GitHub CLI:
      ```bash
      gh pr create --base dev --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
      ```

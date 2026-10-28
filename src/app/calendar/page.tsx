@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
@@ -23,6 +23,19 @@ import {
   Info,
 } from "lucide-react";
 
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatPointsLabel(pts: string | number): string {
+  const num = typeof pts === "string" ? parseFloat(pts) : pts;
+  if (isNaN(num)) return "+0đ";
+  return num > 0 ? `+${num}đ` : `${num}đ`;
+}
+
 export default function CalendarPage() {
   const [user, setUser] = useState<User | null>(null);
   const [semesters, setSemesters] = useState<Semester[]>(() => {
@@ -39,13 +52,13 @@ export default function CalendarPage() {
   const [records, setRecords] = useState<DrlRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [modalInitialDate, setModalInitialDate] = useState<string>("");
 
   // Calendar View states
   const [viewMode, setViewMode] = useState<"grid" | "agenda">("grid");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
+    return formatLocalDate(new Date());
   });
 
   // Load user & semesters
@@ -73,20 +86,32 @@ export default function CalendarPage() {
       .catch((err) => console.error("Error loading semesters:", err));
   }, []);
 
+  const activeSemesterReqRef = useRef<string>("");
+
   // Load records for active semester
   const loadRecords = async (semId: string) => {
     if (!semId) return;
+    activeSemesterReqRef.current = semId;
     setLoading(true);
     try {
       const res = await fetch(`/api/records?semesterId=${semId}`);
       if (res.ok) {
         const data = await res.json();
-        setRecords(data.records || []);
+        if (activeSemesterReqRef.current === semId) {
+          setRecords(data.records || []);
+        }
+      } else if (activeSemesterReqRef.current === semId) {
+        setRecords([]);
       }
     } catch (e) {
       console.error("Error loading records:", e);
+      if (activeSemesterReqRef.current === semId) {
+        setRecords([]);
+      }
     } finally {
-      setLoading(false);
+      if (activeSemesterReqRef.current === semId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -111,7 +136,7 @@ export default function CalendarPage() {
   const handleToday = () => {
     const today = new Date();
     setCurrentDate(today);
-    setSelectedDateStr(today.toISOString().split("T")[0]);
+    setSelectedDateStr(formatLocalDate(today));
   };
 
   // Group records by Date YYYY-MM-DD
@@ -162,7 +187,7 @@ export default function CalendarPage() {
     }
 
     // Current month days
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = formatLocalDate(new Date());
     for (let d = 1; d <= totalDays; d++) {
       const mStr = String(currentMonth + 1).padStart(2, "0");
       const dStr = String(d).padStart(2, "0");
@@ -274,7 +299,10 @@ export default function CalendarPage() {
 
             {/* Add Record button */}
             <button
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setModalInitialDate("");
+                setIsAddModalOpen(true);
+              }}
               className="h-9 px-4 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold flex items-center space-x-1.5 hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors shadow-2xs cursor-pointer"
             >
               <Plus className="w-4 h-4" />
@@ -425,8 +453,11 @@ export default function CalendarPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center space-x-1"
+                    onClick={() => {
+                      setModalInitialDate(selectedDateStr);
+                      setIsAddModalOpen(true);
+                    }}
+                    className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center space-x-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm</span>
@@ -443,8 +474,11 @@ export default function CalendarPage() {
                       Hãy lên lịch hoạt động để theo dõi điểm rèn luyện chủ động hơn.
                     </p>
                     <button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="mt-4 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors"
+                      onClick={() => {
+                        setModalInitialDate(selectedDateStr);
+                        setIsAddModalOpen(true);
+                      }}
+                      className="mt-4 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Lên lịch hoạt động này</span>
@@ -465,8 +499,12 @@ export default function CalendarPage() {
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}>
                               TC{record.category}
                             </span>
-                            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                              +{record.points}đ
+                            <span className={`text-xs font-mono font-bold shrink-0 ${
+                              Number(record.points) < 0
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                            }`}>
+                              {formatPointsLabel(record.points)}
                             </span>
                           </div>
 
@@ -587,12 +625,18 @@ export default function CalendarPage() {
 
                         <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-1.5">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                              +{record.points}đ
+                            <span className={`text-sm font-mono font-bold ${
+                              Number(record.points) < 0
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                            }`}>
+                              {formatPointsLabel(record.points)}
                             </span>
-                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
-                              Dự kiến
-                            </span>
+                            {parsed.isFuture && (
+                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                                Dự kiến
+                              </span>
+                            )}
                           </div>
                           {!record.evidenceUrl ? (
                             <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
@@ -661,8 +705,12 @@ export default function CalendarPage() {
                               <span>Chưa có minh chứng</span>
                             </span>
                           )}
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            +{record.points}đ
+                          <span className={`font-mono font-bold ${
+                            Number(record.points) < 0
+                              ? "text-rose-600 dark:text-rose-400"
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {formatPointsLabel(record.points)}
                           </span>
                         </div>
                       </div>
@@ -679,6 +727,7 @@ export default function CalendarPage() {
       <AddRecordModal
         isOpen={isAddModalOpen}
         semesterId={currentSemesterId}
+        initialDate={modalInitialDate || selectedDateStr}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
           setIsAddModalOpen(false);

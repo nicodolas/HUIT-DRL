@@ -27,14 +27,14 @@ export const BottomNav: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-lg transition-colors min-w-0 ${
                 isActive
                   ? "text-slate-900 dark:text-white font-semibold"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-normal"
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
-              <span className="text-[11px] mt-0.5">{item.label}</span>
+              <Icon className={`w-4.5 h-4.5 ${isActive ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
+              <span className="text-[10px] mt-0.5 tracking-tight truncate">{item.label}</span>
             </Link>
           );
         })}

@@ -11,7 +11,8 @@ Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer o
 
 ## 🛡️ Delivery Contract
 
-- **No direct push to protected branches**: Never commit or push changes directly to `main` or the repository's default branch.
+- **Default base branch is `dev`**: All feature, fix, and refactoring branches MUST target `dev` (`--base dev`) as the pre-production integration environment. `main` is strictly reserved for production releases promoted from `dev`.
+- **No direct push to protected branches**: Never commit or push changes directly to `main` or `dev`. Always branch and use a reviewed Pull Request.
 - **No unauthorized merge**: Never merge the PR automatically unless the user explicitly requests merging.
 - **Review gates & trust tiers**:
   - **Tier 1 (Primary / Required)**: any login or check name containing `cubic` (case-insensitive) (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
@@ -79,7 +80,7 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
 ### Step 3: Open or Reuse Pull Request (PR)
 1. **Check for existing PR**: Verify whether a PR already exists for this branch:
    ```bash
-   gh pr list --head <branch-name> --json number,url,state
+   gh pr list --head <branch-name> --base dev --json number,url,state
    ```
 2. **If an open PR exists**:
    - Reuse the existing PR number and URL.
@@ -87,7 +88,7 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
 3. **If no open PR exists**:
    - Create a new PR using GitHub CLI:
      ```bash
-     gh pr create --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
+     gh pr create --base dev --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
      ```
 4. Record the PR number, URL, base branch, and current head SHA:
    ```bash

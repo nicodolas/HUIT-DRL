@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { QuickEvidenceModal } from "@/components/calendar/QuickEvidenceModal";
+import { CalendarRecordCard } from "@/components/calendar/CalendarRecordCard";
 import { DrlRecord, Semester, User } from "@/lib/db/schema";
 import {
   parseEventDateTime,
@@ -14,7 +15,6 @@ import {
   ParsedEventDateTime,
 } from "@/lib/calendar/utils";
 import {
-  recordToCalendarEvent,
   downloadSingleEventIcs,
   buildGoogleCalendarUrl,
   CalendarEventItem,
@@ -28,16 +28,11 @@ import {
   ListFilter,
   Grid,
   Plus,
-  Clock,
-  MapPin,
-  CheckCircle2,
-  AlertTriangle,
   CalendarCheck,
   Sparkles,
   Search,
   CalendarPlus,
   Download,
-  UploadCloud,
   Bell,
   X,
 } from "lucide-react";
@@ -47,12 +42,6 @@ function formatLocalDate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-
-function formatPointsLabel(pts: string | number): string {
-  const num = typeof pts === "string" ? Number.parseFloat(pts) : pts;
-  if (Number.isNaN(num)) return "+0đ";
-  return num > 0 ? `+${num}đ` : `${num}đ`;
 }
 
 export default function CalendarPage() {
@@ -202,11 +191,11 @@ export default function CalendarPage() {
 
       // 2. Status filter
       if (selectedStatusFilter === "upcoming") {
-        if (!parsed || parsed.daysDiff < 0) return false;
+        if (!parsed || parsed.isPast) return false;
       } else if (selectedStatusFilter === "missing_evidence") {
         if (Boolean(r.evidenceUrl)) return false;
       } else if (selectedStatusFilter === "completed") {
-        if (!parsed || parsed.daysDiff >= 0 || !r.evidenceUrl) return false;
+        if (!parsed || !parsed.isPast || !r.evidenceUrl) return false;
       }
 
       // 3. Search query
@@ -501,6 +490,7 @@ export default function CalendarPage() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
+                  aria-label="Xóa nội dung tìm kiếm"
                   className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -835,117 +825,18 @@ export default function CalendarPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {selectedDateEvents.map(({ record, parsed }) => {
-                      const color = getCriteriaColor(record.category);
-                      const hasProof = Boolean(record.evidenceUrl);
-
-                      return (
-                        <div
-                          key={record.id}
-                          className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}>
-                              TC{record.category}
-                            </span>
-                            <span
-                              className={`text-xs font-mono font-bold shrink-0 ${
-                                Number(record.points) < 0
-                                  ? "text-rose-600 dark:text-rose-400"
-                                  : "text-emerald-600 dark:text-emerald-400"
-                              }`}
-                            >
-                              {formatPointsLabel(record.points)}
-                            </span>
-                          </div>
-
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                            {record.title}
-                          </h4>
-
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                            {parsed.timeStr && (
-                              <span className="flex items-center space-x-1 font-mono">
-                                <Clock className="w-3 h-3 text-amber-500" />
-                                <span>{parsed.timeStr}</span>
-                              </span>
-                            )}
-                            {record.note && (
-                              <span className="flex items-center space-x-1 truncate max-w-[180px]">
-                                <MapPin className="w-3 h-3" />
-                                <span className="truncate">{record.note}</span>
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Status & 1-Click Action Bar */}
-                          <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                            <div>
-                              {parsed.isFuture ? (
-                                <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center space-x-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>Sắp diễn ra</span>
-                                </span>
-                              ) : hasProof ? (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>Đã có minh chứng</span>
-                                </span>
-                              ) : (
-                                <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1">
-                                  <AlertTriangle className="w-3 h-3" />
-                                  <span>Chưa có minh chứng</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center space-x-1">
-                              {!hasProof && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    triggerHaptic("light");
-                                    setEvidenceModalRecord(record);
-                                    setIsEvidenceModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
-                                  title="Nộp ảnh/URL minh chứng nhanh"
-                                >
-                                  <UploadCloud className="w-3 h-3" />
-                                  <span>Nộp minh chứng</span>
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic("light");
-                                  const ev = recordToCalendarEvent(record);
-                                  window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
-                                }}
-                                title="Thêm vào Google Calendar"
-                                className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                              >
-                                <CalendarPlus className="w-3.5 h-3.5" />
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic("light");
-                                  const ev = recordToCalendarEvent(record);
-                                  downloadSingleEventIcs(ev);
-                                }}
-                                title="Tải file .ICS"
-                                className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {selectedDateEvents.map(({ record, parsed }) => (
+                      <CalendarRecordCard
+                        key={record.id}
+                        record={record}
+                        parsed={parsed}
+                        variant="compact"
+                        onOpenEvidenceModal={(rec) => {
+                          setEvidenceModalRecord(rec);
+                          setIsEvidenceModalOpen(true);
+                        }}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -978,133 +869,18 @@ export default function CalendarPage() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {upcomingEvents.map(({ record, parsed }) => {
-                    const color = getCriteriaColor(record.category);
-                    const hasProof = Boolean(record.evidenceUrl);
-
-                    return (
-                      <div
-                        key={record.id}
-                        className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="flex items-start space-x-3 min-w-0 flex-1">
-                          <div
-                            className={`px-2.5 py-1.5 rounded-xl text-center shrink-0 border ${
-                              parsed.isToday
-                                ? "bg-rose-500 text-white font-bold"
-                                : parsed.isTomorrow
-                                ? "bg-amber-500 text-slate-950 font-bold"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                            }`}
-                          >
-                            <span className="block text-xs font-black">
-                              {parsed.isToday ? "HÔM NAY" : parsed.isTomorrow ? "NGÀY MAI" : `+${parsed.daysDiff}d`}
-                            </span>
-                            <span className="block text-[10px] font-mono opacity-80">
-                              {parsed.dateStr}
-                            </span>
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}>
-                                TC{record.category}
-                              </span>
-                              {parsed.timeStr && (
-                                <span className="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-400 flex items-center space-x-1">
-                                  <Clock className="w-3 h-3 text-amber-500" />
-                                  <span>{parsed.timeStr}</span>
-                                </span>
-                              )}
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                              {record.title}
-                            </h3>
-                            {record.note && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 flex items-center space-x-1">
-                                <MapPin className="w-3 h-3 shrink-0" />
-                                <span>{record.note}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 gap-2">
-                          <div className="flex items-center space-x-2">
-                            <span
-                              className={`text-sm font-mono font-bold ${
-                                Number(record.points) < 0
-                                  ? "text-rose-600 dark:text-rose-400"
-                                  : "text-emerald-600 dark:text-emerald-400"
-                              }`}
-                            >
-                              {formatPointsLabel(record.points)}
-                            </span>
-                            {parsed.isFuture && (
-                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
-                                Dự kiến
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center space-x-1.5">
-                            {!hasProof ? (
-                              <div className="flex items-center space-x-1.5">
-                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
-                                  <AlertTriangle className="w-3 h-3" />
-                                  <span>Chưa có minh chứng</span>
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    triggerHaptic("light");
-                                    setEvidenceModalRecord(record);
-                                    setIsEvidenceModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold transition cursor-pointer"
-                                  title="Nộp ảnh/URL minh chứng"
-                                >
-                                  <UploadCloud className="w-3 h-3" />
-                                  <span>Nộp minh chứng</span>
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Có minh chứng</span>
-                              </span>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic("light");
-                                const ev = recordToCalendarEvent(record);
-                                window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
-                              }}
-                              title="Thêm vào Google Calendar"
-                              className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                            >
-                              <CalendarPlus className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic("light");
-                                const ev = recordToCalendarEvent(record);
-                                downloadSingleEventIcs(ev);
-                              }}
-                              title="Tải file .ICS"
-                              className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {upcomingEvents.map(({ record, parsed }) => (
+                    <CalendarRecordCard
+                      key={record.id}
+                      record={record}
+                      parsed={parsed}
+                      variant="agenda-upcoming"
+                      onOpenEvidenceModal={(rec) => {
+                        setEvidenceModalRecord(rec);
+                        setIsEvidenceModalOpen(true);
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -1126,94 +902,18 @@ export default function CalendarPage() {
                 </p>
               ) : (
                 <div className="space-y-2.5">
-                  {pastEvents.slice(0, 15).map(({ record, parsed }) => {
-                    const color = getCriteriaColor(record.category);
-                    const hasProof = Boolean(record.evidenceUrl);
-
-                    return (
-                      <div
-                        key={record.id}
-                        className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="min-w-0 flex-1 flex items-center space-x-3">
-                          <span className="font-mono text-slate-400 dark:text-slate-500 shrink-0 w-20 text-[11px]">
-                            {parsed.dateStr}
-                          </span>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${color.lightBg} ${color.text} border ${color.border} shrink-0`}>
-                            TC{record.category}
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                            {record.title}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 shrink-0">
-                          {!hasProof ? (
-                            <div className="flex items-center space-x-1.5">
-                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-0.5">
-                                <AlertTriangle className="w-3 h-3" />
-                                <span>Chưa có minh chứng</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic("light");
-                                  setEvidenceModalRecord(record);
-                                  setIsEvidenceModalOpen(true);
-                                }}
-                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] transition cursor-pointer"
-                                title="Nộp ảnh/URL minh chứng"
-                              >
-                                <UploadCloud className="w-3 h-3" />
-                                <span>Nộp minh chứng</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-0.5">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Có minh chứng</span>
-                            </span>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic("light");
-                              const ev = recordToCalendarEvent(record);
-                              window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
-                            }}
-                            title="Thêm vào Google Calendar"
-                            className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                          >
-                            <CalendarPlus className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic("light");
-                              const ev = recordToCalendarEvent(record);
-                              downloadSingleEventIcs(ev);
-                            }}
-                            title="Tải file .ICS"
-                            className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </button>
-
-                          <span
-                            className={`font-mono font-bold ${
-                              Number(record.points) < 0
-                                ? "text-rose-600 dark:text-rose-400"
-                                : "text-emerald-600 dark:text-emerald-400"
-                            }`}
-                          >
-                            {formatPointsLabel(record.points)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {pastEvents.slice(0, 15).map(({ record, parsed }) => (
+                    <CalendarRecordCard
+                      key={record.id}
+                      record={record}
+                      parsed={parsed}
+                      variant="agenda-past"
+                      onOpenEvidenceModal={(rec) => {
+                        setEvidenceModalRecord(rec);
+                        setIsEvidenceModalOpen(true);
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>

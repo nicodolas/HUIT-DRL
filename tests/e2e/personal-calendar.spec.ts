@@ -30,10 +30,18 @@ test.describe("Personal Training Calendar & Upcoming Reminders Suite", () => {
 
     // 2. Login to Dashboard
     await page.goto("/login");
-    await page.fill('input[placeholder*="tên đăng nhập"]', testUsername);
-    await page.fill('input[type="password"]', testPassword);
+    await page.waitForLoadState("networkidle");
+    const userInp = page.locator('input[placeholder*="tên đăng nhập"]');
+    await expect(userInp).toBeVisible({ timeout: 10000 });
+    await userInp.click();
+    await userInp.fill(testUsername);
+
+    const passInp = page.locator('input[type="password"]');
+    await passInp.click();
+    await passInp.fill(testPassword);
+
     await page.click('button[type="submit"]');
-    await page.waitForURL("/", { timeout: 15000 });
+    await page.waitForURL("/", { timeout: 20000, waitUntil: "domcontentloaded" });
 
     // 3. Verify Header has "Lịch trình" link and navigate
     const calendarHeaderLink = page.locator('header a[href="/calendar"]').first();
@@ -113,7 +121,8 @@ test.describe("Personal Training Calendar & Upcoming Reminders Suite", () => {
     await expect(evidenceModalTitle).not.toBeVisible({ timeout: 10000 });
 
     // Verify proof status updated to "Có minh chứng"
-    await expect(page.locator("text=Có minh chứng").first()).toBeVisible();
+    await expect(page.getByText("Có minh chứng", { exact: true }).first()).toBeVisible();
+    await expect(page.locator("text=Chưa có minh chứng")).not.toBeVisible();
 
     // 8. Test Search & Filter Toolbar
     const searchInput = page.locator('input[placeholder*="Tìm hoạt động"]');

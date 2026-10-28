@@ -85,18 +85,26 @@ export default function CalendarPage() {
           setCurrentSemesterId((prev) => {
             if (prev && data.semesters.some((s: any) => s.id === prev)) return prev;
             const cur = data.semesters.find((s: any) => s.isCurrent) || data.semesters[0];
-            return cur.id;
+            return cur?.id || "";
           });
+        } else {
+          setLoading(false);
         }
       })
-      .catch((err) => console.error("Error loading semesters:", err));
+      .catch((err) => {
+        console.error("Error loading semesters:", err);
+        setLoading(false);
+      });
   }, []);
 
   const activeSemesterReqRef = useRef<string>("");
 
   // Load records for active semester
   const loadRecords = async (semId: string) => {
-    if (!semId) return;
+    if (!semId) {
+      setLoading(false);
+      return;
+    }
     activeSemesterReqRef.current = semId;
     setLoading(true);
     try {
@@ -124,6 +132,8 @@ export default function CalendarPage() {
   useEffect(() => {
     if (currentSemesterId) {
       void loadRecords(currentSemesterId);
+    } else {
+      setLoading(false);
     }
   }, [currentSemesterId]);
 
@@ -672,7 +682,7 @@ export default function CalendarPage() {
               </div>
 
               {loading ? (
-                <p className="text-xs text-slate-400 py-4 text-center">Đang tải lịch sử hoạt động...</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">Đang tải lịch sử hoạt động...</p>
               ) : pastEvents.length === 0 ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                   Chưa có hoạt động quá khứ nào được ghi nhận.

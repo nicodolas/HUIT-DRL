@@ -168,3 +168,21 @@ export function getUrgentReminders(records: DrlRecord[]): Array<{ record: DrlRec
     .sort((a, b) => a.parsed.fullDate.getTime() - b.parsed.fullDate.getTime());
 }
 
+/**
+ * Filter past records sorted by date descending
+ */
+export function getPastRecords(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
+  const now = Date.now();
+  return records
+    .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
+    .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
+      if (!item.parsed) return false;
+      if (item.parsed.timeStr) {
+        return item.parsed.fullDate.getTime() < now;
+      }
+      return item.parsed.daysDiff < 0;
+    })
+    .sort((a, b) => b.parsed.fullDate.getTime() - a.parsed.fullDate.getTime());
+}
+
+

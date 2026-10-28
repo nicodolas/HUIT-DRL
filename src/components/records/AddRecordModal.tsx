@@ -137,8 +137,15 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
         setOccurredTime("");
       }
-      setLocation("");
-      setNote(recordToEdit.note || "");
+      let initialLocation = "";
+      let initialNote = recordToEdit.note || "";
+      const locMatch = initialNote.match(/^\[(.*?)\]\s*(.*)$/s);
+      if (locMatch) {
+        initialLocation = locMatch[1];
+        initialNote = locMatch[2];
+      }
+      setLocation(initialLocation);
+      setNote(initialNote);
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else if (initialPreset) {
       setTab("preset");
@@ -229,7 +236,10 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       }
     }
 
-    const finalOccurredAt = occurredTime.trim() ? `${occurredAt}T${occurredTime.trim()}` : occurredAt;
+    const trimmedDate = occurredAt.trim();
+    const finalOccurredAt = trimmedDate && occurredTime.trim()
+      ? `${trimmedDate}T${occurredTime.trim()}`
+      : trimmedDate;
     let finalNote = note.trim();
     if (location.trim() && !finalNote.includes(location.trim())) {
       finalNote = finalNote ? `[${location.trim()}] ${finalNote}` : `[${location.trim()}]`;

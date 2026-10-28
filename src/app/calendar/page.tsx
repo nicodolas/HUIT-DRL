@@ -5,7 +5,13 @@ import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { DrlRecord, Semester, User } from "@/lib/db/schema";
-import { parseEventDateTime, getCriteriaColor, ParsedEventDateTime } from "@/lib/calendar/utils";
+import {
+  parseEventDateTime,
+  getCriteriaColor,
+  getUpcomingRecords,
+  getPastRecords,
+  ParsedEventDateTime,
+} from "@/lib/calendar/utils";
 import { getUserSemestersCache, saveUserSemestersCache } from "@/lib/offline/cache";
 import {
   Calendar as CalendarIcon,
@@ -222,25 +228,14 @@ export default function CalendarPage() {
     return eventsByDate.get(selectedDateStr) || [];
   }, [eventsByDate, selectedDateStr]);
 
-  // All events sorted for Agenda View
-  const allParsedEvents = useMemo(() => {
-    const list: Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> = [];
-    for (const r of records) {
-      const parsed = parseEventDateTime(r.occurredAt);
-      if (parsed) {
-        list.push({ record: r, parsed });
-      }
-    }
-    return list.sort((a, b) => b.parsed.fullDate.getTime() - a.parsed.fullDate.getTime());
+  // Upcoming & Past events for Agenda View using centralized calendar utils
+  const upcomingEvents = useMemo(() => {
+    return getUpcomingRecords(records);
   }, [records]);
 
-  const upcomingEvents = useMemo(() => {
-    return allParsedEvents.filter((e) => e.parsed.daysDiff >= 0).reverse();
-  }, [allParsedEvents]);
-
   const pastEvents = useMemo(() => {
-    return allParsedEvents.filter((e) => e.parsed.daysDiff < 0);
-  }, [allParsedEvents]);
+    return getPastRecords(records);
+  }, [records]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-24 sm:pb-12">
@@ -464,7 +459,12 @@ export default function CalendarPage() {
                   </button>
                 </div>
 
-                {selectedDateEvents.length === 0 ? (
+                {loading ? (
+                  <div className="py-10 text-center space-y-2">
+                    <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Đang tải hoạt động...</p>
+                  </div>
+                ) : selectedDateEvents.length === 0 ? (
                   <div className="text-center py-10 px-4">
                     <CalendarCheck className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -570,7 +570,12 @@ export default function CalendarPage() {
                 </h2>
               </div>
 
-              {upcomingEvents.length === 0 ? (
+              {loading ? (
+                <div className="py-8 text-center space-y-2">
+                  <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Đang tải kế hoạch rèn luyện...</p>
+                </div>
+              ) : upcomingEvents.length === 0 ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                   Không có lịch trình sắp tới. Hãy bấm "+ Lên lịch hoạt động" để thêm hoạt động mới.
                 </p>
@@ -666,7 +671,9 @@ export default function CalendarPage() {
                 </h2>
               </div>
 
-              {pastEvents.length === 0 ? (
+              {loading ? (
+                <p className="text-xs text-slate-400 py-4 text-center">Đang tải lịch sử hoạt động...</p>
+              ) : pastEvents.length === 0 ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                   Chưa có hoạt động quá khứ nào được ghi nhận.
                 </p>

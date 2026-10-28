@@ -15,7 +15,8 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
   records,
   onOpenAddModal,
 }) => {
-  const upcomingList = getUpcomingRecords(records).slice(0, 5); // top 5 upcoming
+  const allUpcoming = getUpcomingRecords(records);
+  const upcomingList = allUpcoming.slice(0, 5); // top 5 upcoming
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs transition-colors flex flex-col justify-between">
@@ -29,9 +30,9 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>Lịch trình rèn luyện</span>
-                {upcomingList.length > 0 && (
+                {allUpcoming.length > 0 && (
                   <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold">
-                    {upcomingList.length}
+                    {allUpcoming.length}
                   </span>
                 )}
               </h2>
@@ -122,9 +123,23 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      +{record.points}đ
-                    </span>
+                    {(() => {
+                      const totalPoints = (Number(record.points) || 0) * (record.quantity || 1);
+                      const isDeduction = totalPoints < 0;
+                      const pointsPrefix = parsed.isFuture ? "Dự kiến " : "";
+                      const sign = totalPoints > 0 ? "+" : "";
+                      return (
+                        <span
+                          className={`text-xs font-mono font-bold ${
+                            isDeduction
+                              ? "text-rose-600 dark:text-rose-400"
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {pointsPrefix}{sign}{totalPoints}đ
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -133,10 +148,10 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
         )}
       </div>
 
-      {upcomingList.length > 0 && (
+      {allUpcoming.length > 0 && (
         <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            Tổng {upcomingList.length} lịch trình sắp tới
+            Tổng {allUpcoming.length} lịch trình sắp tới
           </span>
           <Link
             href="/calendar"

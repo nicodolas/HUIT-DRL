@@ -155,10 +155,10 @@ export function buildSemesterCalendarEvents(
     if (r.occurredAt && /^\d{4}-\d{2}-\d{2}/.test(r.occurredAt)) {
       let loc = "Trường Đại học Công Thương TP.HCM";
       let cleanNote = r.note || "Đã nộp minh chứng";
-      const locMatch = cleanNote.match(/^\[([^\]]+)\]\s*(.*)$/);
-      if (locMatch) {
-        loc = locMatch[1];
-        cleanNote = locMatch[2] || "Hoạt động rèn luyện";
+      const closeBracketIdx = cleanNote.indexOf("]");
+      if (cleanNote.startsWith("[") && closeBracketIdx > 1) {
+        loc = cleanNote.slice(1, closeBracketIdx).trim() || loc;
+        cleanNote = cleanNote.slice(closeBracketIdx + 1).trim() || "Hoạt động rèn luyện";
       }
 
       events.push({

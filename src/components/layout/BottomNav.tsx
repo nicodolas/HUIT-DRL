@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpenCheck, Target, User, BookOpen } from "lucide-react";
+import { LayoutDashboard, BookOpenCheck, Target, User, BookOpen, Calendar } from "lucide-react";
 
 export const BottomNav: React.FC = () => {
   const pathname = usePathname();
@@ -11,6 +11,7 @@ export const BottomNav: React.FC = () => {
   const navItems = [
     { href: "/", label: "Tổng quan", icon: LayoutDashboard },
     { href: "/records", label: "Sổ điểm", icon: BookOpenCheck },
+    { href: "/calendar", label: "Lịch trình", icon: Calendar },
     { href: "/goals", label: "Mục tiêu", icon: Target },
     { href: "/handbook", label: "Sổ tay", icon: BookOpen },
     { href: "/profile", label: "Tài khoản", icon: User },

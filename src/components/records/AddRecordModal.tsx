@@ -5,7 +5,7 @@ import { DrlCriteriaPreset, DrlRecord } from "@/lib/db/schema";
 import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
 import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
-import { getPresetsCache, savePresetsCache } from "@/lib/offline/cache";
+import { getPresetsCache, savePresetsCache, getUserSemestersCache } from "@/lib/offline/cache";
 import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass } from "lucide-react";
 import { compressImage, formatBytes } from "@/lib/media/compressor";
 import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
@@ -73,6 +73,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   // Form states
   const [quantity, setQuantity] = useState(1);
   const [occurredAt, setOccurredAt] = useState(new Date().toISOString().split("T")[0]);
+  const [occurredTime, setOccurredTime] = useState("");
+  const [location, setLocation] = useState("");
   const [note, setNote] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -125,7 +127,15 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setCustomPoints(Number(recordToEdit.points));
       setCustomCategory(recordToEdit.category);
       setQuantity(recordToEdit.quantity || 1);
-      setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
+      if (recordToEdit.occurredAt?.includes("T")) {
+        const [d, t] = recordToEdit.occurredAt.split("T");
+        setOccurredAt(d);
+        setOccurredTime(t.slice(0, 5));
+      } else {
+        setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
+        setOccurredTime("");
+      }
+      setLocation("");
       setNote(recordToEdit.note || "");
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else if (initialPreset) {
@@ -134,17 +144,21 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setSelectedCategory(initialPreset.category);
       setCustomCategory(initialPreset.category);
       setQuantity(1);
+      setLocation("");
       setNote("");
       setEvidenceUrl("");
       setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredTime("");
     } else {
       setSelectedPreset(null);
       setCustomTitle("");
       setCustomPoints("");
       setQuantity(1);
+      setLocation("");
       setNote("");
       setEvidenceUrl("");
       setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredTime("");
       if (initialCategory) {
         setSelectedCategory(initialCategory);
         setCustomCategory(initialCategory);
@@ -190,9 +204,40 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
     setError(null);
     setLoading(true);
 
-    const activeSemesterId = effectiveSemesterId || semesterId;
+    let activeSemesterId = effectiveSemesterId || semesterId;
+    if (!activeSemesterId || !activeSemesterId.trim()) {
+      const cached = getUserSemestersCache();
+      if (cached && cached.length > 0) {
+        const cur = cached.find((s) => s.isCurrent) || cached[0];
+        if (cur?.id) activeSemesterId = cur.id;
+      }
+    }
+
+    const finalOccurredAt = occurredTime.trim() ? `${occurredAt}T${occurredTime.trim()}` : occurredAt;
+    let finalNote = note.trim();
+    if (location.trim() && !finalNote.includes(location.trim())) {
+      finalNote = finalNote ? `[${location.trim()}] ${finalNote}` : `[${location.trim()}]`;
+    }
 
     try {
+      if (!activeSemesterId || !activeSemesterId.trim()) {
+        try {
+          const sRes = await fetch("/api/semesters");
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData.semesters && sData.semesters.length > 0) {
+              const cur = sData.semesters.find((s: any) => s.isCurrent) || sData.semesters[0];
+              if (cur?.id) {
+                activeSemesterId = cur.id;
+                setEffectiveSemesterId(cur.id);
+              }
+            }
+          }
+        } catch {
+          // ignore network failure
+        }
+      }
+
       if (!activeSemesterId || !activeSemesterId.trim()) {
         setError("Chưa chọn học kỳ hợp lệ. Vui lòng thử lại sau giây lát.");
         setLoading(false);
@@ -201,8 +246,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
 
       let payload: any = {
         semesterId: activeSemesterId,
-        occurredAt,
-        note: note.trim() || undefined,
+        occurredAt: finalOccurredAt,
+        note: finalNote || undefined,
         evidenceUrl: evidenceUrl.trim() || undefined,
         quantity,
       };
@@ -288,8 +333,8 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         // Fallback to offline draft on mobile network drop / timeout
         addOfflineDraft({
           semesterId: activeSemesterId,
-          occurredAt,
-          note: note.trim() || undefined,
+          occurredAt: finalOccurredAt,
+          note: finalNote || undefined,
           evidenceUrl: evidenceUrl.trim() || undefined,
           quantity,
           category: tab === "preset" ? selectedPreset!.category : customCategory,
@@ -640,13 +685,39 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Giờ diễn ra (tùy chọn):
+                </label>
+                <input
+                  type="time"
+                  value={occurredTime}
+                  onChange={(e) => setOccurredTime(e.target.value)}
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  Địa điểm tổ chức (tùy chọn):
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Hội trường A, Sân D..."
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                 Ghi chú thêm (tùy chọn):
               </label>
               <input
                 type="text"
-                placeholder="Ví dụ: Có giấy xác nhận, Hội trường A..."
+                placeholder="Ví dụ: Có giấy xác nhận tham gia..."
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full text-xs p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500"

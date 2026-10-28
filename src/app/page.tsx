@@ -11,6 +11,8 @@ import { DrlRadarCard } from "@/components/dashboard/DrlRadarCard";
 import { GoalTrackerCard } from "@/components/dashboard/GoalTrackerCard";
 import { CumulativeStatsCard } from "@/components/dashboard/CumulativeStatsCard";
 import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
+import { ScheduleReminderBanner } from "@/components/dashboard/ScheduleReminderBanner";
+import { UpcomingScheduleCard } from "@/components/dashboard/UpcomingScheduleCard";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
@@ -266,6 +268,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Urgent Today / Tomorrow Activity Reminders */}
+        <ScheduleReminderBanner records={records} />
+
         {/* Offline Sync Banner */}
         <OfflineSyncBanner onSyncComplete={loadRecords} />
 
@@ -355,21 +360,32 @@ export default function DashboardPage() {
 
         {/* Tab 1: Personal Activity Log (Primary View) */}
         {activeTab === "records" && (
-          <RecordList
-            records={records}
-            studentName={user?.fullName}
-            studentClass={user?.className}
-            onDeleteRecord={handleDeleteRecord}
-            onEditRecord={(r) => {
-              setEditingRecord(r);
-              setModalOpen(true);
-            }}
-            onOpenAddModal={() => {
-              setEditingRecord(null);
-              setModalInitialCategory(undefined);
-              setModalOpen(true);
-            }}
-          />
+          <div className="space-y-4">
+            <UpcomingScheduleCard
+              records={records}
+              onOpenAddModal={() => {
+                setEditingRecord(null);
+                setModalInitialCategory(undefined);
+                setModalOpen(true);
+              }}
+            />
+
+            <RecordList
+              records={records}
+              studentName={user?.fullName}
+              studentClass={user?.className}
+              onDeleteRecord={handleDeleteRecord}
+              onEditRecord={(r) => {
+                setEditingRecord(r);
+                setModalOpen(true);
+              }}
+              onOpenAddModal={() => {
+                setEditingRecord(null);
+                setModalInitialCategory(undefined);
+                setModalOpen(true);
+              }}
+            />
+          </div>
         )}
 
         {/* Tab 2: 5 Criteria Breakdown & Discipline Checklist */}

@@ -13,6 +13,7 @@ import {
   Settings,
   GraduationCap,
   User,
+  Calendar,
 } from "lucide-react";
 import { triggerHaptic } from "@/lib/native/platform";
 
@@ -109,6 +110,15 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
             >
               <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span className="truncate">Xuất phiếu Mẫu số 01 (QĐ 3385)</span>
+            </Link>
+
+            <Link
+              href="/calendar"
+              onClick={() => setDropdownOpen(false)}
+              className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Calendar className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="truncate">Lịch trình rèn luyện</span>
             </Link>
 
             <button

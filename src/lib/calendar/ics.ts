@@ -35,12 +35,16 @@ export function generateIcsCalendar(
   calendarName: string = "HUIT Điểm Rèn Luyện"
 ): string {
   const nowIcs = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const sanitizedCalName = (calendarName || "HUIT Điểm Rèn Luyện")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/[:;\\]/g, "")
+    .trim() || "HUIT Diem Ren Luyen";
 
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//HUIT DRL//Sinh Vien Ren Luyen//VI",
-    `X-WR-CALNAME:${calendarName}`,
+    `X-WR-CALNAME:${sanitizedCalName}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];
@@ -153,13 +157,17 @@ export function recordToCalendarEvent(record: DrlRecord): CalendarEventItem {
 }
 
 export function downloadSingleEventIcs(event: CalendarEventItem): void {
-  const icsContent = generateIcsCalendar([event], event.title);
+  const safeTitle = (event.title || "Sự kiện")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/[:;\\]/g, "")
+    .trim();
+  const icsContent = generateIcsCalendar([event], safeTitle);
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  const safeTitle = event.title.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 30);
-  a.download = `huit_${safeTitle || "event"}.ics`;
+  const safeFilename = safeTitle.replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, "_").slice(0, 30);
+  a.download = `huit_${safeFilename || "event"}.ics`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -205,4 +213,3 @@ export function buildSemesterCalendarEvents(
 
   return events;
 }
-

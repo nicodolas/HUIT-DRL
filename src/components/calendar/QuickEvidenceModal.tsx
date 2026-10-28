@@ -42,13 +42,16 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
 
   if (!isOpen || !record) return null;
 
+  const isDataImage = evidenceUrl.startsWith("data:image");
+  const isHttpUrl = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(evidenceUrl.trim());
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setCompressing(true);
     setError(null);
     try {
-      const result = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.78 });
+      const result = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.75 });
       setEvidenceUrl(result.dataUrl);
       setCompressedStats({
         originalSize: result.originalSize,
@@ -74,6 +77,13 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
     const trimmedUrl = evidenceUrl.trim();
     if (!trimmedUrl) {
       setError("Vui lòng nhập đường dẫn hoặc đính kèm ảnh minh chứng");
+      return;
+    }
+
+    const isImage = trimmedUrl.startsWith("data:image/");
+    const isHttp = /^https?:\/\/[^\s$.?#].[^\s]*$/i.test(trimmedUrl);
+    if (!isImage && !isHttp) {
+      setError("Vui lòng nhập đường dẫn hợp lệ (bắt đầu bằng http:// hoặc https://) hoặc chọn ảnh minh chứng");
       return;
     }
 
@@ -107,7 +117,12 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-evidence-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col my-auto">
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -116,7 +131,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
               <Camera className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+              <h3 id="quick-evidence-title" className="font-bold text-sm text-slate-900 dark:text-white truncate">
                 Nộp minh chứng hoạt động
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -233,7 +248,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
           {evidenceUrl && (
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
               <div className="flex items-center space-x-3 min-w-0">
-                {evidenceUrl.startsWith("data:image") ? (
+                {isDataImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={evidenceUrl}
@@ -241,13 +256,21 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
                     className="w-10 h-10 object-cover rounded-lg border border-slate-300 dark:border-slate-600 shrink-0"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    isHttpUrl
+                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                  }`}>
                     <Check className="w-5 h-5" />
                   </div>
                 )}
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                    {evidenceUrl.startsWith("data:image") ? "Ảnh chụp đã sẵn sàng" : "Đường dẫn hợp lệ"}
+                    {isDataImage
+                      ? "Ảnh chụp đã sẵn sàng"
+                      : isHttpUrl
+                      ? "Đường dẫn hợp lệ"
+                      : "Đường dẫn liên kết (cần http:// hoặc https://)"}
                   </p>
                   {compressedStats && (
                     <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
@@ -265,6 +288,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
                 }}
                 className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                 title="Gỡ ảnh này"
+                aria-label="Gỡ minh chứng"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -304,4 +328,3 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
     </div>
   );
 };
-

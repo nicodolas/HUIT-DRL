@@ -185,4 +185,11 @@ export function getPastRecords(records: DrlRecord[]): Array<{ record: DrlRecord;
     .sort((a, b) => b.parsed.fullDate.getTime() - a.parsed.fullDate.getTime());
 }
 
-
+/**
+ * Format score number with + prefix if positive
+ */
+export function formatPointsLabel(pts: string | number): string {
+  const num = typeof pts === "string" ? Number.parseFloat(pts) : pts;
+  if (Number.isNaN(num)) return "+0đ";
+  return num > 0 ? `+${num}đ` : `${num}đ`;
+}

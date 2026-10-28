@@ -29,6 +29,28 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
     reduction: number;
   } | null>(null);
 
+  const sanitizeEvidenceUrl = (raw: string): string => {
+    const value = raw.trim();
+    if (!value) return "";
+
+    // Allow only image data URLs in base64 form
+    if (/^data:image\/[a-zA-Z0-9.+-]+;base64,[a-zA-Z0-9+/=\s]+$/.test(value)) {
+      return value;
+    }
+
+    // Allow only absolute http/https URLs
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.toString();
+      }
+    } catch {
+      // invalid URL
+    }
+
+    return "";
+  };
+
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -223,7 +245,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
                 value={evidenceUrl.startsWith("data:image") ? "(Đã đính kèm ảnh chụp minh chứng)" : evidenceUrl}
                 onChange={(e) => {
                   if (!evidenceUrl.startsWith("data:image")) {
-                    setEvidenceUrl(e.target.value);
+                    setEvidenceUrl(sanitizeEvidenceUrl(e.target.value));
                   }
                 }}
                 readOnly={evidenceUrl.startsWith("data:image")}
@@ -296,7 +318,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
                 {isDataImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={evidenceUrl}
+                    src={sanitizeEvidenceUrl(evidenceUrl)}
                     alt="Xem trước minh chứng"
                     className="w-10 h-10 object-cover rounded-lg border border-slate-300 dark:border-slate-600 shrink-0"
                   />

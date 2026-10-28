@@ -1,4 +1,5 @@
 import { DrlRecord, Semester } from "@/lib/db/schema";
+import { splitLocationNote } from "@/lib/calendar/utils";
 
 export interface CalendarEventItem {
   id: string;
@@ -139,19 +140,15 @@ export function buildGoogleCalendarUrl(event: CalendarEventItem): string {
 }
 
 export function recordToCalendarEvent(record: DrlRecord): CalendarEventItem {
-  let loc = "Trường Đại học Công Thương TP.HCM";
-  let cleanNote = record.note || "Ghi nhận trong sổ điểm rèn luyện HUIT";
-  const closeBracketIdx = cleanNote.indexOf("]");
-  if (cleanNote.startsWith("[") && closeBracketIdx > 1) {
-    loc = cleanNote.slice(1, closeBracketIdx).trim() || loc;
-    cleanNote = cleanNote.slice(closeBracketIdx + 1).trim() || "Ghi nhận trong sổ điểm rèn luyện HUIT";
-  }
+  const { location, cleanNote } = splitLocationNote(record.note);
+  const loc = location || "Trường Đại học Công Thương TP.HCM";
+  const desc = cleanNote || "Ghi nhận trong sổ điểm rèn luyện HUIT";
 
   return {
     id: `rec-${record.id}`,
     title: `[TC${record.category}] ${record.title}`,
     date: record.occurredAt || new Date().toISOString().slice(0, 10),
-    description: `Điểm: ${Number(record.points) > 0 ? "+" : ""}${record.points}đ | Ghi chú: ${cleanNote}`,
+    description: `Điểm: ${Number(record.points) > 0 ? "+" : ""}${record.points}đ | Ghi chú: ${desc}`,
     location: loc,
   };
 }
@@ -214,19 +211,15 @@ export function buildSemesterCalendarEvents(
 
   for (const r of records) {
     if (r.occurredAt && /^\d{4}-\d{2}-\d{2}/.test(r.occurredAt)) {
-      let loc = "Trường Đại học Công Thương TP.HCM";
-      let cleanNote = r.note || "Đã nộp minh chứng";
-      const closeBracketIdx = cleanNote.indexOf("]");
-      if (cleanNote.startsWith("[") && closeBracketIdx > 1) {
-        loc = cleanNote.slice(1, closeBracketIdx).trim() || loc;
-        cleanNote = cleanNote.slice(closeBracketIdx + 1).trim() || "Hoạt động rèn luyện";
-      }
+      const { location, cleanNote } = splitLocationNote(r.note);
+      const loc = location || "Trường Đại học Công Thương TP.HCM";
+      const desc = cleanNote || "Hoạt động rèn luyện";
 
       events.push({
         id: `rec-${r.id}`,
         title: `[ĐRL TC${r.category}] ${r.title}`,
         date: r.occurredAt,
-        description: `Điểm: ${Number(r.points) > 0 ? "+" : ""}${r.points}đ | Ghi chú: ${cleanNote}`,
+        description: `Điểm: ${Number(r.points) > 0 ? "+" : ""}${r.points}đ | Ghi chú: ${desc}`,
         location: loc,
       });
     }

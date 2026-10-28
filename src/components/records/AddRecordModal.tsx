@@ -10,6 +10,7 @@ import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compas
 import { compressImage, formatBytes } from "@/lib/media/compressor";
 import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
 import { triggerHaptic } from "@/lib/native/platform";
+import { splitLocationNote } from "@/lib/calendar/utils";
 
 const POPULAR_SHORTCUTS = [
   { label: "Cổ vũ văn nghệ/TT", code: "TC3_CO_VU", badge: "+2đ" },
@@ -137,15 +138,9 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         setOccurredAt(recordToEdit.occurredAt || new Date().toISOString().split("T")[0]);
         setOccurredTime("");
       }
-      let initialLocation = "";
-      let initialNote = recordToEdit.note || "";
-      const closeBracketIdx = initialNote.indexOf("]");
-      if (initialNote.startsWith("[") && closeBracketIdx > 1) {
-        initialLocation = initialNote.slice(1, closeBracketIdx).trim();
-        initialNote = initialNote.slice(closeBracketIdx + 1).trim();
-      }
-      setLocation(initialLocation);
-      setNote(initialNote);
+      const { location: initialLocation, cleanNote: initialNote } = splitLocationNote(recordToEdit.note);
+      setLocation(initialLocation || "");
+      setNote(initialNote || "");
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else if (initialPreset) {
       setTab("preset");

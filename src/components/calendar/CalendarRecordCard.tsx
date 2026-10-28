@@ -6,6 +6,7 @@ import {
   ParsedEventDateTime,
   getCriteriaColor,
   formatPointsLabel,
+  splitLocationNote,
 } from "@/lib/calendar/utils";
 import {
   recordToCalendarEvent,
@@ -40,15 +41,7 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
   const hasProof = Boolean(record.evidenceUrl);
 
   // Extract bracket convention [Location] note
-  let locationStr: string | null = null;
-  let noteStr: string | null = record.note || null;
-  if (noteStr?.startsWith("[")) {
-    const closeIdx = noteStr.indexOf("]");
-    if (closeIdx > 1) {
-      locationStr = noteStr.slice(1, closeIdx).trim() || null;
-      noteStr = noteStr.slice(closeIdx + 1).trim() || null;
-    }
-  }
+  const { location: locationStr, cleanNote: noteStr } = splitLocationNote(record.note);
 
   const handleGoogleCalendar = () => {
     triggerHaptic("light");
@@ -56,10 +49,10 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
     window.open(buildGoogleCalendarUrl(ev), "_blank", "noopener,noreferrer");
   };
 
-  const handleDownloadIcs = async () => {
+  const handleDownloadIcs = () => {
     triggerHaptic("light");
     const ev = recordToCalendarEvent(record);
-    await downloadSingleEventIcs(ev);
+    void downloadSingleEventIcs(ev);
   };
 
   const handleEvidenceClick = () => {

@@ -271,7 +271,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
             capture="environment"
             onChange={handleFileChange}
             className="hidden"
-            aria-hidden="true"
+            tabIndex={-1}
           />
           <input
             ref={galleryInputRef}
@@ -279,7 +279,7 @@ export const QuickEvidenceModal: React.FC<QuickEvidenceModalProps> = ({
             accept="image/*"
             onChange={handleFileChange}
             className="hidden"
-            aria-hidden="true"
+            tabIndex={-1}
           />
 
           {compressing && (

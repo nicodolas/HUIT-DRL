@@ -33,7 +33,7 @@ export const BottomNav: React.FC = () => {
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-normal"
               }`}
             >
-              <Icon className={`w-4.5 h-4.5 ${isActive ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
+              <Icon className={`w-[18px] h-[18px] ${isActive ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
               <span className="text-[10px] mt-0.5 tracking-tight truncate">{item.label}</span>
             </Link>
           );

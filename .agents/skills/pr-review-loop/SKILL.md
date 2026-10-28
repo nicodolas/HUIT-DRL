@@ -49,7 +49,7 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
    git remote -v
    ```
 2. Determine the active writable remote (e.g., `origin` or upstream).
-3. If on the default branch (`main`), create a descriptive feature branch:
+3. Always branch off `dev` (the pre-production integration branch):
    ```bash
    git checkout -b feature/<task-slug>
    # or fix/<task-slug>, refactor/<task-slug>
@@ -177,7 +177,7 @@ Upon completing the loop, return a structured markdown report:
 ### 🚀 PR Review Loop Summary
 
 - **Pull Request**: [#<number>](<PR_URL>)
-- **Branch**: `<branch-name>` ➔ `main`
+- **Branch**: `<branch-name>` ➔ `dev`
 - **Head Commit SHA**: `<head-sha>`
 - **CI / Build Status**: ✅ All checks passed
 

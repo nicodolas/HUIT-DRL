@@ -25,16 +25,27 @@ export function parseEventDateTime(occurredAt?: string | null): ParsedEventDateT
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
 
   const [y, m, d] = dateStr.split("-").map(Number);
-  const now = new Date();
-  
-  // Set target date
-  const targetDate = new Date(y, m - 1, d);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+
+  let hh = 0;
+  let mm = 0;
   if (timeStr) {
-    const [hh, mm] = timeStr.split(":").map(Number);
-    targetDate.setHours(hh || 0, mm || 0, 0, 0);
-  } else {
-    targetDate.setHours(0, 0, 0, 0);
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(timeStr)) return null;
+    [hh, mm] = timeStr.split(":").map(Number);
   }
+
+  const targetDate = new Date(y, m - 1, d, hh, mm, 0, 0);
+
+  // Validate date round-trip to reject invalid calendar days (e.g., Feb 30)
+  if (
+    targetDate.getFullYear() !== y ||
+    targetDate.getMonth() !== m - 1 ||
+    targetDate.getDate() !== d
+  ) {
+    return null;
+  }
+
+  const now = new Date();
 
   // Today at midnight for day diff calculation
   const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -44,8 +55,10 @@ export function parseEventDateTime(occurredAt?: string | null): ParsedEventDateT
 
   const isToday = daysDiff === 0;
   const isTomorrow = daysDiff === 1;
-  const isPast = targetDate.getTime() < now.getTime() && !isToday;
-  const isFuture = targetDate.getTime() > now.getTime();
+
+  // If timed event, check against current wall-clock time; if date-only, check day diff
+  const isPast = timeStr ? targetDate.getTime() < now.getTime() : daysDiff < 0;
+  const isFuture = timeStr ? targetDate.getTime() > now.getTime() : daysDiff > 0;
 
   return {
     dateStr,
@@ -125,10 +138,14 @@ export function getCriteriaColor(category: number) {
  * Filter upcoming records (today and future) sorted by date ascending
  */
 export function getUpcomingRecords(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
+  const now = Date.now();
   return records
     .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
     .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
       if (!item.parsed) return false;
+      if (item.parsed.timeStr) {
+        return item.parsed.fullDate.getTime() >= now;
+      }
       return item.parsed.daysDiff >= 0; // Today and future
     })
     .sort((a, b) => a.parsed.fullDate.getTime() - b.parsed.fullDate.getTime());
@@ -138,10 +155,14 @@ export function getUpcomingRecords(records: DrlRecord[]): Array<{ record: DrlRec
  * Filter today and tomorrow urgent records
  */
 export function getUrgentReminders(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
+  const now = Date.now();
   return records
     .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
     .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
       if (!item.parsed) return false;
+      if (item.parsed.timeStr && item.parsed.isToday) {
+        return item.parsed.fullDate.getTime() >= now;
+      }
       return item.parsed.isToday || item.parsed.isTomorrow;
     })
     .sort((a, b) => a.parsed.fullDate.getTime() - b.parsed.fullDate.getTime());

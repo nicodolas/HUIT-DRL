@@ -27,6 +27,7 @@ interface AddRecordModalProps {
   semesterId: string;
   initialCategory?: number;
   initialPreset?: DrlCriteriaPreset | null;
+  initialDate?: string;
   recordToEdit?: DrlRecord | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -37,6 +38,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   semesterId,
   initialCategory,
   initialPreset,
+  initialDate,
   recordToEdit,
   onClose,
   onSuccess,
@@ -140,6 +142,13 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setEvidenceUrl(recordToEdit.evidenceUrl || "");
     } else if (initialPreset) {
       setTab("preset");
+      const defaultDate = initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
+        ? initialDate
+        : (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          })();
+
       setSelectedPreset(initialPreset);
       setSelectedCategory(initialPreset.category);
       setCustomCategory(initialPreset.category);
@@ -147,9 +156,16 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setLocation("");
       setNote("");
       setEvidenceUrl("");
-      setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredAt(defaultDate);
       setOccurredTime("");
     } else {
+      const defaultDate = initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
+        ? initialDate
+        : (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          })();
+
       setSelectedPreset(null);
       setCustomTitle("");
       setCustomPoints("");
@@ -157,14 +173,14 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
       setLocation("");
       setNote("");
       setEvidenceUrl("");
-      setOccurredAt(new Date().toISOString().split("T")[0]);
+      setOccurredAt(defaultDate);
       setOccurredTime("");
       if (initialCategory) {
         setSelectedCategory(initialCategory);
         setCustomCategory(initialCategory);
       }
     }
-  }, [recordToEdit, initialCategory, initialPreset, isOpen]);
+  }, [recordToEdit, initialCategory, initialPreset, initialDate, isOpen]);
 
   useEffect(() => {
     if (isOpen) {

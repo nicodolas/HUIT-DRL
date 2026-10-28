@@ -15,11 +15,9 @@ export async function GET() {
         status: "ok",
         uptimeSeconds: Math.floor(process.uptime()),
         timestamp: new Date().toISOString(),
-        version: "1.0.0",
         database: {
           status: "connected",
           latencyMs: dbLatencyMs,
-          engine: "Neon Serverless PostgreSQL",
         },
       },
       { status: 200 }
@@ -33,7 +31,6 @@ export async function GET() {
       {
         status: "error",
         timestamp: new Date().toISOString(),
-        version: "1.0.0",
         database: {
           status: "disconnected",
           latencyMs: errorLatencyMs,

@@ -21,7 +21,7 @@
 - **Banner Nhắc nhở Cấp bách (`ScheduleReminderBanner`)**:
   - Hiển thị nổi bật ở đầu trang nếu có sự kiện diễn ra trong vòng 24 - 48 giờ tới ("Hôm nay" hoặc "Ngày mai").
 - **Widget Thẻ Sự kiện Sắp tới (`UpcomingScheduleCard`)**:
-  - Hiển thị danh sách các hoạt động dự kiến trong 7 - 14 ngày tới.
+  - Hiển thị tối đa 5 hoạt động sắp tới, bắt đầu từ hôm nay; không giới hạn khoảng thời gian.
   - Có đếm ngược thời gian ("Hôm nay", "Ngày mai", "Còn 3 ngày..."), giờ diễn ra và số điểm dự kiến.
   - Nút chuyển nhanh đến trang `/calendar`.
 

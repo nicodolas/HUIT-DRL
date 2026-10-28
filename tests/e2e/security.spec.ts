@@ -140,10 +140,12 @@ test.describe("Security & OWASP Hardening Suite", () => {
     expect(meData.user.passwordHash).toBeUndefined();
     expect(meData.user.username).toBe(testUser);
 
-    // Health endpoint check: never leaks stack traces or db connection strings
+    // Health endpoint check: never leaks stack traces, tech engine specifics, or db connection strings
     const healthRes = await request.get("/api/health");
     const healthData = await healthRes.json();
     expect(healthData.database?.error).toBeUndefined();
+    expect(healthData.database?.engine).toBeUndefined();
+    expect(healthData.version).toBeUndefined();
   });
 
   test("Anti-IDOR: Users cannot view, modify, or delete other users' records", async ({ browser }) => {

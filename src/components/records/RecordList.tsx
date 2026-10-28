@@ -20,6 +20,7 @@ import {
 import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
 import { ActivityVerificationModal } from "@/components/records/ActivityVerificationModal";
 import { triggerHaptic } from "@/lib/native/platform";
+import { parseEventDateTime } from "@/lib/calendar/utils";
 
 function removeVietnameseTones(str: string): string {
   return str
@@ -386,6 +387,8 @@ export const RecordList: React.FC<RecordListProps> = ({
             const cat = CATEGORIES[r.category] || { code: `TC${r.category}`, shortName: "Khác", color: "#64748b" };
             const isAdd = Number(r.points) > 0;
             const totalPts = Number(r.points) * (r.quantity || 1);
+            const eventTime = parseEventDateTime(r.occurredAt);
+            const isFuture = eventTime ? eventTime.isFuture : false;
 
             return (
               <div
@@ -412,12 +415,14 @@ export const RecordList: React.FC<RecordListProps> = ({
                     <div className="shrink-0 text-right">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold ${
-                          isAdd
+                          isFuture
+                            ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-dashed border-sky-300 dark:border-sky-700"
+                            : isAdd
                             ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                             : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                         }`}
                       >
-                        {isAdd ? `+${totalPts}` : totalPts}đ
+                        {isFuture ? `Dự kiến +${totalPts}đ` : isAdd ? `+${totalPts}đ` : `${totalPts}đ`}
                       </span>
                     </div>
                   </div>
@@ -430,6 +435,22 @@ export const RecordList: React.FC<RecordListProps> = ({
                       <span className="flex items-center space-x-1">
                         <Calendar className="w-3 h-3 text-slate-400" />
                         <span>{r.occurredAt}</span>
+                      </span>
+                    )}
+
+                    {eventTime?.isToday && (
+                      <span className="bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        Hôm nay
+                      </span>
+                    )}
+                    {eventTime?.isTomorrow && (
+                      <span className="bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        Ngày mai
+                      </span>
+                    )}
+                    {eventTime?.isFuture && !eventTime?.isTomorrow && (
+                      <span className="bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                        Còn {eventTime.daysDiff} ngày
                       </span>
                     )}
 
@@ -451,7 +472,9 @@ export const RecordList: React.FC<RecordListProps> = ({
                         <span>Có minh chứng</span>
                       </button>
                     ) : (
-                      <span className="text-slate-400 text-[10px]">Chưa đính kèm ảnh</span>
+                      <span className="text-amber-600 dark:text-amber-400 text-[10px] font-medium" title="Hoạt động chưa có link hoặc ảnh minh chứng">
+                        Chưa có minh chứng
+                      </span>
                     )}
                   </div>
 

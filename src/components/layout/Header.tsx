@@ -41,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   const navLinks = [
     { href: "/", label: "Tổng quan" },
     { href: "/records", label: "Sổ điểm" },
+    { href: "/calendar", label: "Lịch trình" },
     { href: "/goals", label: "Mục tiêu" },
     { href: "/handbook", label: "Sổ tay" },
     { href: "/report", label: "Phiếu ĐRL" },

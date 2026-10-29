@@ -2,9 +2,9 @@ name: HUIT DRL Continuous Integration
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
   test:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Run Playwright E2E Tests
         if: env.DATABASE_URL != ''
-        run: npx playwright test tests/e2e/theme-system.spec.ts tests/e2e/admin-portal.spec.ts tests/e2e/student-utilities-dropdown.spec.ts tests/e2e/login-footer-author.spec.ts tests/e2e/admin-semester-lifecycle.spec.ts tests/e2e/header-layout.spec.ts tests/e2e/check-username-security.spec.ts tests/e2e/security.spec.ts --project=chromium
+        run: npx playwright test tests/e2e/theme-system.spec.ts tests/e2e/admin-portal.spec.ts tests/e2e/student-utilities-dropdown.spec.ts tests/e2e/login-footer-author.spec.ts tests/e2e/admin-semester-lifecycle.spec.ts tests/e2e/header-layout.spec.ts tests/e2e/check-username-security.spec.ts tests/e2e/security.spec.ts tests/e2e/personal-calendar.spec.ts --project=chromium
 
       - name: Restore Clean Database State
         if: always() && env.DATABASE_URL != ''

@@ -56,8 +56,7 @@ Thumbs.db
 *.sln
 *.sw?
 
-# Temporary extracted docs images (keep the original PDF & MD files in docs/)
-docs/pdf_images/
+/docs/
 
 # Playwright test artifacts
 test-results/

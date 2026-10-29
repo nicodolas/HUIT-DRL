@@ -11,7 +11,8 @@ Ship changes through a reviewable branch and Pull Request (PR). Treat reviewer o
 
 ## 🛡️ Delivery Contract
 
-- **No direct push to protected branches**: Never commit or push changes directly to `main` or the repository's default branch.
+- **Default base branch is `dev`**: All feature, fix, and refactoring branches MUST target `dev` (`--base dev`) as the pre-production integration environment. `main` is strictly reserved for production releases promoted from `dev`.
+- **No direct push to protected branches**: Never commit or push changes directly to `main` or `dev`. Always branch and use a reviewed Pull Request.
 - **No unauthorized merge**: Never merge the PR automatically unless the user explicitly requests merging.
 - **Review gates & trust tiers**:
   - **Tier 1 (Primary / Required)**: any login or check name containing `cubic` (case-insensitive) (trusted AI code reviewer for architecture, functional bugs, and edge cases). Must evaluate the latest head commit before completing unless explicitly configured otherwise.
@@ -48,7 +49,7 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
    git remote -v
    ```
 2. Determine the active writable remote (e.g., `origin` or upstream).
-3. If on the default branch (`main`), create a descriptive feature branch:
+3. Always branch off `dev` (the pre-production integration branch):
    ```bash
    git checkout -b feature/<task-slug>
    # or fix/<task-slug>, refactor/<task-slug>
@@ -77,17 +78,21 @@ The workflow integrates seamlessly with GitHub's leading **100% Free & Perpetual
 ---
 
 ### Step 3: Open or Reuse Pull Request (PR)
-1. **Check for existing PR**: Verify whether a PR already exists for this branch:
+1. **Check for existing PR**: Search by branch head across all base branches to detect existing open PRs:
    ```bash
-   gh pr list --head <branch-name> --json number,url,state
+   gh pr list --head <branch-name> --state open --json number,url,state,baseRefName
    ```
 2. **If an open PR exists**:
+   - Inspect `baseRefName`. If it does NOT target `dev`, retarget it immediately to `dev`:
+     ```bash
+     gh pr edit <number> --base dev
+     ```
    - Reuse the existing PR number and URL.
    - Update PR body/title if scope has expanded: `gh pr edit <number> --body "..."`
 3. **If no open PR exists**:
-   - Create a new PR using GitHub CLI:
+   - Create a new PR strictly targeting `dev` using GitHub CLI:
      ```bash
-     gh pr create --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
+     gh pr create --base dev --title "<Title>" --body "<Summary of changes, test proof, areas for AI reviewer focus>"
      ```
 4. Record the PR number, URL, base branch, and current head SHA:
    ```bash
@@ -176,7 +181,7 @@ Upon completing the loop, return a structured markdown report:
 ### 🚀 PR Review Loop Summary
 
 - **Pull Request**: [#<number>](<PR_URL>)
-- **Branch**: `<branch-name>` ➔ `main`
+- **Branch**: `<branch-name>` ➔ `dev`
 - **Head Commit SHA**: `<head-sha>`
 - **CI / Build Status**: ✅ All checks passed
 

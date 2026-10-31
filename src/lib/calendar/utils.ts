@@ -135,51 +135,42 @@ export function getCriteriaColor(category: number) {
 }
 
 /**
- * Filter upcoming records (today and future) sorted by date ascending
+ * Filter upcoming records (today and future) sorted by date ascending.
+ * All activities occurring today (isToday) remain visible all day long.
  */
 export function getUpcomingRecords(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
-  const now = Date.now();
   return records
     .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
     .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
       if (!item.parsed) return false;
-      if (item.parsed.timeStr) {
-        return item.parsed.fullDate.getTime() >= now;
-      }
-      return item.parsed.daysDiff >= 0; // Today and future
+      return item.parsed.isToday || item.parsed.daysDiff > 0;
     })
     .sort((a, b) => a.parsed.fullDate.getTime() - b.parsed.fullDate.getTime());
 }
 
 /**
- * Filter today and tomorrow urgent records
+ * Filter today and tomorrow urgent records.
+ * All activities occurring today remain visible throughout the day as urgent reminders.
  */
 export function getUrgentReminders(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
-  const now = Date.now();
   return records
     .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
     .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
       if (!item.parsed) return false;
-      if (item.parsed.timeStr && item.parsed.isToday) {
-        return item.parsed.fullDate.getTime() >= now;
-      }
       return item.parsed.isToday || item.parsed.isTomorrow;
     })
     .sort((a, b) => a.parsed.fullDate.getTime() - b.parsed.fullDate.getTime());
 }
 
 /**
- * Filter past records sorted by date descending
+ * Filter past records sorted by date descending.
+ * Strictly prior days (daysDiff < 0) are considered past history.
  */
 export function getPastRecords(records: DrlRecord[]): Array<{ record: DrlRecord; parsed: ParsedEventDateTime }> {
-  const now = Date.now();
   return records
     .map((r) => ({ record: r, parsed: parseEventDateTime(r.occurredAt) }))
     .filter((item): item is { record: DrlRecord; parsed: ParsedEventDateTime } => {
       if (!item.parsed) return false;
-      if (item.parsed.timeStr) {
-        return item.parsed.fullDate.getTime() < now;
-      }
       return item.parsed.daysDiff < 0;
     })
     .sort((a, b) => b.parsed.fullDate.getTime() - a.parsed.fullDate.getTime());

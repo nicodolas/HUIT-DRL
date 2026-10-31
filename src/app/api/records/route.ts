@@ -66,6 +66,8 @@ export async function GET(req: Request) {
         evidenceUrl: drlRecords.evidenceUrl,
         auditStatus: drlRecords.auditStatus,
         auditComment: drlRecords.auditComment,
+        originInviteCode: drlRecords.originInviteCode,
+        originCreatorUsername: drlRecords.originCreatorUsername,
         createdAt: drlRecords.createdAt,
         updatedAt: drlRecords.updatedAt,
       })

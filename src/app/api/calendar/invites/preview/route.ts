@@ -18,9 +18,13 @@ export async function GET(req: Request) {
   if (!rateCheck.success) {
     return NextResponse.json(
       { error: "Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại." },
-      { status: 429 }
+      {
+        status: 429,
+        headers: {
+          "Retry-After": Math.ceil(rateCheck.resetMs / 1000).toString(),
+        },
+      }
     );
-  }
 
   const { searchParams } = new URL(req.url);
   const rawCode = searchParams.get("code");

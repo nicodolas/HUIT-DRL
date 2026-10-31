@@ -22,6 +22,7 @@ import {
   UploadCloud,
   CalendarPlus,
   Download,
+  Share2,
 } from "lucide-react";
 
 export interface CalendarRecordCardProps {
@@ -29,6 +30,7 @@ export interface CalendarRecordCardProps {
   parsed: ParsedEventDateTime;
   variant: "compact" | "agenda-upcoming" | "agenda-past";
   onOpenEvidenceModal: (record: DrlRecord) => void;
+  onOpenShareModal?: (record: DrlRecord) => void;
 }
 
 export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
@@ -36,6 +38,7 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
   parsed,
   variant,
   onOpenEvidenceModal,
+  onOpenShareModal,
 }) => {
   const color = getCriteriaColor(record.category);
   const hasProof = Boolean(record.evidenceUrl);
@@ -60,7 +63,12 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
     onOpenEvidenceModal(record);
   };
 
-  // Reusable action bar for sync & proof submission
+  const handleShareClick = () => {
+    triggerHaptic("light");
+    onOpenShareModal?.(record);
+  };
+
+  // Reusable action bar for sync, share & proof submission
   const renderActionButtons = (isPastVariant: boolean = false, showStatusText: boolean = true) => (
     <div className="flex items-center space-x-1.5 shrink-0">
       {showStatusText && (
@@ -87,6 +95,18 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
         >
           <UploadCloud className="w-3 h-3" />
           <span>Nộp minh chứng</span>
+        </button>
+      )}
+
+      {onOpenShareModal && (
+        <button
+          type="button"
+          onClick={handleShareClick}
+          title="Chia sẻ mã mời cho bạn bè"
+          aria-label={`Chia sẻ mã mời ${record.title}`}
+          className="p-1 rounded-md text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+        >
+          <Share2 className="w-3.5 h-3.5" />
         </button>
       )}
 
@@ -119,11 +139,19 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
     return (
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}
-          >
-            TC{record.category}
-          </span>
+          <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}
+            >
+              TC{record.category}
+            </span>
+            {record.originCreatorUsername && (
+              <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                @{record.originCreatorUsername}
+              </span>
+            )}
+          </div>
+
           <span
             className={`text-xs font-mono font-bold shrink-0 ${
               parsed.isFuture
@@ -213,12 +241,17 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center space-x-2 mb-1">
+            <div className="flex items-center space-x-2 mb-1 flex-wrap gap-y-1">
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}
               >
                 TC{record.category}
               </span>
+              {record.originCreatorUsername && (
+                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                  Nhận từ @{record.originCreatorUsername}
+                </span>
+              )}
               {parsed.timeStr && (
                 <span className="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-400 flex items-center space-x-1">
                   <Clock className="w-3 h-3 text-amber-500" />
@@ -281,6 +314,11 @@ export const CalendarRecordCard: React.FC<CalendarRecordCardProps> = ({
         >
           TC{record.category}
         </span>
+        {record.originCreatorUsername && (
+          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shrink-0">
+            @{record.originCreatorUsername}
+          </span>
+        )}
         <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
           {record.title}
         </span>

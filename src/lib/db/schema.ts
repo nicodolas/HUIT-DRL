@@ -54,12 +54,36 @@ export const drlRecords = pgTable("drl_records", {
   evidenceUrl: text("evidence_url"),
   auditStatus: varchar("audit_status", { length: 32 }).default("pending_review").notNull(), // 'missing' | 'pending_review' | 'valid' | 'rejected'
   auditComment: text("audit_comment"),
+  originInviteCode: varchar("origin_invite_code", { length: 32 }),
+  originCreatorUsername: varchar("origin_creator_username", { length: 64 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const activityInvites = pgTable("activity_invites", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  code: varchar("code", { length: 16 }).notNull().unique(), // e.g. HUIT-9K2F
+  recordId: varchar("record_id", { length: 64 }).notNull().references(() => drlRecords.id, { onDelete: "cascade" }),
+  creatorId: varchar("creator_id", { length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  maxUses: integer("max_uses"), // null = unlimited
+  usesCount: integer("uses_count").default(0).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }), // null = no expiry
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const activityInviteClaims = pgTable("activity_invite_claims", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inviteId: varchar("invite_id", { length: 64 }).notNull().references(() => activityInvites.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  claimedRecordId: varchar("claimed_record_id", { length: 64 }).notNull().references(() => drlRecords.id, { onDelete: "cascade" }),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type User = typeof users.$inferSelect;
 export type Semester = typeof semesters.$inferSelect;
 export type DrlCriteriaPreset = typeof drlCriteriaPresets.$inferSelect;
 export type DrlRecord = typeof drlRecords.$inferSelect;
-
+export type ActivityInvite = typeof activityInvites.$inferSelect;
+export type ActivityInviteClaim = typeof activityInviteClaims.$inferSelect;

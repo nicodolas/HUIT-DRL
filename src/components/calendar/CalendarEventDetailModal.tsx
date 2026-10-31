@@ -13,6 +13,8 @@ import {
   Trash2,
   Edit,
   Sparkles,
+  Share2,
+  UserCheck,
 } from "lucide-react";
 import { DrlRecord } from "@/lib/db/schema";
 import { parseEventDateTime, getCriteriaColor, splitLocationNote, formatPointsLabel } from "@/lib/calendar/utils";
@@ -25,6 +27,7 @@ interface CalendarEventDetailModalProps {
   onClose: () => void;
   onOpenEvidenceModal: (record: DrlRecord) => void;
   onEditRecord: (record: DrlRecord) => void;
+  onOpenShareModal?: (record: DrlRecord) => void;
   onDeleteSuccess?: (recordId: string) => void;
 }
 
@@ -34,6 +37,7 @@ export function CalendarEventDetailModal({
   onClose,
   onOpenEvidenceModal,
   onEditRecord,
+  onOpenShareModal,
   onDeleteSuccess,
 }: CalendarEventDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -101,68 +105,120 @@ export function CalendarEventDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="event-detail-title"
-      onClick={onClose}
+      aria-labelledby="calendar-detail-title"
     >
       <div
         ref={modalRef}
         tabIndex={-1}
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden outline-hidden animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden focus:outline-none transition-all flex flex-col max-h-[90vh]"
       >
-        {/* Header Ribbon with Criteria Color */}
-        <div className={`px-6 py-4 border-b ${color.border} ${color.lightBg} flex items-center justify-between`}>
-          <div className="flex items-center space-x-2">
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${color.bg} text-white shadow-2xs`}>
-              Tiêu chí {record.category}
-            </span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {formatPointsLabel(record.points)}
-            </span>
-            {parsed?.isFuture && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
-                Dự kiến
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="space-y-1.5 min-w-0 pr-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.lightBg} ${color.text} border ${color.border}`}
+              >
+                TC{record.category} • {color.name.split(":")[1]?.trim() || "Tiêu chí"}
               </span>
-            )}
+
+              {parsed?.isToday && (
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white">
+                  HÔM NAY
+                </span>
+              )}
+              {parsed?.isTomorrow && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-slate-950">
+                  NGÀY MAI
+                </span>
+              )}
+            </div>
+
+            <h3
+              id="calendar-detail-title"
+              className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug break-words"
+            >
+              {record.title}
+            </h3>
           </div>
+
           <button
-            type="button"
             onClick={onClose}
-            aria-label="Đóng cửa sổ chi tiết"
-            className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+            aria-label="Đóng"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-4">
-          <h2 id="event-detail-title" className="text-lg font-extrabold text-slate-900 dark:text-white leading-snug">
-            {record.title}
-          </h2>
+        <div className="p-6 space-y-4 overflow-y-auto">
+          {/* Points badge */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Điểm rèn luyện quy đổi:
+            </span>
+            <div className="text-right">
+              <span
+                className={`text-base font-mono font-black ${
+                  Number(record.points) < 0
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                }`}
+              >
+                {formatPointsLabel(record.points)}
+              </span>
+              {parsed?.isFuture && (
+                <span className="ml-2 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                  Dự kiến
+                </span>
+              )}
+            </div>
+          </div>
 
-          {/* Time, Location & Date Grid */}
-          <div className="space-y-2.5 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
+          {/* Activity Origin (If claimed from a friend) */}
+          {record.originCreatorUsername && (
+            <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <UserCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300">
+                  Nhận từ: <strong className="text-amber-700 dark:text-amber-300">@{record.originCreatorUsername}</strong>
+                </span>
+              </div>
+              {record.originInviteCode && (
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold">
+                  {record.originInviteCode}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Date & Time Info */}
+          <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
             <div className="flex items-center space-x-2.5">
               <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
               <span>
-                Ngày: <strong className="font-mono text-slate-900 dark:text-white">{parsed?.dateStr || record.occurredAt}</strong>
-                {parsed?.isToday && <span className="ml-2 font-bold text-amber-600 dark:text-amber-400">(Hôm nay)</span>}
-                {parsed?.isTomorrow && <span className="ml-2 font-bold text-amber-600 dark:text-amber-400">(Ngày mai)</span>}
-                {parsed && parsed.daysDiff > 1 && (
-                  <span className="ml-2 font-medium text-slate-500">(Còn {parsed.daysDiff} ngày)</span>
+                Ngày diễn ra:{" "}
+                <strong className="text-slate-900 dark:text-white font-mono">
+                  {parsed?.dateStr || "Chưa xác định"}
+                </strong>
+                {parsed?.daysDiff !== undefined && (
+                  <span className="ml-1.5 text-slate-400">
+                    ({parsed.isToday ? "Hôm nay" : parsed.daysDiff > 0 ? `còn ${parsed.daysDiff} ngày nữa` : `đã qua ${Math.abs(parsed.daysDiff)} ngày`})
+                  </span>
                 )}
               </span>
             </div>
 
             {parsed?.timeStr && (
               <div className="flex items-center space-x-2.5">
-                <Clock className="w-4 h-4 text-sky-500 shrink-0" />
+                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>
-                  Thời gian: <strong className="font-mono text-slate-900 dark:text-white">{parsed.timeStr}</strong>
+                  Thời gian bắt đầu:{" "}
+                  <strong className="text-slate-900 dark:text-white font-mono">{parsed.timeStr}</strong>
                 </span>
               </div>
             )}
@@ -226,7 +282,22 @@ export function CalendarEventDetailModal({
 
         {/* Footer Actions */}
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+            {onOpenShareModal && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  onOpenShareModal(record);
+                }}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-semibold transition cursor-pointer"
+                title="Chia sẻ mã mời cho bạn bè"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Chia sẻ mã</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {
@@ -239,6 +310,7 @@ export function CalendarEventDetailModal({
               <CalendarPlus className="w-3.5 h-3.5 text-amber-600" />
               <span className="hidden sm:inline">Google Cal</span>
             </button>
+
             <button
               type="button"
               onClick={() => {

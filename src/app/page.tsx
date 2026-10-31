@@ -483,6 +483,10 @@ export default function DashboardPage() {
           setSelectedPresetToAdd(null);
         }}
         onSuccess={loadRecords}
+        onOpenShareModal={(record) => {
+          setShareRecord(record);
+          setShareModalOpen(true);
+        }}
       />
 
       <CsvExchangeModal

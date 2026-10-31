@@ -6,7 +6,7 @@ import { CATEGORIES } from "@/lib/drl/rules";
 import { addOfflineDraft } from "@/lib/offline/drafts";
 import { DEFAULT_HUIT_PRESETS } from "@/lib/presets/default-presets";
 import { getPresetsCache, savePresetsCache, getUserSemestersCache } from "@/lib/offline/cache";
-import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass } from "lucide-react";
+import { X, Search, Check, Sparkles, Camera, Image as ImageIcon, Loader2, Compass, Share2 } from "lucide-react";
 import { compressImage, formatBytes } from "@/lib/media/compressor";
 import { classifyHuitActivity, ActivityClassificationResult } from "@/lib/classifier/activity-classifier";
 import { triggerHaptic } from "@/lib/native/platform";
@@ -32,6 +32,7 @@ interface AddRecordModalProps {
   recordToEdit?: DrlRecord | null;
   onClose: () => void;
   onSuccess: () => void;
+  onOpenShareModal?: (record: DrlRecord) => void;
 }
 
 export const AddRecordModal: React.FC<AddRecordModalProps> = ({
@@ -43,6 +44,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   recordToEdit,
   onClose,
   onSuccess,
+  onOpenShareModal,
 }) => {
   const [tab, setTab] = useState<"preset" | "custom">("preset");
   const [effectiveSemesterId, setEffectiveSemesterId] = useState(semesterId);
@@ -85,6 +87,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [createShareInvite, setCreateShareInvite] = useState(false);
   const [compressingImage, setCompressingImage] = useState(false);
   const [compressedStats, setCompressedStats] = useState<{
     originalSize: number;
@@ -124,6 +127,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
   const smartSuggestion = useMemo(() => classifyHuitActivity(customTitle), [customTitle]);
 
   useEffect(() => {
+    setCreateShareInvite(false);
     if (recordToEdit) {
       setTab("custom");
       setCustomTitle(recordToEdit.title);
@@ -334,14 +338,44 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
         throw new Error(data.error || "Lỗi lưu hoạt động");
       }
 
+      const shouldShare = createShareInvite && !recordToEdit;
+      let createdRecord: DrlRecord | null = null;
+      if (shouldShare && data.recordId) {
+        createdRecord = {
+          id: data.recordId,
+          userId: "",
+          semesterId: payload.semesterId,
+          presetId: payload.presetId || null,
+          category: payload.category,
+          title: payload.title,
+          type: payload.type,
+          points: String(payload.points),
+          quantity: payload.quantity,
+          occurredAt: payload.occurredAt || null,
+          note: payload.note || null,
+          evidenceUrl: payload.evidenceUrl || null,
+          auditStatus: payload.evidenceUrl ? "pending_review" : "missing",
+          auditComment: null,
+          originInviteCode: null,
+          originCreatorUsername: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+
       setSelectedPreset(null);
       setNote("");
       setEvidenceUrl("");
       setQuantity(1);
       setCustomTitle("");
       setCustomPoints("");
+      setCreateShareInvite(false);
       onSuccess();
       onClose();
+
+      if (shouldShare && createdRecord && onOpenShareModal) {
+        onOpenShareModal(createdRecord);
+      }
     } catch (err: any) {
       const isNetworkError =
         err.name === "TypeError" ||
@@ -910,6 +944,36 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     </div>
                   </div>
                 )}
+                {/* Auto-share toggle card */}
+                {!recordToEdit && (
+                  <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-800/50 flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Share2 className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                          Chia sẻ mã mời cho bạn bè
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          Tự động tạo mã HUIT-XXXX & mã QR ngay sau khi lưu
+                        </p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={createShareInvite}
+                        onChange={(e) => {
+                          triggerHaptic("light");
+                          setCreateShareInvite(e.target.checked);
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -928,9 +992,20 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-slate-950 transition-colors cursor-pointer disabled:opacity-50 flex items-center space-x-1.5"
           >
-            {loading ? "Đang lưu..." : recordToEdit ? "Lưu thay đổi" : "Xác nhận"}
+            {loading ? (
+              <span>Đang lưu...</span>
+            ) : recordToEdit ? (
+              <span>Lưu thay đổi</span>
+            ) : createShareInvite ? (
+              <>
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Xác nhận & Chia sẻ</span>
+              </>
+            ) : (
+              <span>Xác nhận</span>
+            )}
           </button>
         </div>
       </div>

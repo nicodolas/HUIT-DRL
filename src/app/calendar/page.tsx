@@ -696,7 +696,7 @@ export default function CalendarPage() {
             {/* Quick Day Schedule Panel (Placed on Top for Instant Visibility) */}
             <div
               ref={selectedDayScheduleRef}
-              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-all"
+              className="scroll-mt-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-all"
             >
               <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center space-x-2.5 min-w-0">

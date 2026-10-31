@@ -8,7 +8,7 @@ export function handleModalTabLoop(
   if (e.key !== "Tab" || !container) return;
 
   const focusables = container.querySelectorAll<HTMLElement>(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
   );
   if (focusables.length === 0) return;
 

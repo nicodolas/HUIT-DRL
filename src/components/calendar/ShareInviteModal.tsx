@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { DrlRecord } from "@/lib/db/schema";
 import { triggerHaptic } from "@/lib/native/platform";
+import { handleModalTabLoop } from "@/lib/calendar/focusTrap";
 import QRCode from "qrcode";
 
 interface ShareInviteModalProps {
@@ -163,22 +164,8 @@ export function ShareInviteModal({
         onClose();
         return;
       }
-
-      if (e.key === "Tab" && isOpen && modalRef.current) {
-        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      if (isOpen) {
+        handleModalTabLoop(e, modalRef.current);
       }
     };
     window.addEventListener("keydown", handleKeyDown);

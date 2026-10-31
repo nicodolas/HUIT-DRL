@@ -18,6 +18,7 @@ import { DrlRecord } from "@/lib/db/schema";
 import { getCriteriaColor, splitLocationNote, formatPointsLabel } from "@/lib/calendar/utils";
 import { normalizeInviteCode } from "@/lib/calendar/inviteCode";
 import { triggerHaptic } from "@/lib/native/platform";
+import { handleModalTabLoop } from "@/lib/calendar/focusTrap";
 
 interface ClaimInviteModalProps {
   isOpen: boolean;
@@ -110,22 +111,8 @@ export function ClaimInviteModal({
         onClose();
         return;
       }
-
-      if (e.key === "Tab" && isOpen && modalRef.current) {
-        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      if (isOpen) {
+        handleModalTabLoop(e, modalRef.current);
       }
     };
     window.addEventListener("keydown", handleKeyDown);

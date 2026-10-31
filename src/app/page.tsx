@@ -249,7 +249,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white truncate mt-0.5">
-                Sổ tay rèn luyện: {user.fullName}
+                Xin chào,{user.fullName}!
               </h1>
             </div>
           </div>

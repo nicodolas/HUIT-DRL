@@ -201,7 +201,7 @@ test.describe("Activity Invites & Calendar Sharing Suite", () => {
 
     const submitBtn = page.locator(".fixed button:has-text('Xác nhận')");
     await submitBtn.click();
-    await page.waitForTimeout(1000);
+    await expect(page.locator("h3:has-text('Ghi nhận điểm rèn luyện')")).not.toBeVisible({ timeout: 10000 });
 
     // Go to Dashboard
     await page.goto("/");

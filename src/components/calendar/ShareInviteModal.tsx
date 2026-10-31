@@ -65,6 +65,8 @@ export function ShareInviteModal({
 
   // Load or create invite when modal opens
   useEffect(() => {
+    let isCancelled = false;
+
     if (!isOpen || !record) {
       setInvite(null);
       setClaims([]);
@@ -81,6 +83,7 @@ export function ShareInviteModal({
         // 1. Check existing invite
         const res = await fetch(`/api/calendar/invites?recordId=${record.id}`);
         const data = await res.json();
+        if (isCancelled) return;
 
         if (res.ok && data.invite) {
           setInvite(data.invite);
@@ -98,6 +101,8 @@ export function ShareInviteModal({
             }),
           });
           const createData = await createRes.json();
+          if (isCancelled) return;
+
           if (createRes.ok && createData.invite) {
             setInvite(createData.invite);
             setClaims([]);
@@ -107,15 +112,34 @@ export function ShareInviteModal({
           }
         }
       } catch (err: any) {
-        console.error("Fetch invite error:", err);
-        setError("Lỗi kết nối khi tải mã mời chia sẻ");
+        if (!isCancelled) {
+          console.error("Fetch invite error:", err);
+          setError("Lỗi kết nối khi tải mã mời chia sẻ");
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void fetchOrCreateInvite();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [isOpen, record]);
+
+  // Focus management: focus dialog on open, restore previous focus on close
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    modalRef.current?.focus();
+
+    return () => {
+      previouslyFocused?.focus?.();
+    };
+  }, [isOpen]);
 
   // Generate QR code data URL whenever invite code changes
   useEffect(() => {
@@ -132,11 +156,29 @@ export function ShareInviteModal({
       .catch((err) => console.error("QR Code generation error:", err));
   }, [invite?.code]);
 
-  // Escape key listener
+  // Escape key and tab loop listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && isOpen && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);

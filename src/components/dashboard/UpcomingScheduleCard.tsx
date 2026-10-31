@@ -24,27 +24,27 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs transition-colors flex flex-col justify-between">
       <div>
         {/* Card Header */}
-        <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <Calendar className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                 <span>Lịch trình rèn luyện</span>
                 {allUpcoming.length > 0 && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold shrink-0">
                     {allUpcoming.length}
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 Kế hoạch & hoạt động sắp diễn ra
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 shrink-0">
             {onOpenClaimModal && (
               <button
                 type="button"

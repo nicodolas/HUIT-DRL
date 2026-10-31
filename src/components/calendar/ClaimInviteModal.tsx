@@ -60,6 +60,7 @@ export function ClaimInviteModal({
 }: ClaimInviteModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -67,22 +68,64 @@ export function ClaimInviteModal({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Focus input on open
+  // Clear timers on unmount
   useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Focus input on open, restore previous focus on close
+  useEffect(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+
     if (isOpen) {
+      const previouslyFocused = document.activeElement as HTMLElement | null;
       setCode("");
       setPreview(null);
       setError(null);
       setSuccessMessage(null);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 80);
+      return () => {
+        clearTimeout(timer);
+        previouslyFocused?.focus?.();
+      };
     }
   }, [isOpen]);
 
-  // Escape key handler
+  // Escape key handler and tab focus trap
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
+        if (closeTimerRef.current) {
+          clearTimeout(closeTimerRef.current);
+          closeTimerRef.current = null;
+        }
         onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && isOpen && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -145,7 +188,10 @@ export function ClaimInviteModal({
         triggerHaptic("success");
         setSuccessMessage(data.message || "Đã thêm hoạt động vào lịch rèn luyện thành công!");
         onClaimSuccess?.(data.record);
-        setTimeout(() => {
+        if (closeTimerRef.current) {
+          clearTimeout(closeTimerRef.current);
+        }
+        closeTimerRef.current = setTimeout(() => {
           onClose();
         }, 1500);
       } else {

@@ -1,18 +1,27 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import {
-  activityInvites,
-  drlRecords,
-  users,
-  activityInviteClaims,
-  semesters,
-} from "@/lib/db/schema";
-import { eq, and, desc, sql, or, isNull, lt } from "drizzle-orm";
+import { drlRecords, activityInvites, activityInviteClaims, users } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
-import { randomUUID } from "crypto";
 import { normalizeInviteCode } from "@/lib/calendar/inviteCode";
-import { checkRateLimit } from "@/lib/security/rateLimit";
 import { isValidId } from "@/lib/security/sanitizer";
+
+// In-memory rate limiting map for claim attempts (max 10 claims per IP/User per 5 minutes)
+const claimRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(key: string, limit: number = 10, windowMs: number = 5 * 60 * 1000): boolean {
+  const now = Date.now();
+  const record = claimRateLimit.get(key);
+  if (!record || now > record.resetAt) {
+    claimRateLimit.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (record.count >= limit) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
 
 export async function POST(req: Request) {
   const session = await getSession();
@@ -20,12 +29,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
 
-  // Rate limit: 15 claims per minute per user
-  const rateLimitKey = `claim_invite_${session.id}`;
-  const rateCheck = checkRateLimit(rateLimitKey, 15, 60 * 1000);
-  if (!rateCheck.success) {
+  // Rate limit by user session
+  if (!checkRateLimit(`claim_${session.id}`)) {
     return NextResponse.json(
-      { error: "Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại." },
+      { error: "Thao tác quá nhanh. Vui lòng thử lại sau 5 phút." },
       { status: 429 }
     );
   }
@@ -34,11 +41,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { code: rawCode, semesterId } = body;
 
-    if (!rawCode) {
-      return NextResponse.json({ error: "Vui lòng nhập mã mời" }, { status: 400 });
-    }
-
-    if (typeof rawCode !== "string" || !rawCode.trim()) {
+    if (!rawCode || typeof rawCode !== "string" || !rawCode.trim()) {
       return NextResponse.json({ error: "Vui lòng nhập mã mời" }, { status: 400 });
     }
     const code = normalizeInviteCode(rawCode);
@@ -49,20 +52,18 @@ export async function POST(req: Request) {
         inviteId: activityInvites.id,
         code: activityInvites.code,
         creatorId: activityInvites.creatorId,
+        isActive: activityInvites.isActive,
         maxUses: activityInvites.maxUses,
         usesCount: activityInvites.usesCount,
         expiresAt: activityInvites.expiresAt,
-        isActive: activityInvites.isActive,
-        // Source Record fields
-        recordId: drlRecords.id,
+        recordId: activityInvites.recordId,
         title: drlRecords.title,
-        type: drlRecords.type,
+        criteriaId: drlRecords.criteriaId,
         category: drlRecords.category,
         points: drlRecords.points,
-        quantity: drlRecords.quantity,
-        occurredAt: drlRecords.occurredAt,
-        note: drlRecords.note,
-        // Creator fields
+        date: drlRecords.date,
+        description: drlRecords.description,
+        semesterId: drlRecords.semesterId,
         creatorUsername: users.username,
         creatorFullName: users.fullName,
       })
@@ -81,34 +82,33 @@ export async function POST(req: Request) {
 
     if (!inviteData.isActive) {
       return NextResponse.json(
-        { error: "Mã mời này hiện đang bị tạm khóa bởi người tạo" },
+        { error: "Mã mời này hiện đang tạm đóng bởi người chia sẻ" },
         { status: 400 }
       );
     }
 
-    if (inviteData.expiresAt && new Date() > new Date(inviteData.expiresAt)) {
+    if (inviteData.expiresAt && new Date(inviteData.expiresAt).getTime() < Date.now()) {
       return NextResponse.json(
-        { error: "Mã mời này đã hết thời gian hiệu lực" },
+        { error: "Mã mời này đã hết hạn sử dụng" },
         { status: 400 }
       );
     }
 
     if (inviteData.maxUses !== null && inviteData.usesCount >= inviteData.maxUses) {
       return NextResponse.json(
-        { error: "Mã mời này đã đủ số lượt tham gia tối đa" },
+        { error: "Mã mời đã đạt tối đa số lượt tham gia quy định" },
         { status: 400 }
       );
     }
 
-    // 2. Prevent self-claiming
     if (inviteData.creatorId === session.id) {
       return NextResponse.json(
-        { error: "Bạn không thể tự nhận mã mời do chính bạn tạo" },
+        { error: "Bạn chính là người tạo mã mời này, không cần phải nhập mã của chính mình!" },
         { status: 400 }
       );
     }
 
-    // 3. Prevent duplicate claim by same user
+    // Check duplicate claim by this user
     const [existingClaim] = await db
       .select({ id: activityInviteClaims.id })
       .from(activityInviteClaims)
@@ -122,46 +122,20 @@ export async function POST(req: Request) {
 
     if (existingClaim) {
       return NextResponse.json(
-        { error: "Bạn đã thêm hoạt động này vào sổ rèn luyện trước đó rồi" },
+        { error: "Bạn đã nhận hoạt động này từ mã mời trước đó rồi!" },
         { status: 400 }
       );
     }
 
-    // 4. Resolve target semester for session.id
-    let targetSemesterId = semesterId;
-    if (targetSemesterId && !isValidId(targetSemesterId)) {
-      targetSemesterId = undefined;
-    }
+    // Determine target semester ID
+    const targetSemesterId = (semesterId && isValidId(semesterId))
+      ? semesterId
+      : inviteData.semesterId;
 
-    if (!targetSemesterId) {
-      const [currentSemester] = await db
-        .select({ id: semesters.id })
-        .from(semesters)
-        .where(and(eq(semesters.userId, session.id), eq(semesters.isCurrent, true)))
-        .limit(1);
-
-      if (currentSemester) {
-        targetSemesterId = currentSemester.id;
-      } else {
-        const [latestSemester] = await db
-          .select({ id: semesters.id })
-          .from(semesters)
-          .where(eq(semesters.userId, session.id))
-          .orderBy(desc(semesters.createdAt))
-          .limit(1);
-        targetSemesterId = latestSemester?.id;
-      }
-    }
-
-    if (!targetSemesterId) {
-      return NextResponse.json(
-        { error: "Hệ thống chưa tìm thấy học kỳ của bạn để lưu hoạt động" },
-        { status: 400 }
-      );
-    }
-
-    // 5. Reserve slot atomically via atomic conditional update
-    const [updatedInvite] = await db
+    // Concurrency-safe atomic slot reservation without db.transaction (for neon-http driver compatibility)
+    // Decrement slot / increment uses_count with conditional WHERE:
+    // WHERE is_active = true AND (max_uses IS NULL OR uses_count < max_uses)
+    const updateResult = await db
       .update(activityInvites)
       .set({
         usesCount: sql`${activityInvites.usesCount} + 1`,
@@ -171,58 +145,72 @@ export async function POST(req: Request) {
         and(
           eq(activityInvites.id, inviteData.inviteId),
           eq(activityInvites.isActive, true),
-          or(
-            isNull(activityInvites.maxUses),
-            lt(activityInvites.usesCount, activityInvites.maxUses)
-          )
+          sql`(${activityInvites.maxUses} IS NULL OR ${activityInvites.usesCount} < ${activityInvites.maxUses})`
         )
       )
-      .returning({ id: activityInvites.id });
+      .returning({ updatedId: activityInvites.id });
 
-    if (!updatedInvite) {
+    if (!updateResult || updateResult.length === 0) {
       return NextResponse.json(
-        { error: "Mã mời đã đủ số lượt tham gia tối đa hoặc đã bị tạm khóa" },
+        { error: "Mã mời vừa hết lượt tham gia hoặc đã bị đóng. Vui lòng kiểm tra lại." },
         { status: 400 }
       );
     }
 
-    // 6. Insert cloned record into recipient's ledger
-    const newRecordId = randomUUID();
-    const [clonedRecord] = await db
-      .insert(drlRecords)
-      .values({
-        id: newRecordId,
-        userId: session.id,
-        semesterId: targetSemesterId,
-        category: inviteData.category,
-        title: inviteData.title,
-        type: inviteData.type || "add",
-        points: inviteData.points,
-        quantity: inviteData.quantity || 1,
-        occurredAt: inviteData.occurredAt,
-        note: inviteData.note,
-        evidenceUrl: null, // individual submission needed
-        auditStatus: "missing",
-        originInviteCode: inviteData.code,
-        originCreatorUsername: inviteData.creatorUsername,
-      })
-      .returning();
+    let clonedRecord;
+    try {
+      // Create new record for the current user
+      const [newRec] = await db
+        .insert(drlRecords)
+        .values({
+          userId: session.id,
+          semesterId: targetSemesterId,
+          criteriaId: inviteData.criteriaId,
+          title: inviteData.title,
+          category: inviteData.category,
+          points: inviteData.points,
+          date: inviteData.date,
+          description: inviteData.description
+            ? `${inviteData.description} (Được chia sẻ bởi @${inviteData.creatorUsername})`
+            : `Được chia sẻ bởi @${inviteData.creatorUsername}`,
+          auditStatus: "missing", // Claimed activity starts with missing evidence until the user uploads
+          originInviteCode: inviteData.code,
+          originCreatorUsername: inviteData.creatorUsername,
+        })
+        .returning();
 
-    // 7. Record the claim
-    await db.insert(activityInviteClaims).values({
-      id: randomUUID(),
-      inviteId: inviteData.inviteId,
-      userId: session.id,
-      claimedRecordId: newRecordId,
-    });
+      clonedRecord = newRec;
+
+      // Record the claim
+      await db.insert(activityInviteClaims).values({
+        inviteId: inviteData.inviteId,
+        userId: session.id,
+        claimedRecordId: clonedRecord.id,
+      });
+    } catch (insertError) {
+      // Rollback slot reservation if record insertion failed
+      console.error("Claim insertion failed, reverting usesCount:", insertError);
+      await db
+        .update(activityInvites)
+        .set({
+          usesCount: sql`GREATEST(${activityInvites.usesCount} - 1, 0)`,
+          updatedAt: new Date(),
+        })
+        .where(eq(activityInvites.id, inviteData.inviteId));
+
+      throw insertError;
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Đã thêm thành công "${inviteData.title}" từ @${inviteData.creatorUsername} vào lịch trình của bạn`,
+      message: `Đã thêm thành công hoạt động "${inviteData.title}" vào lịch rèn luyện của bạn!`,
       record: clonedRecord,
     });
   } catch (error: any) {
     console.error("POST /api/calendar/invites/claim error:", error);
-    return NextResponse.json({ error: "Lỗi khi nhận hoạt động từ mã mời" }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || "Lỗi máy chủ khi nhận hoạt động" },
+      { status: 500 }
+    );
   }
 }

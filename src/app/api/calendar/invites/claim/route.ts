@@ -118,17 +118,6 @@ export async function POST(req: Request) {
 
     // Determine target semester ID for the claiming user
     let targetSemesterId = semesterId;
-    if (targetSemesterId && isValidId(targetSemesterId)) {
-      // Verify semester belongs to current user
-      const [userSem] = await db
-        .select({ id: semesters.id })
-        .from(semesters)
-        .where(and(eq(semesters.id, targetSemesterId), eq(semesters.userId, session.id)))
-        .limit(1);
-
-      if (!userSem) {
-        targetSemesterId = null;
-    let targetSemesterId = semesterId;
     if (targetSemesterId && !isValidId(targetSemesterId)) {
       return NextResponse.json({ error: "Mã học kỳ không hợp lệ" }, { status: 400 });
     }

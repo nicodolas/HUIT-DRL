@@ -554,7 +554,7 @@ export default function DashboardPage() {
         isOpen={claimModalOpen}
         onClose={() => setClaimModalOpen(false)}
         onClaimSuccess={() => {
-          loadRecords();
+          void loadRecords();
         }}
       />
 

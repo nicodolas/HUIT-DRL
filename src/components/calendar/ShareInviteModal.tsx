@@ -114,13 +114,13 @@ export function ShareInviteModal({
       }
     };
 
-    fetchOrCreateInvite();
+    void fetchOrCreateInvite();
   }, [isOpen, record]);
 
   // Generate QR code data URL whenever invite code changes
   useEffect(() => {
     if (!invite?.code) return;
-    QRCode.toDataURL(invite.code, {
+    void QRCode.toDataURL(invite.code, {
       width: 240,
       margin: 1.5,
       color: {
@@ -275,7 +275,7 @@ export function ShareInviteModal({
                   </span>
 
                   <button
-                    onClick={handleToggleActive}
+                    onClick={() => void handleToggleActive()}
                     disabled={updating}
                     className={`inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 rounded-full transition cursor-pointer ${
                       invite.isActive
@@ -316,7 +316,7 @@ export function ShareInviteModal({
 
                     <button
                       type="button"
-                      onClick={handleCopyCode}
+                      onClick={() => void handleCopyCode()}
                       className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold text-xs transition cursor-pointer"
                     >
                       {copied ? (
@@ -382,10 +382,14 @@ export function ShareInviteModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
+                    <label
+                      htmlFor="share-max-uses-input"
+                      className="block text-slate-600 dark:text-slate-400 font-semibold mb-1"
+                    >
                       Số lượt tham gia tối đa:
                     </label>
                     <input
+                      id="share-max-uses-input"
                       type="number"
                       min="1"
                       max="500"
@@ -400,10 +404,14 @@ export function ShareInviteModal({
                   </div>
 
                   <div>
-                    <label className="block text-slate-600 dark:text-slate-400 font-semibold mb-1">
+                    <label
+                      htmlFor="share-expires-select"
+                      className="block text-slate-600 dark:text-slate-400 font-semibold mb-1"
+                    >
                       Thời hạn hiệu lực:
                     </label>
                     <select
+                      id="share-expires-select"
                       value={expiresInHours}
                       onChange={(e) =>
                         setExpiresInHours(
@@ -424,7 +432,7 @@ export function ShareInviteModal({
                 <div className="text-right pt-1">
                   <button
                     type="button"
-                    onClick={handleSaveSettings}
+                    onClick={() => void handleSaveSettings()}
                     disabled={updating}
                     className="px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition cursor-pointer"
                   >

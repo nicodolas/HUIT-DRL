@@ -1,16 +1,16 @@
-import { randomBytes } from "crypto";
+import { randomInt } from "crypto";
 
 // 31 unambiguous alphanumeric characters (excluding 0, O, 1, I, L)
 const CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
 /**
- * Generates an intuitive, readable invite code, e.g. "HUIT-9K2F"
+ * Generates an intuitive, readable invite code, e.g. "HUIT-9K2F".
+ * Uses cryptographically secure, uniform random selection without modulo bias.
  */
 export function generateInviteCode(): string {
-  const bytes = randomBytes(4);
   let code = "";
   for (let i = 0; i < 4; i++) {
-    code += CHARS[bytes[i] % CHARS.length];
+    code += CHARS[randomInt(0, CHARS.length)];
   }
   return `HUIT-${code}`;
 }
@@ -29,4 +29,3 @@ export function normalizeInviteCode(input?: string | null): string {
   }
   return clean;
 }
-

@@ -348,7 +348,7 @@ export function ClaimInviteModal({
 
           <button
             type="button"
-            onClick={handleClaim}
+            onClick={() => void handleClaim()}
             disabled={
               !preview ||
               preview.isCreator ||

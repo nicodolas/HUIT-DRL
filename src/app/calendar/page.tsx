@@ -233,11 +233,11 @@ export default function CalendarPage() {
 
       // 2. Status filter
       if (selectedStatusFilter === "upcoming") {
-        if (!parsed || parsed.isPast) return false;
+        if (!parsed || (!parsed.isToday && parsed.daysDiff <= 0)) return false;
       } else if (selectedStatusFilter === "missing_evidence") {
         if (Boolean(r.evidenceUrl)) return false;
       } else if (selectedStatusFilter === "completed") {
-        if (!parsed || !parsed.isPast || !r.evidenceUrl) return false;
+        if (!parsed || parsed.isToday || parsed.daysDiff >= 0 || !r.evidenceUrl) return false;
       }
 
       // 3. Search query

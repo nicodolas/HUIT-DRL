@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { getValidTestCaptchaToken } from "./helpers/auth";
 
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 test.describe("Activity Invites & Calendar Sharing Suite", () => {
   const ts = Date.now();
   const studentA = {
@@ -65,8 +72,8 @@ test.describe("Activity Invites & Calendar Sharing Suite", () => {
     const catSelect = page.locator(".fixed select");
     await catSelect.selectOption("3");
 
-    // Set today's date
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Set today's local date
+    const todayStr = formatLocalDate(new Date());
     const dateInput = page.locator('.fixed input[type="date"]');
     await dateInput.fill(todayStr);
 
@@ -190,7 +197,7 @@ test.describe("Activity Invites & Calendar Sharing Suite", () => {
     const catSelect = page.locator(".fixed select");
     await catSelect.selectOption("1");
 
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = formatLocalDate(new Date());
     const dateInput = page.locator('.fixed input[type="date"]');
     await dateInput.fill(todayStr);
 

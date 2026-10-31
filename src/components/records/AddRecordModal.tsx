@@ -962,7 +962,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer shrink-0">
                       <input
-                        type="checkbox"
+                        type="checkbox" aria-label="Chia sẻ mã mời cho bạn bè"
                         checked={createShareInvite}
                         onChange={(e) => {
                           triggerHaptic("light");

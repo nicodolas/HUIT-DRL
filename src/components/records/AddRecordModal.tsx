@@ -945,7 +945,7 @@ export const AddRecordModal: React.FC<AddRecordModalProps> = ({
                   </div>
                 )}
                 {/* Auto-share toggle card */}
-                {!recordToEdit && (
+                {!recordToEdit && onOpenShareModal && (
                   <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-800/50 flex items-center justify-between gap-3">
                     <div className="flex items-center space-x-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">

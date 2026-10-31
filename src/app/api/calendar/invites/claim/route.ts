@@ -243,7 +243,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("POST /api/calendar/invites/claim error:", error);
     return NextResponse.json(
-      { error: error.message || "Lỗi máy chủ khi nhận hoạt động" },
+      { error: "Lỗi máy chủ khi nhận hoạt động" },
       { status: 500 }
     );
   }

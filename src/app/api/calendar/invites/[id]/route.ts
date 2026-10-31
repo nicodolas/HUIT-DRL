@@ -53,11 +53,23 @@ export async function PATCH(
     }
 
     if (expiresInHours !== undefined) {
-      if (typeof expiresInHours === "number" && expiresInHours > 0) {
-        updates.expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
-      } else if (expiresInHours === null) {
+    if (expiresInHours !== undefined) {
+      if (expiresInHours === null) {
         updates.expiresAt = null;
+      } else if (
+        typeof expiresInHours !== "number" ||
+        !Number.isFinite(expiresInHours) ||
+        expiresInHours <= 0
+      ) {
+        return NextResponse.json({ error: "Thời hạn không hợp lệ" }, { status: 400 });
+      } else {
+        const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+        if (Number.isNaN(expiresAt.getTime())) {
+          return NextResponse.json({ error: "Thời hạn không hợp lệ" }, { status: 400 });
+        }
+        updates.expiresAt = expiresAt;
       }
+    }
     }
 
     const [updated] = await db

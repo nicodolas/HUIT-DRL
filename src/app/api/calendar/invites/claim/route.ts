@@ -38,6 +38,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Vui lòng nhập mã mời" }, { status: 400 });
     }
 
+    if (typeof rawCode !== "string" || !rawCode.trim()) {
+      return NextResponse.json({ error: "Vui lòng nhập mã mời" }, { status: 400 });
+    }
     const code = normalizeInviteCode(rawCode);
 
     // 1. Fetch invite, source record, and creator info

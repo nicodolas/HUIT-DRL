@@ -327,10 +327,10 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/semesters?id=${sem.id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        setSemesterActionMsg({ type: "success", text: data.message || `Đã xóa học kỳ "${sem.name}" thành công!` });
-        fetchSemesters();
+        await fetchSemesters();
         fetchStats();
-        loadHeaderSemesters();
+        await loadHeaderSemesters();
+        setSemesterActionMsg({ type: "success", text: data.message || `Đã xóa học kỳ "${sem.name}" thành công!` });
       } else {
         setSemesterActionMsg({ type: "error", text: data.error || "Không thể xóa học kỳ" });
       }

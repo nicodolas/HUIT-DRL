@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { semesters, drlRecords } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
 import {
@@ -31,7 +31,7 @@ export async function GET() {
         status: semesters.status,
       })
       .from(semesters)
-      .where(eq(semesters.userId, session.id));
+      .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)));
 
     const userRecords = await db
       .select({
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       const existing = await db
         .select({ id: semesters.id, name: semesters.name })
         .from(semesters)
-        .where(eq(semesters.userId, session.id));
+        .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)));
 
       const matched = existing.find((s) => s.name.trim() === cleanSemName);
       if (matched) {

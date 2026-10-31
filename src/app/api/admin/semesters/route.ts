@@ -103,22 +103,38 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Mã học kỳ không hợp lệ" }, { status: 400 });
     }
 
-    // 1. Cascade delete DRL records in this semester
-    await db.delete(drlRecords).where(eq(drlRecords.semesterId, semesterId));
-
-    // 2. Delete the semester
-    const [deleted] = await db
-      .delete(semesters)
+    // 1. Fetch target semester first to determine whether it is a system-wide official semester
+    const [targetSem] = await db
+      .select({ id: semesters.id, name: semesters.name, isSystem: semesters.isSystem })
+      .from(semesters)
       .where(eq(semesters.id, semesterId))
-      .returning({ id: semesters.id, name: semesters.name });
+      .limit(1);
 
-    if (!deleted) {
+    if (!targetSem) {
       return NextResponse.json({ error: "Không tìm thấy học kỳ để xóa" }, { status: 404 });
+    }
+
+    if (targetSem.isSystem) {
+      // Cascade delete all matching semesters and their DRL records across the system
+      const matching = await db
+        .select({ id: semesters.id })
+        .from(semesters)
+        .where(eq(semesters.name, targetSem.name));
+
+      for (const m of matching) {
+        await db.delete(drlRecords).where(eq(drlRecords.semesterId, m.id));
+      }
+
+      await db.delete(semesters).where(eq(semesters.name, targetSem.name));
+    } else {
+      // Cascade delete DRL records in this specific semester
+      await db.delete(drlRecords).where(eq(drlRecords.semesterId, semesterId));
+      await db.delete(semesters).where(eq(semesters.id, semesterId));
     }
 
     return NextResponse.json({
       success: true,
-      message: `Đã xóa học kỳ "${deleted.name}" thành công`,
+      message: `Đã xóa học kỳ "${targetSem.name}" thành công`,
     });
   } catch (error) {
     console.error("DELETE /api/admin/semesters error:", error);

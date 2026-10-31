@@ -25,6 +25,8 @@ import { DisciplineChecklistCard } from "@/components/dashboard/DisciplineCheckl
 import { StudentUtilitiesMenu } from "@/components/dashboard/StudentUtilitiesMenu";
 import { AdminHubModal } from "@/components/modals/AdminHubModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
+import { ClaimInviteModal } from "@/components/calendar/ClaimInviteModal";
+import { ShareInviteModal } from "@/components/calendar/ShareInviteModal";
 import { DrlRecord, Semester, DrlCriteriaPreset } from "@/lib/db/schema";
 import { ScoreCalculationResult, GoalAnalysisResult } from "@/lib/drl/calculator";
 import { saveSemesterCache, getSemesterCache, saveUserSemestersCache, getUserSemestersCache } from "@/lib/offline/cache";
@@ -54,6 +56,9 @@ export default function DashboardPage() {
   const [proofVaultOpen, setProofVaultOpen] = useState(false);
   const [forecastModalOpen, setForecastModalOpen] = useState(false);
   const [adminHubOpen, setAdminHubOpen] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareRecord, setShareRecord] = useState<DrlRecord | null>(null);
   const [isUsingCache, setIsUsingCache] = useState(false);
 
   // 1. Check Auth & Load Semesters
@@ -235,7 +240,7 @@ export default function DashboardPage() {
                 </span>
                 <span>•</span>
                 <span className="font-mono text-slate-500">@{user.username}</span>
-                {user.className && <span>• {user.className}</span>}
+                {user.className && <span>• Lớp: {user.className}</span>}
                 <Link
                   href="/profile"
                   className="inline-flex items-center space-x-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline ml-1"
@@ -244,7 +249,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white truncate mt-0.5">
-                Sổ tay rèn luyện: {user.fullName}
+                Xin chào, {user.fullName}!
               </h1>
             </div>
           </div>
@@ -368,6 +373,7 @@ export default function DashboardPage() {
                 setModalInitialCategory(undefined);
                 setModalOpen(true);
               }}
+              onOpenClaimModal={() => setClaimModalOpen(true)}
             />
 
             <RecordList
@@ -378,6 +384,10 @@ export default function DashboardPage() {
               onEditRecord={(r) => {
                 setEditingRecord(r);
                 setModalOpen(true);
+              }}
+              onOpenShareModal={(rec) => {
+                setShareRecord(rec);
+                setShareModalOpen(true);
               }}
               onOpenAddModal={() => {
                 setEditingRecord(null);
@@ -473,6 +483,10 @@ export default function DashboardPage() {
           setSelectedPresetToAdd(null);
         }}
         onSuccess={loadRecords}
+        onOpenShareModal={(record) => {
+          setShareRecord(record);
+          setShareModalOpen(true);
+        }}
       />
 
       <CsvExchangeModal
@@ -529,6 +543,24 @@ export default function DashboardPage() {
 
       {/* Offline and Network Recovery Listeners */}
       <NetworkRecoveryListener onSyncComplete={loadRecords} />
+
+      {/* Activity Invite Sharing and Claiming Modals */}
+      <ShareInviteModal
+        isOpen={shareModalOpen}
+        record={shareRecord}
+        onClose={() => {
+          setShareModalOpen(false);
+          setShareRecord(null);
+        }}
+      />
+
+      <ClaimInviteModal
+        isOpen={claimModalOpen}
+        onClose={() => setClaimModalOpen(false)}
+        onClaimSuccess={() => {
+          void loadRecords();
+        }}
+      />
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />

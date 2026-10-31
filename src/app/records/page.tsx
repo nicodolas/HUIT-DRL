@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { OfflineSyncBanner } from "@/components/common/OfflineSyncBanner";
 import { RecordList } from "@/components/records/RecordList";
 import { AddRecordModal } from "@/components/records/AddRecordModal";
+import { ShareInviteModal } from "@/components/calendar/ShareInviteModal";
 import { CloneActivitiesModal } from "@/components/modals/CloneActivitiesModal";
 import { PreFlightAuditModal } from "@/components/modals/PreFlightAuditModal";
 import { CsvExchangeModal } from "@/components/modals/CsvExchangeModal";
@@ -29,6 +30,8 @@ export default function RecordsPage() {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareRecord, setShareRecord] = useState<DrlRecord | null>(null);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -268,6 +271,10 @@ export default function RecordsPage() {
             setEditingRecord(r);
             setModalOpen(true);
           }}
+          onOpenShareModal={(rec) => {
+            setShareRecord(rec);
+            setShareModalOpen(true);
+          }}
           onOpenAddModal={() => {
             setEditingRecord(null);
             setModalOpen(true);
@@ -285,6 +292,10 @@ export default function RecordsPage() {
           setEditingRecord(null);
         }}
         onSuccess={loadRecords}
+        onOpenShareModal={(rec) => {
+          setShareRecord(rec);
+          setShareModalOpen(true);
+        }}
       />
 
       <CloneActivitiesModal
@@ -330,6 +341,16 @@ export default function RecordsPage() {
       >
         <Plus className="w-5 h-5 text-amber-400" />
       </button>
+
+      {/* Activity Invite Sharing Modal */}
+      <ShareInviteModal
+        isOpen={shareModalOpen}
+        record={shareRecord}
+        onClose={() => {
+          setShareModalOpen(false);
+          setShareRecord(null);
+        }}
+      />
 
       <BottomNav />
     </div>

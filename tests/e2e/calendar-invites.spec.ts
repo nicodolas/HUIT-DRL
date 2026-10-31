@@ -146,8 +146,8 @@ test.describe("Activity Invites & Calendar Sharing Suite", () => {
     await expect(confirmClaimBtn).toBeEnabled();
     await confirmClaimBtn.click();
 
-    // Success notification
-    await expect(page.locator("text=Đã thêm hoạt động")).toBeVisible({ timeout: 10000 });
+    // Modal closes after claim
+    await expect(page.locator("h3:has-text('Nhập mã mời hoạt động')")).not.toBeVisible({ timeout: 10000 });
 
     // 11. Verify activity is now on Student B's Dashboard and Calendar
     await page.goto("/calendar");

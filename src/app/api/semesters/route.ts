@@ -39,7 +39,7 @@ export async function GET() {
         createdAt: semesters.createdAt,
       })
       .from(semesters)
-      .where(eq(semesters.userId, session.id))
+      .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)))
       .orderBy(desc(semesters.createdAt));
 
     // 3. Automatically sync any missing official system semester for this user
@@ -79,7 +79,7 @@ export async function GET() {
             createdAt: semesters.createdAt,
           })
           .from(semesters)
-          .where(eq(semesters.userId, session.id))
+          .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)))
           .orderBy(desc(semesters.createdAt));
       }
     }
@@ -214,7 +214,7 @@ export async function PUT(req: Request) {
         await db
           .update(semesters)
           .set({ isCurrent: false })
-          .where(eq(semesters.userId, session.id));
+          .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)));
       }
       updateData.isCurrent = Boolean(isCurrent);
     }

@@ -350,7 +350,6 @@ export default function ProfilePage() {
                         <Lock className="w-3.5 h-3.5 text-slate-400" />
                         <span>Tên đăng nhập:</span>
                       </label>
-                      <span className="text-[10px] text-slate-400">Định danh bất biến</span>
                     </div>
                     <input
                       type="text"

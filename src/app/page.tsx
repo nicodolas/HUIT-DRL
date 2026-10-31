@@ -240,7 +240,7 @@ export default function DashboardPage() {
                 </span>
                 <span>•</span>
                 <span className="font-mono text-slate-500">@{user.username}</span>
-                {user.className && <span>• {user.className}</span>}
+                {user.className && <span>• Lớp: {user.className}</span>}
                 <Link
                   href="/profile"
                   className="inline-flex items-center space-x-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline ml-1"

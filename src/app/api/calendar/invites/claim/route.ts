@@ -1,27 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { drlRecords, activityInvites, activityInviteClaims, users } from "@/lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { drlRecords, activityInvites, activityInviteClaims, users, semesters } from "@/lib/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
+import { randomUUID } from "crypto";
 import { normalizeInviteCode } from "@/lib/calendar/inviteCode";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { isValidId } from "@/lib/security/sanitizer";
-
-// In-memory rate limiting map for claim attempts (max 10 claims per IP/User per 5 minutes)
-const claimRateLimit = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(key: string, limit: number = 10, windowMs: number = 5 * 60 * 1000): boolean {
-  const now = Date.now();
-  const record = claimRateLimit.get(key);
-  if (!record || now > record.resetAt) {
-    claimRateLimit.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
-  }
-  if (record.count >= limit) {
-    return false;
-  }
-  record.count += 1;
-  return true;
-}
 
 export async function POST(req: Request) {
   const session = await getSession();
@@ -29,10 +14,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
 
-  // Rate limit by user session
-  if (!checkRateLimit(`claim_${session.id}`)) {
+  // Rate limit: 15 claims per minute per user
+  const rateLimitKey = `claim_invite_${session.id}`;
+  const rateCheck = checkRateLimit(rateLimitKey, 15, 60 * 1000);
+  if (!rateCheck.success) {
     return NextResponse.json(
-      { error: "Thao tác quá nhanh. Vui lòng thử lại sau 5 phút." },
+      { error: "Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại." },
       { status: 429 }
     );
   }
@@ -57,12 +44,14 @@ export async function POST(req: Request) {
         usesCount: activityInvites.usesCount,
         expiresAt: activityInvites.expiresAt,
         recordId: activityInvites.recordId,
+        presetId: drlRecords.presetId,
         title: drlRecords.title,
-        criteriaId: drlRecords.criteriaId,
+        type: drlRecords.type,
         category: drlRecords.category,
         points: drlRecords.points,
-        date: drlRecords.date,
-        description: drlRecords.description,
+        quantity: drlRecords.quantity,
+        occurredAt: drlRecords.occurredAt,
+        note: drlRecords.note,
         semesterId: drlRecords.semesterId,
         creatorUsername: users.username,
         creatorFullName: users.fullName,
@@ -127,14 +116,53 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine target semester ID
-    const targetSemesterId = (semesterId && isValidId(semesterId))
-      ? semesterId
-      : inviteData.semesterId;
+    // Determine target semester ID for the claiming user
+    let targetSemesterId = semesterId;
+    if (targetSemesterId && isValidId(targetSemesterId)) {
+      // Verify semester belongs to current user
+      const [userSem] = await db
+        .select({ id: semesters.id })
+        .from(semesters)
+        .where(and(eq(semesters.id, targetSemesterId), eq(semesters.userId, session.id)))
+        .limit(1);
+
+      if (!userSem) {
+        targetSemesterId = null;
+      }
+    } else {
+      targetSemesterId = null;
+    }
+
+    if (!targetSemesterId) {
+      // Find recipient's current active semester
+      const [currentSemester] = await db
+        .select({ id: semesters.id })
+        .from(semesters)
+        .where(and(eq(semesters.userId, session.id), eq(semesters.isCurrent, true)))
+        .limit(1);
+
+      if (currentSemester) {
+        targetSemesterId = currentSemester.id;
+      } else {
+        // Fallback to recipient's latest semester
+        const [latestSemester] = await db
+          .select({ id: semesters.id })
+          .from(semesters)
+          .where(eq(semesters.userId, session.id))
+          .orderBy(desc(semesters.createdAt))
+          .limit(1);
+        targetSemesterId = latestSemester?.id;
+      }
+    }
+
+    if (!targetSemesterId) {
+      return NextResponse.json(
+        { error: "Hệ thống chưa tìm thấy học kỳ của bạn để lưu hoạt động" },
+        { status: 400 }
+      );
+    }
 
     // Concurrency-safe atomic slot reservation without db.transaction (for neon-http driver compatibility)
-    // Decrement slot / increment uses_count with conditional WHERE:
-    // WHERE is_active = true AND (max_uses IS NULL OR uses_count < max_uses)
     const updateResult = await db
       .update(activityInvites)
       .set({
@@ -157,23 +185,28 @@ export async function POST(req: Request) {
       );
     }
 
+    const newRecordId = randomUUID();
     let clonedRecord;
     try {
       // Create new record for the current user
       const [newRec] = await db
         .insert(drlRecords)
         .values({
+          id: newRecordId,
           userId: session.id,
           semesterId: targetSemesterId,
-          criteriaId: inviteData.criteriaId,
-          title: inviteData.title,
+          presetId: inviteData.presetId,
           category: inviteData.category,
+          title: inviteData.title,
+          type: inviteData.type || "add",
           points: inviteData.points,
-          date: inviteData.date,
-          description: inviteData.description
-            ? `${inviteData.description} (Được chia sẻ bởi @${inviteData.creatorUsername})`
+          quantity: inviteData.quantity || 1,
+          occurredAt: inviteData.occurredAt,
+          note: inviteData.note
+            ? `${inviteData.note} (Được chia sẻ bởi @${inviteData.creatorUsername})`
             : `Được chia sẻ bởi @${inviteData.creatorUsername}`,
-          auditStatus: "missing", // Claimed activity starts with missing evidence until the user uploads
+          evidenceUrl: null, // individual submission needed
+          auditStatus: "missing",
           originInviteCode: inviteData.code,
           originCreatorUsername: inviteData.creatorUsername,
         })
@@ -183,6 +216,7 @@ export async function POST(req: Request) {
 
       // Record the claim
       await db.insert(activityInviteClaims).values({
+        id: randomUUID(),
         inviteId: inviteData.inviteId,
         userId: session.id,
         claimedRecordId: clonedRecord.id,

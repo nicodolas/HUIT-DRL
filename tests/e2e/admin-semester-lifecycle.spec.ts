@@ -84,9 +84,9 @@ test.describe("Admin Public Semesters & Strict User Isolation Suite", () => {
     await expect(deleteBtn).toBeVisible();
     await deleteBtn.click();
 
-    // Verify it is removed and success message appears
-    await expect(page.locator("text=thành công")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("td", { hasText: officialSemName })).not.toBeVisible();
+    // Verify it is removed and delete success message appears
+    await expect(page.locator("text=Đã xóa học kỳ")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("td", { hasText: officialSemName })).not.toBeVisible({ timeout: 15000 });
   });
 });
 

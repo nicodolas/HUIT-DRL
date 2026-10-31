@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { semesters, drlRecords } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { calculateSemesterScore } from "@/lib/drl/calculator";
 import { DisciplineLevel, determineRating } from "@/lib/drl/rules";
@@ -22,7 +22,7 @@ export async function GET() {
         disciplineLevel: semesters.disciplineLevel,
       })
       .from(semesters)
-      .where(eq(semesters.userId, session.id))
+      .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)))
       .orderBy(desc(semesters.createdAt));
 
     if (userSemesters.length === 0) {

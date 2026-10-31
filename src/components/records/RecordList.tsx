@@ -16,6 +16,7 @@ import {
   Check,
   Sparkles,
   QrCode,
+  Share2,
 } from "lucide-react";
 import { ProofViewerModal } from "@/components/modals/ProofViewerModal";
 import { ActivityVerificationModal } from "@/components/records/ActivityVerificationModal";
@@ -35,6 +36,7 @@ interface RecordListProps {
   records: DrlRecord[];
   onDeleteRecord: (id: string) => void;
   onEditRecord?: (record: DrlRecord) => void;
+  onOpenShareModal?: (record: DrlRecord) => void;
   onOpenAddModal: () => void;
   studentName?: string;
   studentClass?: string;
@@ -45,6 +47,7 @@ export const RecordList: React.FC<RecordListProps> = ({
   records,
   onDeleteRecord,
   onEditRecord,
+  onOpenShareModal,
   onOpenAddModal,
   studentName,
   studentClass,
@@ -461,6 +464,15 @@ export const RecordList: React.FC<RecordListProps> = ({
                     )}
 
                     {/* Proof Indicator */}
+                    {r.originCreatorUsername && (
+                      <span
+                        className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold"
+                        title={`Mã mời: ${r.originInviteCode || "HUIT"}`}
+                      >
+                        Nhận từ @{r.originCreatorUsername}
+                      </span>
+                    )}
+
                     {r.evidenceUrl ? (
                       <button
                         type="button"
@@ -499,6 +511,20 @@ export const RecordList: React.FC<RecordListProps> = ({
                   >
                     <QrCode className="w-3.5 h-3.5" />
                   </button>
+
+                  {onOpenShareModal && (
+                    <button
+                      onClick={() => {
+                        triggerHaptic("light");
+                        onOpenShareModal(r);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                      title="Chia sẻ mã mời cho bạn bè"
+                      aria-label="Chia sẻ mã mời"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
                   {onEditRecord && (
                     <button

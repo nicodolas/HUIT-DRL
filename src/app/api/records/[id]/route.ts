@@ -154,6 +154,8 @@ export async function PUT(
         evidenceUrl: drlRecords.evidenceUrl,
         auditStatus: drlRecords.auditStatus,
         auditComment: drlRecords.auditComment,
+        originInviteCode: drlRecords.originInviteCode,
+        originCreatorUsername: drlRecords.originCreatorUsername,
       });
 
     if (updated.length === 0) {

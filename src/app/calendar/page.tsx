@@ -7,6 +7,8 @@ import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { QuickEvidenceModal } from "@/components/calendar/QuickEvidenceModal";
 import { CalendarRecordCard } from "@/components/calendar/CalendarRecordCard";
 import { CalendarEventDetailModal } from "@/components/calendar/CalendarEventDetailModal";
+import { ShareInviteModal } from "@/components/calendar/ShareInviteModal";
+import { ClaimInviteModal } from "@/components/calendar/ClaimInviteModal";
 import { DrlRecord, Semester, User } from "@/lib/db/schema";
 import {
   parseEventDateTime,
@@ -40,6 +42,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Ticket,
 } from "lucide-react";
 
 function formatLocalDate(d: Date): string {
@@ -77,6 +80,11 @@ export default function CalendarPage() {
   const [evidenceModalRecord, setEvidenceModalRecord] = useState<DrlRecord | null>(null);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
 
+  // Share & Claim Modal states
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalRecord, setShareModalRecord] = useState<DrlRecord | null>(null);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+
   // Search & Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<number>(0); // 0 = all
@@ -111,6 +119,13 @@ export default function CalendarPage() {
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => {
     return formatLocalDate(new Date());
   });
+  const selectedDayScheduleRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectDate = (dateStr: string) => {
+    triggerHaptic("light");
+    setSelectedDateStr(dateStr);
+    selectedDayScheduleRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
 
   // Load user & semesters
   useEffect(() => {
@@ -225,11 +240,11 @@ export default function CalendarPage() {
 
       // 2. Status filter
       if (selectedStatusFilter === "upcoming") {
-        if (!parsed || parsed.isPast) return false;
+        if (!parsed || (!parsed.isToday && parsed.daysDiff <= 0)) return false;
       } else if (selectedStatusFilter === "missing_evidence") {
         if (Boolean(r.evidenceUrl)) return false;
       } else if (selectedStatusFilter === "completed") {
-        if (!parsed || !parsed.isPast || !r.evidenceUrl) return false;
+        if (!parsed || parsed.isToday || parsed.daysDiff >= 0 || !r.evidenceUrl) return false;
       }
 
       // 3. Search query
@@ -363,7 +378,7 @@ export default function CalendarPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                Lịch Cá Nhân & Nhắc Việc
+                Lịch Cá Nhân
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Theo dõi kế hoạch hoạt động rèn luyện sinh viên theo QĐ 3385/QĐ-DCT
@@ -399,6 +414,20 @@ export default function CalendarPage() {
                 <span>Dòng thời gian (Danh sách)</span>
               </button>
             </div>
+
+            {/* Enter Invite Code button */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setIsClaimModalOpen(true);
+              }}
+              className="h-9 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-bold flex items-center space-x-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors shadow-xs cursor-pointer shrink-0"
+              title="Nhập mã mời từ bạn bè để thêm hoạt động"
+            >
+              <Ticket className="w-4 h-4" />
+              <span>Nhập mã mời</span>
+            </button>
 
             {/* Add Record button */}
             <button
@@ -664,6 +693,87 @@ export default function CalendarPage() {
         {/* ===================== VIEW 1: LỊCH THEO Ô (FULL-WIDTH MONTH GRID) ===================== */}
         {viewMode === "grid" ? (
           <div className="space-y-5">
+            {/* Quick Day Schedule Panel (Placed on Top for Instant Visibility) */}
+            <div
+              ref={selectedDayScheduleRef}
+              className="scroll-mt-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-all"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <CalendarCheck className="w-4 h-4" />
+                  </div>
+                  <div className="flex items-center space-x-2 flex-wrap min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                      Hoạt động ngày {selectedDateStr}
+                    </h3>
+                    {selectedDateStr === formatLocalDate(new Date()) && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 shrink-0">
+                        Hôm nay
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono shrink-0">
+                      ({selectedDateEvents.length} hoạt động)
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setRecordToEdit(null);
+                    setModalInitialDate(selectedDateStr);
+                    setIsAddModalOpen(true);
+                  }}
+                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors cursor-pointer shadow-xs shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Thêm hoạt động vào ngày này</span>
+                </button>
+              </div>
+
+              {selectedDateEvents.length === 0 ? (
+                <div className="text-center py-6 px-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Không có hoạt động nào được ghi nhận vào ngày này.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setRecordToEdit(null);
+                      setModalInitialDate(selectedDateStr);
+                      setIsAddModalOpen(true);
+                    }}
+                    className="mt-2.5 inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Lên lịch hoạt động vào ngày này</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {selectedDateEvents.map(({ record, parsed }) => (
+                    <CalendarRecordCard
+                      key={record.id}
+                      record={record}
+                      parsed={parsed}
+                      variant="compact"
+                      onOpenEvidenceModal={(rec) => {
+                        setEvidenceModalRecord(rec);
+                        setIsEvidenceModalOpen(true);
+                      }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Full-width Calendar Container */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs">
               {/* Month Navigator Header */}
@@ -747,8 +857,7 @@ export default function CalendarPage() {
                     <div
                       key={cell.dateStr}
                       onClick={() => {
-                        triggerHaptic("light");
-                        setSelectedDateStr(cell.dateStr);
+                        handleSelectDate(cell.dateStr);
                       }}
                       className={`min-h-[110px] lg:min-h-[125px] p-2 rounded-2xl flex flex-col justify-between text-left transition-all border group relative cursor-pointer ${
                         isSelected
@@ -864,8 +973,7 @@ export default function CalendarPage() {
                       key={cell.dateStr}
                       type="button"
                       onClick={() => {
-                        triggerHaptic("light");
-                        setSelectedDateStr(cell.dateStr);
+                        handleSelectDate(cell.dateStr);
                       }}
                       className={`min-h-[58px] p-1 rounded-xl flex flex-col justify-between text-left transition-all border cursor-pointer ${
                         isSelected
@@ -919,71 +1027,6 @@ export default function CalendarPage() {
                 })}
               </div>
             </div>
-
-            {/* Mobile / Quick Day Schedule Drawer under Grid */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between pb-3 mb-3.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center space-x-2">
-                  <CalendarCheck className="w-4 h-4 text-amber-500" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Hoạt động ngày {selectedDateStr}
-                  </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                    ({selectedDateEvents.length} hoạt động)
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic("light");
-                    setRecordToEdit(null);
-                    setModalInitialDate(selectedDateStr);
-                    setIsAddModalOpen(true);
-                  }}
-                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Thêm hoạt động</span>
-                </button>
-              </div>
-
-              {selectedDateEvents.length === 0 ? (
-                <div className="text-center py-6 px-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Không có hoạt động nào được ghi nhận vào ngày này.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic("light");
-                      setRecordToEdit(null);
-                      setModalInitialDate(selectedDateStr);
-                      setIsAddModalOpen(true);
-                    }}
-                    className="mt-2.5 inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 text-xs font-bold hover:bg-slate-800 dark:hover:bg-amber-400 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Lên lịch hoạt động vào ngày này</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {selectedDateEvents.map(({ record, parsed }) => (
-                    <CalendarRecordCard
-                      key={record.id}
-                      record={record}
-                      parsed={parsed}
-                      variant="compact"
-                      onOpenEvidenceModal={(rec) => {
-                        setEvidenceModalRecord(rec);
-                        setIsEvidenceModalOpen(true);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         ) : (
           /* ===================== VIEW 2: DÒNG THỜI GIAN (AGENDA TIMELINE) ===================== */
@@ -1018,6 +1061,10 @@ export default function CalendarPage() {
                         setEvidenceModalRecord(rec);
                         setIsEvidenceModalOpen(true);
                       }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -1051,6 +1098,10 @@ export default function CalendarPage() {
                         setEvidenceModalRecord(rec);
                         setIsEvidenceModalOpen(true);
                       }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -1076,6 +1127,10 @@ export default function CalendarPage() {
           if (currentSemesterId) {
             void loadRecords(currentSemesterId);
           }
+        }}
+        onOpenShareModal={(record) => {
+          setShareModalRecord(record);
+          setIsShareModalOpen(true);
         }}
       />
 
@@ -1105,8 +1160,33 @@ export default function CalendarPage() {
           setRecordToEdit(rec);
           setIsAddModalOpen(true);
         }}
+        onOpenShareModal={(rec) => {
+          setShareModalRecord(rec);
+          setIsShareModalOpen(true);
+        }}
         onDeleteSuccess={(deletedId) => {
           setRecords((prev) => prev.filter((r) => r.id !== deletedId));
+        }}
+      />
+
+      {/* Share Invite Modal */}
+      <ShareInviteModal
+        isOpen={isShareModalOpen}
+        record={shareModalRecord}
+        onClose={() => {
+          setIsShareModalOpen(false);
+          setShareModalRecord(null);
+        }}
+      />
+
+      {/* Claim Invite Modal */}
+      <ClaimInviteModal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        onClaimSuccess={() => {
+          if (currentSemesterId) {
+            void loadRecords(currentSemesterId);
+          }
         }}
       />
 

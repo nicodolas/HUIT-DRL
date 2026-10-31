@@ -173,7 +173,7 @@ export async function POST(req: Request) {
         and(
           eq(activityInvites.id, inviteData.inviteId),
           eq(activityInvites.isActive, true),
-          sql`(${activityInvites.maxUses} IS NULL OR ${activityInvites.usesCount} < ${activityInvites.maxUses})`
+          sql`(${activityInvites.expiresAt} IS NULL OR ${activityInvites.expiresAt} > NOW()) AND (${activityInvites.maxUses} IS NULL OR ${activityInvites.usesCount} < ${activityInvites.maxUses})`
         )
       )
       .returning({ updatedId: activityInvites.id });

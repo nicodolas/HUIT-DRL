@@ -4,16 +4,18 @@ import React from "react";
 import Link from "next/link";
 import { DrlRecord } from "@/lib/db/schema";
 import { getUpcomingRecords, getCriteriaColor } from "@/lib/calendar/utils";
-import { Calendar, Clock, ArrowRight, Plus, MapPin, AlertCircle } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Plus, MapPin, Ticket } from "lucide-react";
 
 interface UpcomingScheduleCardProps {
   records: DrlRecord[];
   onOpenAddModal?: () => void;
+  onOpenClaimModal?: () => void;
 }
 
 export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
   records,
   onOpenAddModal,
+  onOpenClaimModal,
 }) => {
   const allUpcoming = getUpcomingRecords(records);
   const upcomingList = allUpcoming.slice(0, 5); // top 5 upcoming
@@ -42,13 +44,27 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
             </div>
           </div>
 
-          <Link
-            href="/calendar"
-            className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center space-x-1 transition-colors"
-          >
-            <span>Chi tiết</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center space-x-2">
+            {onOpenClaimModal && (
+              <button
+                type="button"
+                onClick={onOpenClaimModal}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/80 text-[11px] font-bold text-amber-700 dark:text-amber-300 transition-colors cursor-pointer"
+                title="Nhập mã mời từ bạn bè"
+              >
+                <Ticket className="w-3 h-3" />
+                <span>Nhập mã</span>
+              </button>
+            )}
+
+            <Link
+              href="/calendar"
+              className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center space-x-1 transition-colors"
+            >
+              <span>Chi tiết</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Content list */}
@@ -63,15 +79,26 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-xs mx-auto">
               Lên lịch trước các hoạt động Đoàn Hội, NCKH, hiến máu để nhận thông báo nhắc nhở.
             </p>
-            {onOpenAddModal && (
-              <button
-                onClick={onOpenAddModal}
-                className="mt-3 inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Lên lịch hoạt động</span>
-              </button>
-            )}
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
+              {onOpenAddModal && (
+                <button
+                  onClick={onOpenAddModal}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-amber-500 hover:bg-slate-800 dark:hover:bg-amber-400 text-white dark:text-slate-950 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Lên lịch hoạt động</span>
+                </button>
+              )}
+              {onOpenClaimModal && (
+                <button
+                  onClick={onOpenClaimModal}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <Ticket className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Nhập mã mời</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -83,7 +110,7 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
                   className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center space-x-1.5 mb-1">
+                    <div className="flex items-center space-x-1.5 mb-1 flex-wrap gap-y-1">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                         parsed.isToday
                           ? "bg-rose-500 text-white font-extrabold"
@@ -108,6 +135,12 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
                       <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${color.lightBg} ${color.text} border ${color.border}`}>
                         TC{record.category}
                       </span>
+
+                      {record.originCreatorUsername && (
+                        <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold">
+                          @{record.originCreatorUsername}
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
@@ -165,4 +198,3 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
     </div>
   );
 };
-

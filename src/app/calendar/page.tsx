@@ -7,6 +7,8 @@ import { AddRecordModal } from "@/components/records/AddRecordModal";
 import { QuickEvidenceModal } from "@/components/calendar/QuickEvidenceModal";
 import { CalendarRecordCard } from "@/components/calendar/CalendarRecordCard";
 import { CalendarEventDetailModal } from "@/components/calendar/CalendarEventDetailModal";
+import { ShareInviteModal } from "@/components/calendar/ShareInviteModal";
+import { ClaimInviteModal } from "@/components/calendar/ClaimInviteModal";
 import { DrlRecord, Semester, User } from "@/lib/db/schema";
 import {
   parseEventDateTime,
@@ -40,6 +42,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Ticket,
 } from "lucide-react";
 
 function formatLocalDate(d: Date): string {
@@ -76,6 +79,11 @@ export default function CalendarPage() {
   // Quick Evidence Modal states
   const [evidenceModalRecord, setEvidenceModalRecord] = useState<DrlRecord | null>(null);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+
+  // Share & Claim Modal states
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalRecord, setShareModalRecord] = useState<DrlRecord | null>(null);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   // Search & Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -399,6 +407,20 @@ export default function CalendarPage() {
                 <span>Dòng thời gian (Danh sách)</span>
               </button>
             </div>
+
+            {/* Enter Invite Code button */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setIsClaimModalOpen(true);
+              }}
+              className="h-9 px-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-bold flex items-center space-x-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors shadow-xs cursor-pointer shrink-0"
+              title="Nhập mã mời từ bạn bè để thêm hoạt động"
+            >
+              <Ticket className="w-4 h-4" />
+              <span>Nhập mã mời</span>
+            </button>
 
             {/* Add Record button */}
             <button
@@ -979,6 +1001,10 @@ export default function CalendarPage() {
                         setEvidenceModalRecord(rec);
                         setIsEvidenceModalOpen(true);
                       }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -1018,6 +1044,10 @@ export default function CalendarPage() {
                         setEvidenceModalRecord(rec);
                         setIsEvidenceModalOpen(true);
                       }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -1050,6 +1080,10 @@ export default function CalendarPage() {
                       onOpenEvidenceModal={(rec) => {
                         setEvidenceModalRecord(rec);
                         setIsEvidenceModalOpen(true);
+                      }}
+                      onOpenShareModal={(rec) => {
+                        setShareModalRecord(rec);
+                        setIsShareModalOpen(true);
                       }}
                     />
                   ))}
@@ -1105,8 +1139,33 @@ export default function CalendarPage() {
           setRecordToEdit(rec);
           setIsAddModalOpen(true);
         }}
+        onOpenShareModal={(rec) => {
+          setShareModalRecord(rec);
+          setIsShareModalOpen(true);
+        }}
         onDeleteSuccess={(deletedId) => {
           setRecords((prev) => prev.filter((r) => r.id !== deletedId));
+        }}
+      />
+
+      {/* Share Invite Modal */}
+      <ShareInviteModal
+        isOpen={isShareModalOpen}
+        record={shareModalRecord}
+        onClose={() => {
+          setIsShareModalOpen(false);
+          setShareModalRecord(null);
+        }}
+      />
+
+      {/* Claim Invite Modal */}
+      <ClaimInviteModal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        onClaimSuccess={() => {
+          if (currentSemesterId) {
+            void loadRecords(currentSemesterId);
+          }
         }}
       />
 

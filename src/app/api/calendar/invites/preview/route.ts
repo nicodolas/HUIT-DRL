@@ -4,11 +4,22 @@ import { activityInvites, drlRecords, users, activityInviteClaims } from "@/lib/
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { normalizeInviteCode } from "@/lib/calendar/inviteCode";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function GET(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  }
+
+  // Rate limit: 30 preview queries per minute per user
+  const rateLimitKey = `preview_invite_${session.id}`;
+  const rateCheck = checkRateLimit(rateLimitKey, 30, 60 * 1000);
+  if (!rateCheck.success) {
+    return NextResponse.json(
+      { error: "Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại." },
+      { status: 429 }
+    );
   }
 
   const { searchParams } = new URL(req.url);

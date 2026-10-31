@@ -46,14 +46,29 @@ export async function POST(req: Request) {
       .where(and(eq(activityInvites.recordId, recordId), eq(activityInvites.creatorId, session.id)))
       .limit(1);
 
-    // Calculate expiration if provided
-    let expiresAt: Date | null = null;
-    if (expiresInHours && typeof expiresInHours === "number" && expiresInHours > 0) {
-      expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+    // Validate maxUses
+    let cleanMaxUses: number | null | undefined = undefined;
+    if (maxUses !== undefined) {
+      if (maxUses === null) {
+        cleanMaxUses = null;
+      } else if (typeof maxUses === "number" && Number.isInteger(maxUses) && maxUses >= 1) {
+        cleanMaxUses = Math.min(maxUses, 500);
+      } else {
+        return NextResponse.json({ error: "Số lượt tham gia phải là số nguyên dương từ 1 trở lên" }, { status: 400 });
+      }
     }
 
-    const cleanMaxUses =
-      maxUses && typeof maxUses === "number" && maxUses > 0 ? Math.min(Math.floor(maxUses), 500) : null;
+    // Validate expiresInHours
+    let expiresAt: Date | null | undefined = undefined;
+    if (expiresInHours !== undefined) {
+      if (expiresInHours === null) {
+        expiresAt = null;
+      } else if (typeof expiresInHours === "number" && Number.isFinite(expiresInHours) && expiresInHours > 0 && expiresInHours <= 8760) {
+        expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+      } else {
+        return NextResponse.json({ error: "Thời hạn hiệu lực không hợp lệ" }, { status: 400 });
+      }
+    }
 
     if (existingInvite) {
       // Re-activate or update settings of existing invite
@@ -61,8 +76,8 @@ export async function POST(req: Request) {
         .update(activityInvites)
         .set({
           isActive: true,
-          maxUses: cleanMaxUses,
-          expiresAt: expiresAt ?? existingInvite.expiresAt,
+          maxUses: cleanMaxUses !== undefined ? cleanMaxUses : existingInvite.maxUses,
+          expiresAt: expiresAt !== undefined ? expiresAt : existingInvite.expiresAt,
           updatedAt: new Date(),
         })
         .where(eq(activityInvites.id, existingInvite.id))
@@ -94,9 +109,9 @@ export async function POST(req: Request) {
         code: inviteCode,
         recordId: record.id,
         creatorId: session.id,
-        maxUses: cleanMaxUses,
+        maxUses: cleanMaxUses ?? null,
         usesCount: 0,
-        expiresAt,
+        expiresAt: expiresAt ?? null,
         isActive: true,
       })
       .returning();

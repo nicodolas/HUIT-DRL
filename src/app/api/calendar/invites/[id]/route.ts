@@ -46,30 +46,38 @@ export async function PATCH(
     }
 
     if (maxUses !== undefined) {
-      updates.maxUses =
-        maxUses && typeof maxUses === "number" && maxUses > 0
-          ? Math.min(Math.floor(maxUses), 500)
-          : null;
+      if (maxUses === null) {
+        updates.maxUses = null;
+      } else if (typeof maxUses === "number" && Number.isInteger(maxUses) && maxUses >= 1) {
+        updates.maxUses = Math.min(maxUses, 500);
+      } else {
+        return NextResponse.json(
+          { error: "Số lượt tham gia phải là số nguyên dương từ 1 trở lên" },
+          { status: 400 }
+        );
+      }
     }
 
-    if (expiresInHours !== undefined) {
     if (expiresInHours !== undefined) {
       if (expiresInHours === null) {
         updates.expiresAt = null;
       } else if (
-        typeof expiresInHours !== "number" ||
-        !Number.isFinite(expiresInHours) ||
-        expiresInHours <= 0
+        typeof expiresInHours === "number" &&
+        Number.isFinite(expiresInHours) &&
+        expiresInHours > 0 &&
+        expiresInHours <= 8760
       ) {
-        return NextResponse.json({ error: "Thời hạn không hợp lệ" }, { status: 400 });
-      } else {
         const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
         if (Number.isNaN(expiresAt.getTime())) {
-          return NextResponse.json({ error: "Thời hạn không hợp lệ" }, { status: 400 });
+          return NextResponse.json({ error: "Thời hạn hiệu lực không hợp lệ" }, { status: 400 });
         }
         updates.expiresAt = expiresAt;
+      } else {
+        return NextResponse.json(
+          { error: "Thời hạn hiệu lực không hợp lệ" },
+          { status: 400 }
+        );
       }
-    }
     }
 
     const [updated] = await db
@@ -121,4 +129,3 @@ export async function DELETE(
     return NextResponse.json({ error: "Lỗi khi xoá mã mời" }, { status: 500 });
   }
 }
-

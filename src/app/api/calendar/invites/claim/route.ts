@@ -7,7 +7,7 @@ import {
   activityInviteClaims,
   semesters,
 } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, or, isNull, lt } from "drizzle-orm";
 import { getSession } from "@/lib/auth/session";
 import { randomUUID } from "crypto";
 import { normalizeInviteCode } from "@/lib/calendar/inviteCode";
@@ -160,7 +160,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5. Clone record into user's ledger
+    // 5. Reserve slot atomically via atomic conditional update
+    const [updatedInvite] = await db
+      .update(activityInvites)
+      .set({
+        usesCount: sql`${activityInvites.usesCount} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(activityInvites.id, inviteData.inviteId),
+          eq(activityInvites.isActive, true),
+          or(
+            isNull(activityInvites.maxUses),
+            lt(activityInvites.usesCount, activityInvites.maxUses)
+          )
+        )
+      )
+      .returning({ id: activityInvites.id });
+
+    if (!updatedInvite) {
+      return NextResponse.json(
+        { error: "Mã mời đã đủ số lượt tham gia tối đa hoặc đã bị tạm khóa" },
+        { status: 400 }
+      );
+    }
+
+    // 6. Insert cloned record into recipient's ledger
     const newRecordId = randomUUID();
     const [clonedRecord] = await db
       .insert(drlRecords)
@@ -176,28 +202,19 @@ export async function POST(req: Request) {
         occurredAt: inviteData.occurredAt,
         note: inviteData.note,
         evidenceUrl: null, // individual submission needed
-        auditStatus: "pending_review",
+        auditStatus: "missing",
         originInviteCode: inviteData.code,
         originCreatorUsername: inviteData.creatorUsername,
       })
       .returning();
 
-    // 6. Record the claim
+    // 7. Record the claim
     await db.insert(activityInviteClaims).values({
       id: randomUUID(),
       inviteId: inviteData.inviteId,
       userId: session.id,
       claimedRecordId: newRecordId,
     });
-
-    // 7. Increment uses count
-    await db
-      .update(activityInvites)
-      .set({
-        usesCount: inviteData.usesCount + 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(activityInvites.id, inviteData.inviteId));
 
     return NextResponse.json({
       success: true,

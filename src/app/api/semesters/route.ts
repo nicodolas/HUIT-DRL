@@ -42,8 +42,8 @@ export async function GET() {
       .where(and(eq(semesters.userId, session.id), eq(semesters.isSystem, false)))
       .orderBy(desc(semesters.createdAt));
 
-    // 3. Automatically sync any missing official system semester for this user
-    if (sysSemesters.length > 0) {
+    // 3. Automatically sync any missing official system semester for regular students
+    if (session.role !== "admin" && sysSemesters.length > 0) {
       const existingNames = new Set(userSemesters.map((s) => s.name));
       let newlyAdded = false;
 

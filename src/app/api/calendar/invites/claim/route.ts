@@ -128,9 +128,19 @@ export async function POST(req: Request) {
 
       if (!userSem) {
         targetSemesterId = null;
+    let targetSemesterId = semesterId;
+    if (targetSemesterId && !isValidId(targetSemesterId)) {
+      return NextResponse.json({ error: "Mã học kỳ không hợp lệ" }, { status: 400 });
+    }
+    if (targetSemesterId) {
+      const [ownedSemester] = await db
+        .select({ id: semesters.id })
+        .from(semesters)
+        .where(and(eq(semesters.id, targetSemesterId), eq(semesters.userId, session.id)))
+        .limit(1);
+      if (!ownedSemester) {
+        return NextResponse.json({ error: "Học kỳ không hợp lệ hoặc bạn không có quyền truy cập" }, { status: 403 });
       }
-    } else {
-      targetSemesterId = null;
     }
 
     if (!targetSemesterId) {

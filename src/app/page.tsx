@@ -23,6 +23,7 @@ import { ProofVaultModal } from "@/components/dashboard/ProofVaultModal";
 import { GraduationForecastModal } from "@/components/dashboard/GraduationForecastModal";
 import { DisciplineChecklistCard } from "@/components/dashboard/DisciplineChecklistCard";
 import { StudentUtilitiesMenu } from "@/components/dashboard/StudentUtilitiesMenu";
+import { TourGuideManager } from "@/components/common/TourGuideManager";
 import { AdminHubModal } from "@/components/modals/AdminHubModal";
 import { NetworkRecoveryListener } from "@/components/common/NetworkRecoveryListener";
 import { ClaimInviteModal } from "@/components/calendar/ClaimInviteModal";
@@ -212,6 +213,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen pb-24 sm:pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      <TourGuideManager />
       <Header
         user={user}
         semesters={semesters}
@@ -292,6 +294,7 @@ export default function DashboardPage() {
 
         {/* Compact Modern Score Overview Gauge */}
         {scoreSummary && (
+          <div id="tour-score-gauge">
           <ScoreGauge
             score={scoreSummary.totalScore}
             rating={scoreSummary.rating}
@@ -304,6 +307,7 @@ export default function DashboardPage() {
               setModalOpen(true);
             }}
           />
+          </div>
         )}
 
         {/* Modern Segmented Tab Navigation */}

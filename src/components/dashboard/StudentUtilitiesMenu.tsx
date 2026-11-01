@@ -14,6 +14,7 @@ import {
   GraduationCap,
   User,
   Calendar,
+  Sparkles,
 } from "lucide-react";
 import { triggerHaptic } from "@/lib/native/platform";
 
@@ -130,6 +131,19 @@ export const StudentUtilitiesMenu: React.FC<StudentUtilitiesMenuProps> = ({
             >
               <GraduationCap className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
               <span className="truncate">Dự báo tốt nghiệp (Điều 12)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setDropdownOpen(false);
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("huit:start-tour"));
+                }
+              }}
+              className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors text-left cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="truncate">Xem lại hướng dẫn nhanh</span>
             </button>
 
             <div className="border-t border-slate-100 dark:border-slate-800 my-1" />

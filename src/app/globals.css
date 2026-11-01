@@ -1,3 +1,5 @@
+@import "driver.js/dist/driver.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,4 +64,167 @@ body {
     size: A4 portrait;
     margin: 12mm 15mm;
   }
+}
+
+/* =========================================================================
+   HUIT-DRL Driver.js Tour Guide Custom Theming
+   ========================================================================= */
+
+.driver-popover.huit-tour-popover {
+  background-color: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem; /* rounded-2xl */
+  padding: 1.25rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  max-width: 360px;
+  z-index: 1000000000;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.dark .driver-popover.huit-tour-popover {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.driver-popover.huit-tour-popover .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0f172a;
+  padding-right: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-title {
+  color: #ffffff;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-description {
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.6;
+  color: #475569;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-description {
+  color: #cbd5e1;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-close-btn {
+  color: #94a3b8;
+  font-size: 1.25rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0.75rem;
+  right: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-close-btn:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-close-btn {
+  color: #64748b;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-close-btn:hover {
+  color: #f8fafc;
+  background-color: #1e293b;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-footer {
+  border-top-color: #1e293b;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-progress-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #64748b;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-progress-text {
+  color: #94a3b8;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-footer-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  outline: none;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-prev-btn {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-prev-btn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-prev-btn {
+  background-color: #1e293b;
+  color: #cbd5e1;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-prev-btn:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-next-btn {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.driver-popover.huit-tour-popover .driver-popover-next-btn:hover {
+  background-color: #1e293b;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-next-btn {
+  background-color: #f59e0b; /* amber-500 */
+  color: #020617;
+  font-weight: 700;
+}
+
+.dark .driver-popover.huit-tour-popover .driver-popover-next-btn:hover {
+  background-color: #d97706; /* amber-600 */
+}
+
+/* Arrows */
+.dark .driver-popover.huit-tour-popover .driver-popover-arrow-side-left {
+  border-left-color: #0f172a;
+}
+.dark .driver-popover.huit-tour-popover .driver-popover-arrow-side-right {
+  border-right-color: #0f172a;
+}
+.dark .driver-popover.huit-tour-popover .driver-popover-arrow-side-top {
+  border-top-color: #0f172a;
+}
+.dark .driver-popover.huit-tour-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: #0f172a;
 }

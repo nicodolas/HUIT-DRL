@@ -21,7 +21,9 @@ export const UpcomingScheduleCard: React.FC<UpcomingScheduleCardProps> = ({
   const upcomingList = allUpcoming.slice(0, 5); // top 5 upcoming
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs transition-colors flex flex-col justify-between">
+    <div
+      id="tour-schedule-card"
+      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs transition-colors flex flex-col justify-between">
       <div>
         {/* Card Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800/80">

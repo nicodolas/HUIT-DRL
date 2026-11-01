@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { GraduationCap, LogOut, ChevronDown } from "lucide-react";
+import { GraduationCap, LogOut, ChevronDown, HelpCircle } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { clearAuthToken } from "@/lib/api/client";
@@ -151,6 +151,21 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                 </div>
               </Link>
+
+              <button
+                id="tour-help-btn"
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("huit:start-tour"));
+                  }
+                }}
+                title="Hướng dẫn sử dụng hệ thống"
+                className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 dark:hover:text-amber-400 transition-colors cursor-pointer"
+                aria-label="Hướng dẫn sử dụng hệ thống"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
 
               <ThemeToggle />
 

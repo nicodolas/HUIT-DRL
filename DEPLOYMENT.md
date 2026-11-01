@@ -40,12 +40,8 @@ Chạy các script khởi tạo và nạp toàn bộ 65 tiêu chí quy định t
 # 1. Cài đặt dependencies
 npm install
 
-# 2. Chạy migration schema
-python scripts/setup-db-security.py
-python scripts/migrate-evidence-url.py
-
-# 3. Seed 65 tiêu chí chuẩn QĐ 3385
-python scripts/seed-presets.py
+# 2. Đẩy schema lên cơ sở dữ liệu
+npm run db:push
 ```
 
 ---
@@ -93,11 +89,8 @@ Chạy toàn bộ bộ kiểm thử tự động trước khi bàn giao:
 # Kiểm tra phân quyền an toàn & Auth username
 node tests/auth-and-drl.test.js
 
-# Kiểm tra công thức 60 điểm sàn & chặn trần từng tiêu chí
-python scripts/test-business-logic.py
-
-# Kiểm tra toàn bộ 36 kịch bản E2E API
-node tests/e2e-api.test.js
+# Kiểm thử Playwright E2E
+npm run test:e2e
 ```
 
 Kiểm tra endpoint giám sát hệ thống thời gian thực:

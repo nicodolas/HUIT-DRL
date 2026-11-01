@@ -42,10 +42,6 @@ jobs:
         if: env.DATABASE_URL != ''
         run: npx playwright test tests/e2e/theme-system.spec.ts tests/e2e/admin-portal.spec.ts tests/e2e/student-utilities-dropdown.spec.ts tests/e2e/login-footer-author.spec.ts tests/e2e/admin-semester-lifecycle.spec.ts tests/e2e/header-layout.spec.ts tests/e2e/check-username-security.spec.ts tests/e2e/security.spec.ts tests/e2e/personal-calendar.spec.ts --project=chromium
 
-      - name: Restore Clean Database State
-        if: always() && env.DATABASE_URL != ''
-        run: node scripts/cleanup-db.js
-
       - name: Upload Playwright Test Report (On Failure)
         uses: actions/upload-artifact@v4
         if: failure()

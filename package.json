@@ -24,6 +24,7 @@
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "dotenv": "^18.0.9",
+    "driver.js": "^1.10.2",
     "drizzle-orm": "^0.39.3",
     "jose": "^6.0.8",
     "lucide-react": "^1.16.0",

@@ -232,6 +232,7 @@ export const RecordList: React.FC<RecordListProps> = ({
           )}
 
           <button
+            id="tour-add-record-btn"
             onClick={() => {
               triggerHaptic("medium");
               onOpenAddModal();

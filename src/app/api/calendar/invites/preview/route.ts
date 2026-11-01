@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const rawCode = searchParams.get("code");
 
-  if (!rawCode) {
+  if (!rawCode?.trim()) {
     return NextResponse.json({ error: "Vui lòng nhập mã mời" }, { status: 400 });
   }
 

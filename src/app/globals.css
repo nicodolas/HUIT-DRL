@@ -172,7 +172,7 @@ body {
   cursor: pointer;
   transition: all 0.15s ease;
   border: none;
-  outline: none;
+  outline-offset: 2px;
 }
 
 .driver-popover.huit-tour-popover .driver-popover-prev-btn {

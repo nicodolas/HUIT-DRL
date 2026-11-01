@@ -173,8 +173,8 @@ test.describe("Interactive Tour Guide (Onboarding Walkthrough)", () => {
       // Popover must fit on screen horizontally without overflow
       const viewport = page.viewportSize();
       const screenWidth = viewport ? viewport.width : 393;
-      expect(box.x).toBeGreaterThanOrEqual(-10);
-      expect(box.width).toBeLessThanOrEqual(screenWidth + 20);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(screenWidth);
     }
 
     // Step through on mobile

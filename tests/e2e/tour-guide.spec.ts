@@ -144,11 +144,7 @@ test.describe("Interactive Tour Guide (Onboarding Walkthrough)", () => {
     page,
     request,
   }) => {
-    try {
-      await page.setViewportSize({ width: 375, height: 667 });
-    } catch {
-      // Ignored for mobile device emulation which has fixed viewport
-    }
+    await page.setViewportSize({ width: 375, height: 667 });
 
     const user = {
       username: `mob_${Date.now()}`,
